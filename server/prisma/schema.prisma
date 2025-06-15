@@ -41,6 +41,9 @@ model User {
   createdWorkRequests WorkRequest[]  @relation("WorkRequestCreator")
   sentMessages        Message[]      @relation("MessageSender")
   receivedMessages    Message[]      @relation("MessageReceiver")
+  
+  // ETAP 10 - Subscription relation
+  subscription        Subscription?
 
   @@map("users")
 }
@@ -307,6 +310,104 @@ model Message {
   @@map("messages")
 }
 
+// ETAP 10 - SUBSCRIPTION & PAYMENT MODELS
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique // "Basic", "Pro", "Enterprise"
+  displayName String   // "Plan Podstawowy", "Plan Pro", "Plan Enterprise"
+  description String?  // opis planu
+  price       Float    // cena miesięczna w groszach (np. 2900 = 29.00 PLN)
+  currency    String   @default("PLN")
+  
+  // Limity funkcjonalności
+  maxCompanies      Int     @default(1)     // maksymalna liczba firm
+  maxProjects       Int     @default(5)     // maksymalna liczba projektów
+  maxWorkers        Int     @default(10)    // maksymalna liczba pracowników
+  maxJobOffers      Int     @default(3)     // maksymalna liczba ogłoszeń o pracę
+  maxWorkRequests   Int     @default(5)     // maksymalna liczba zleceń
+  maxStorageGB      Float   @default(1.0)   // maksymalna przestrzeń dyskowa w GB
+  
+  // Funkcjonalności premium
+  hasAdvancedReports Boolean @default(false) // zaawansowane raporty
+  hasApiAccess      Boolean @default(false)  // dostęp do API
+  hasPrioritySupport Boolean @default(false) // priorytetowe wsparcie
+  hasCustomBranding Boolean @default(false)  // własny branding
+  hasTeamManagement Boolean @default(false)  // zarządzanie zespołem
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  status            SubscriptionStatus @default(TRIAL)
+  
+  // Daty subskrypcji
+  startDate         DateTime           @default(now())
+  endDate           DateTime?          // null dla aktywnych subskrypcji
+  trialEndDate      DateTime?          // koniec okresu próbnego
+  nextBillingDate   DateTime?          // następna data płatności
+  
+  // Płatności
+  stripeCustomerId      String?        // ID klienta w Stripe
+  stripeSubscriptionId  String?        // ID subskrypcji w Stripe
+  stripePriceId         String?        // ID ceny w Stripe
+  
+  // Anulowanie
+  cancelAtPeriodEnd Boolean            @default(false)
+  canceledAt        DateTime?
+  cancelReason      String?
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Relations
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String             @unique // jeden user = jedna subskrypcja
+  plan              SubscriptionPlan   @relation(fields: [planId], references: [id])
+  planId            String
+  payments          Payment[]
+
+  @@map("subscriptions")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  amount          Float         // kwota w groszach
+  currency        String        @default("PLN")
+  status          PaymentStatus @default(PENDING)
+  
+  // Stripe
+  stripePaymentIntentId String?  // ID płatności w Stripe
+  stripeInvoiceId       String?  // ID faktury w Stripe
+  
+  // Metadane
+  description     String?       // opis płatności
+  receiptUrl      String?       // link do paragonu
+  invoiceUrl      String?       // link do faktury
+  
+  // Daty
+  paidAt          DateTime?     // kiedy zapłacono
+  failedAt        DateTime?     // kiedy płatność się nie powiodła
+  refundedAt      DateTime?     // kiedy zwrócono pieniądze
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  subscription    Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscriptionId  String
+
+  @@map("payments")
+}
+
 // EXISTING ENUMS
 enum Role {
   SUPERADMIN
@@ -411,4 +512,27 @@ enum RequestType {
   RECURRING            // Cykliczne
   PROJECT              // Projekt
   URGENT               // Pilne
+}
+
+// ETAP 10 - SUBSCRIPTION & PAYMENT ENUMS
+
+enum SubscriptionStatus {
+  TRIAL                // Okres próbny
+  ACTIVE               // Aktywna
+  PAST_DUE             // Zaległa płatność
+  CANCELED             // Anulowana
+  UNPAID               // Nieopłacona
+  INCOMPLETE           // Niekompletna
+  INCOMPLETE_EXPIRED   // Wygasła niekompletna
+  PAUSED               // Wstrzymana
+}
+
+enum PaymentStatus {
+  PENDING              // Oczekująca
+  PROCESSING           // Przetwarzana
+  SUCCEEDED            // Udana
+  FAILED               // Nieudana
+  CANCELED             // Anulowana
+  REFUNDED             // Zwrócona
+  PARTIALLY_REFUNDED   // Częściowo zwrócona
 }

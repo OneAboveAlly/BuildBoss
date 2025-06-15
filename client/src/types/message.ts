@@ -1,20 +1,20 @@
 // Typy dla systemu wiadomości
 
 export interface Message {
-  id: string;
+  id: number;
   content: string;
   isRead: boolean;
   createdAt: string;
 
   // Relations
   sender: {
-    id: string;
+    id: number;
     firstName?: string;
     lastName?: string;
     avatar?: string;
   };
   receiver: {
-    id: string;
+    id: number;
     firstName?: string;
     lastName?: string;
     avatar?: string;
@@ -32,38 +32,37 @@ export interface Message {
 }
 
 export interface Conversation {
-  partnerId: string;
-  partner: {
-    id: string;
+  otherUser: {
+    id: number;
     firstName?: string;
     lastName?: string;
     avatar?: string;
   };
-  context: {
-    type: 'job' | 'request' | 'direct';
-    data?: {
-      id: string;
-      title: string;
-    };
+  jobOffer?: {
+    id: number;
+    title: string;
   };
-  messages: Message[];
+  workRequest?: {
+    id: number;
+    title: string;
+  };
   lastMessage: Message;
   unreadCount: number;
 }
 
 export interface CreateMessageData {
-  receiverId: string;
+  receiverId: number;
   content: string;
-  jobOfferId?: string;
-  workRequestId?: string;
+  jobOfferId?: number;
+  workRequestId?: number;
 }
 
 export interface MessageThread {
-  partnerId: string;
-  jobOfferId?: string;
-  workRequestId?: string;
+  otherUserId: number;
+  jobOfferId?: number;
+  workRequestId?: number;
 }
 
 export interface UnreadCount {
-  unreadCount: number;
+  total: number;
 } 

@@ -33,15 +33,15 @@ export const messageService = {
   },
 
   // Pobieranie wiadomości w konkretnej konwersacji
-  async getThread(thread: MessageThread) {
+  async getMessageThread(thread: MessageThread) {
     const params = new URLSearchParams();
-    params.append('partnerId', thread.partnerId);
+    params.append('otherUserId', thread.otherUserId.toString());
     
     if (thread.jobOfferId) {
-      params.append('jobOfferId', thread.jobOfferId);
+      params.append('jobOfferId', thread.jobOfferId.toString());
     }
     if (thread.workRequestId) {
-      params.append('workRequestId', thread.workRequestId);
+      params.append('workRequestId', thread.workRequestId.toString());
     }
 
     const response = await api.get(`/messages/thread?${params.toString()}`);
@@ -59,7 +59,7 @@ export const messageService = {
   // ===== OZNACZANIE JAKO PRZECZYTANE =====
 
   // Oznaczanie pojedynczej wiadomości jako przeczytanej
-  async markAsRead(messageId: string) {
+  async markAsRead(messageId: number) {
     const response = await api.put(`/messages/${messageId}/read`);
     return response.data as Message;
   },
@@ -67,7 +67,7 @@ export const messageService = {
   // Oznaczanie całej konwersacji jako przeczytanej
   async markThreadAsRead(thread: MessageThread) {
     const data = {
-      partnerId: thread.partnerId,
+      otherUserId: thread.otherUserId,
       ...(thread.jobOfferId && { jobOfferId: thread.jobOfferId }),
       ...(thread.workRequestId && { workRequestId: thread.workRequestId })
     };
@@ -87,7 +87,7 @@ export const messageService = {
   // ===== USUWANIE =====
 
   // Usuwanie wiadomości (tylko dla nadawcy)
-  async deleteMessage(messageId: string) {
+  async deleteMessage(messageId: number) {
     const response = await api.delete(`/messages/${messageId}`);
     return response.data;
   },
@@ -134,14 +134,14 @@ export const messageService = {
 
   // Generowanie nazwy konwersacji
   getConversationTitle(conversation: Conversation) {
-    const partnerName = conversation.partner.firstName && conversation.partner.lastName
-      ? `${conversation.partner.firstName} ${conversation.partner.lastName}`
-      : conversation.partner.firstName || 'Użytkownik';
+    const partnerName = conversation.otherUser.firstName && conversation.otherUser.lastName
+      ? `${conversation.otherUser.firstName} ${conversation.otherUser.lastName}`
+      : conversation.otherUser.firstName || 'Użytkownik';
 
-    if (conversation.context.type === 'job' && conversation.context.data) {
-      return `${partnerName} - ${conversation.context.data.title}`;
-    } else if (conversation.context.type === 'request' && conversation.context.data) {
-      return `${partnerName} - ${conversation.context.data.title}`;
+    if (conversation.jobOffer) {
+      return `${partnerName} - ${conversation.jobOffer.title}`;
+    } else if (conversation.workRequest) {
+      return `${partnerName} - ${conversation.workRequest.title}`;
     } else {
       return partnerName;
     }
@@ -149,9 +149,9 @@ export const messageService = {
 
   // Generowanie opisu kontekstu
   getContextDescription(conversation: Conversation) {
-    if (conversation.context.type === 'job') {
+    if (conversation.jobOffer) {
       return 'Ogłoszenie o pracę';
-    } else if (conversation.context.type === 'request') {
+    } else if (conversation.workRequest) {
       return 'Zlecenie pracy';
     } else {
       return 'Wiadomość bezpośrednia';
@@ -159,7 +159,7 @@ export const messageService = {
   },
 
   // Sprawdzanie czy użytkownik jest nadawcą wiadomości
-  isMessageFromUser(message: Message, userId: string) {
+  isMessageFromUser(message: Message, userId: number) {
     return message.sender.id === userId;
   },
 

@@ -34,7 +34,8 @@
     "nodemailer": "^6.9.17",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "stripe": "^17.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

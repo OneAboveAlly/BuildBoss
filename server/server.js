@@ -69,6 +69,9 @@ app.use('/api/materials', require('./routes/materials'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/requests', require('./routes/requests'));
 app.use('/api/messages', require('./routes/messages'));
+// ETAP 10 - Subscriptions & Payments
+app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/webhooks', require('./routes/webhooks'));
 
 // 404 handler
 app.use((req, res) => {

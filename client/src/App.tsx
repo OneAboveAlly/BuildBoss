@@ -14,6 +14,11 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import MaterialsPage from './pages/MaterialsPage';
 import JobsPage from './pages/JobsPage';
+import MessagesPage from './pages/MessagesPage';
+import PricingPage from './pages/PricingPage';
+import SubscriptionPage from './pages/SubscriptionPage';
+import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
+import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './i18n/config';
 
@@ -80,6 +85,27 @@ function App() {
                 <JobsPage />
               </Layout>
             } />
+            
+            {/* ETAP 9 - Messages */}
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessagesPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            {/* ETAP 10 - Subscriptions & Payments */}
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/subscription" element={
+              <ProtectedRoute>
+                <Layout>
+                  <SubscriptionPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+            <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
             
             {/* 404 */}
             <Route path="*" element={

@@ -10,6 +10,8 @@ const Sidebar: React.FC = () => {
     { name: 'Faktury', path: '/invoices', icon: '🧾' },
     { name: 'Materiały', path: '/materials', icon: '🧱' },
     { name: 'Praca', path: '/jobs', icon: '👷' },
+    { name: 'Wiadomości', path: '/messages', icon: '💬' },
+    { name: 'Subskrypcja', path: '/subscription', icon: '💳' },
     { name: 'Firma', path: '/company', icon: '🏢' },
   ];
 

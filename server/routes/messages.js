@@ -67,13 +67,9 @@ router.get('/', authenticateToken, async (req, res) => {
       
       if (!conversations[conversationKey]) {
         conversations[conversationKey] = {
-          partnerId,
-          partner,
-          context: message.jobOfferId ? 
-            { type: 'job', data: message.jobOffer } : 
-            message.workRequestId ? 
-            { type: 'request', data: message.workRequest } : 
-            { type: 'direct', data: null },
+          otherUser: partner,
+          jobOffer: message.jobOffer || null,
+          workRequest: message.workRequest || null,
           messages: [],
           lastMessage: null,
           unreadCount: 0
@@ -109,11 +105,11 @@ router.get('/', authenticateToken, async (req, res) => {
 // GET /api/messages/thread - Wiadomości w konkretnej konwersacji
 router.get('/thread', authenticateToken, async (req, res) => {
   try {
-    const { partnerId, jobOfferId, workRequestId } = req.query;
+    const { otherUserId, jobOfferId, workRequestId } = req.query;
     const userId = req.user.id;
 
-    if (!partnerId) {
-      return res.status(400).json({ error: 'Wymagany parametr partnerId' });
+    if (!otherUserId) {
+      return res.status(400).json({ error: 'Wymagany parametr otherUserId' });
     }
 
     // Buduj warunki wyszukiwania
@@ -121,10 +117,10 @@ router.get('/thread', authenticateToken, async (req, res) => {
       OR: [
         {
           senderId: userId,
-          receiverId: partnerId
+          receiverId: parseInt(otherUserId)
         },
         {
-          senderId: partnerId,
+          senderId: parseInt(otherUserId),
           receiverId: userId
         }
       ]
@@ -132,9 +128,9 @@ router.get('/thread', authenticateToken, async (req, res) => {
 
     // Dodaj kontekst jeśli podany
     if (jobOfferId) {
-      where.jobOfferId = jobOfferId;
+      where.jobOfferId = parseInt(jobOfferId);
     } else if (workRequestId) {
-      where.workRequestId = workRequestId;
+      where.workRequestId = parseInt(workRequestId);
     } else {
       // Bezpośrednia konwersacja (bez kontekstu)
       where.jobOfferId = null;
@@ -284,7 +280,7 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
 
     // Sprawdź czy wiadomość istnieje i czy użytkownik jest odbiorcą
     const message = await prisma.message.findUnique({
-      where: { id }
+      where: { id: parseInt(id) }
     });
 
     if (!message) {
@@ -296,7 +292,7 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
     }
 
     const updatedMessage = await prisma.message.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: { isRead: true }
     });
 
@@ -310,24 +306,24 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
 // PUT /api/messages/thread/read - Oznaczanie całej konwersacji jako przeczytanej
 router.put('/thread/read', authenticateToken, async (req, res) => {
   try {
-    const { partnerId, jobOfferId, workRequestId } = req.body;
+    const { otherUserId, jobOfferId, workRequestId } = req.body;
     const userId = req.user.id;
 
-    if (!partnerId) {
-      return res.status(400).json({ error: 'Wymagany parametr partnerId' });
+    if (!otherUserId) {
+      return res.status(400).json({ error: 'Wymagany parametr otherUserId' });
     }
 
     // Buduj warunki
     const where = {
-      senderId: partnerId,
+      senderId: parseInt(otherUserId),
       receiverId: userId,
       isRead: false
     };
 
     if (jobOfferId) {
-      where.jobOfferId = jobOfferId;
+      where.jobOfferId = parseInt(jobOfferId);
     } else if (workRequestId) {
-      where.workRequestId = workRequestId;
+      where.workRequestId = parseInt(workRequestId);
     } else {
       where.jobOfferId = null;
       where.workRequestId = null;
@@ -357,7 +353,7 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
       }
     });
 
-    res.json({ unreadCount });
+    res.json({ total: unreadCount });
   } catch (error) {
     console.error('Error fetching unread count:', error);
     res.status(500).json({ error: 'Błąd podczas pobierania liczby nieprzeczytanych wiadomości' });
@@ -372,7 +368,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     // Sprawdź czy wiadomość istnieje i czy użytkownik jest nadawcą
     const message = await prisma.message.findUnique({
-      where: { id }
+      where: { id: parseInt(id) }
     });
 
     if (!message) {
@@ -384,7 +380,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 
     await prisma.message.delete({
-      where: { id }
+      where: { id: parseInt(id) }
     });
 
     res.json({ message: 'Wiadomość została usunięta' });

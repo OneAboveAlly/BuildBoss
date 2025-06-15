@@ -106,4 +106,16 @@ server/uploads/
 # Database
 *.db
 *.sqlite
-*.sqlite3 
+*.sqlite3
+
+# Stripe configuration instructions (contains sensitive setup info)
+STRIPE_SETUP_INSTRUCTIONS.md
+
+# Additional environment files
+server/.env*
+client/.env*
+!server/env.example
+
+# Stripe keys and secrets (extra safety)
+*stripe*key*
+*webhook*secret* 
