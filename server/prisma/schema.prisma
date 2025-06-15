@@ -1,0 +1,414 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String?  // Nullable for Google OAuth users
+  role              Role     @default(WORKER)
+  isEmailConfirmed  Boolean  @default(false)
+  confirmationToken String?  @unique
+  googleId          String?  @unique
+  firstName         String?
+  lastName          String?
+  avatar            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  createdCompanies Company[] @relation("CompanyCreator")
+  workerProfiles   Worker[]
+  createdProjects  Project[] @relation("ProjectCreator")
+  assignedTasks    Task[]    @relation("TaskAssignee")
+  createdTasks     Task[]    @relation("TaskCreator")
+  createdMaterials Material[] @relation("MaterialCreator")
+  
+  // ETAP 8 - Jobs & Requests Relations
+  createdJobOffers    JobOffer[]     @relation("JobOfferCreator")
+  jobApplications     JobApplication[]
+  createdWorkRequests WorkRequest[]  @relation("WorkRequestCreator")
+  sentMessages        Message[]      @relation("MessageSender")
+  receivedMessages    Message[]      @relation("MessageReceiver")
+
+  @@map("users")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  nip         String?  @unique
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  logo        String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  createdBy   User      @relation("CompanyCreator", fields: [createdById], references: [id])
+  createdById String
+  workers     Worker[]
+  projects    Project[]
+  materials   Material[]
+  
+  // ETAP 8 - Jobs & Requests Relations
+  jobOffers    JobOffer[]
+  workRequests WorkRequest[]
+
+  @@map("companies")
+}
+
+model Worker {
+  id        String       @id @default(cuid())
+  status    WorkerStatus @default(INVITED)
+  invitedAt DateTime     @default(now())
+  joinedAt  DateTime?
+  leftAt    DateTime?
+  position  String?
+  
+  // Permissions
+  canEdit          Boolean @default(false)
+  canView          Boolean @default(true)
+  canManageFinance Boolean @default(false)
+
+  // Relations
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  @@unique([userId, companyId])
+  @@map("workers")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  priority    Priority      @default(MEDIUM)
+  startDate   DateTime?
+  endDate     DateTime?
+  deadline    DateTime?
+  budget      Float?
+  location    String?
+  clientName  String?
+  clientEmail String?
+  clientPhone String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+  createdBy   User    @relation("ProjectCreator", fields: [createdById], references: [id])
+  createdById String
+  tasks       Task[]
+  materials   Material[]
+
+  @@map("projects")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  startDate   DateTime?
+  dueDate     DateTime?
+  estimatedHours Float?
+  actualHours    Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  assignedTo  User?   @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  assignedToId String?
+  createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id])
+  createdById String
+
+  @@map("tasks")
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?  // np. "Cement", "Drewno", "Narzędzia"
+  unit        String   @default("szt") // jednostka miary: szt, kg, m, m2, m3, l
+  quantity    Float    @default(0)
+  minQuantity Float?   // próg alertu o niskim stanie
+  price       Float?   // cena za jednostkę
+  supplier    String?  // dostawca
+  location    String?  // lokalizacja w magazynie
+  barcode     String?  // kod kreskowy
+  notes       String?  // dodatkowe notatki
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId   String?  // opcjonalne przypisanie do projektu
+  createdBy   User     @relation("MaterialCreator", fields: [createdById], references: [id])
+  createdById String
+
+  @@map("materials")
+}
+
+// ETAP 8 - JOBS & WORK REQUESTS MODELS
+
+model JobOffer {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  category    JobCategory
+  type        JobType     @default(FULL_TIME)
+  
+  // Location
+  country     String      @default("Polska")
+  voivodeship String      // województwo
+  city        String
+  address     String?     // dokładny adres (opcjonalny)
+  latitude    Float?      // współrzędne do mapy
+  longitude   Float?
+  
+  // Job details
+  salaryMin   Float?      // minimalne wynagrodzenie
+  salaryMax   Float?      // maksymalne wynagrodzenie
+  currency    String      @default("PLN")
+  experience  ExperienceLevel @default(JUNIOR)
+  
+  // Requirements
+  requirements String?    // wymagania (markdown)
+  benefits     String?    // benefity (markdown)
+  
+  // Contact & Status
+  contactEmail String?
+  contactPhone String?
+  isActive     Boolean    @default(true)
+  isPublic     Boolean    @default(true) // czy widoczne publicznie
+  expiresAt    DateTime?  // data wygaśnięcia
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId    String
+  createdBy    User            @relation("JobOfferCreator", fields: [createdById], references: [id])
+  createdById  String
+  applications JobApplication[]
+  messages     Message[]
+
+  @@map("job_offers")
+}
+
+model JobApplication {
+  id          String              @id @default(cuid())
+  message     String?             // wiadomość od kandydata
+  cvUrl       String?             // link do CV
+  status      ApplicationStatus   @default(PENDING)
+  appliedAt   DateTime            @default(now())
+  reviewedAt  DateTime?
+  notes       String?             // notatki rekrutera
+
+  // Relations
+  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  jobOfferId  String
+  applicant   User     @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  applicantId String
+
+  @@unique([jobOfferId, applicantId]) // jeden user może aplikować tylko raz na jedno ogłoszenie
+  @@map("job_applications")
+}
+
+model WorkRequest {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  category    WorkCategory
+  type        RequestType    @default(ONE_TIME)
+  
+  // Location
+  country     String         @default("Polska")
+  voivodeship String         // województwo
+  city        String
+  address     String?        // dokładny adres (opcjonalny)
+  latitude    Float?         // współrzędne do mapy
+  longitude   Float?
+  
+  // Budget & Timeline
+  budgetMin   Float?         // minimalny budżet
+  budgetMax   Float?         // maksymalny budżet
+  currency    String         @default("PLN")
+  deadline    DateTime?      // termin wykonania
+  
+  // Requirements
+  requirements String?       // wymagania (markdown)
+  materials    String?       // materiały (markdown)
+  
+  // Contact & Status
+  contactEmail String?
+  contactPhone String?
+  isActive     Boolean       @default(true)
+  isPublic     Boolean       @default(true) // czy widoczne publicznie
+  expiresAt    DateTime?     // data wygaśnięcia
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  company      Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyId    String?       // opcjonalne - może być prywatne zlecenie
+  createdBy    User          @relation("WorkRequestCreator", fields: [createdById], references: [id])
+  createdById  String
+  messages     Message[]
+
+  @@map("work_requests")
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  content   String
+  isRead    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  // Relations
+  sender      User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    String
+  receiver    User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId  String
+  
+  // Context - wiadomość może być związana z ogłoszeniem lub zleceniem
+  jobOffer    JobOffer?    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  jobOfferId  String?
+  workRequest WorkRequest? @relation(fields: [workRequestId], references: [id], onDelete: Cascade)
+  workRequestId String?
+
+  @@map("messages")
+}
+
+// EXISTING ENUMS
+enum Role {
+  SUPERADMIN
+  BOSS
+  WORKER
+}
+
+enum WorkerStatus {
+  INVITED
+  ACTIVE
+  INACTIVE
+  LEFT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ETAP 8 - NEW ENUMS
+
+enum JobCategory {
+  CONSTRUCTION_WORKER    // Robotnik budowlany
+  ELECTRICIAN           // Elektryk
+  PLUMBER              // Hydraulik
+  PAINTER              // Malarz
+  CARPENTER            // Stolarz
+  MASON                // Murarz
+  ROOFER               // Dekarz
+  TILER                // Glazurnik
+  FOREMAN              // Kierownik budowy
+  ARCHITECT            // Architekt
+  ENGINEER             // Inżynier
+  HEAVY_EQUIPMENT      // Operator sprzętu
+  LANDSCAPING          // Ogrodnictwo
+  DEMOLITION           // Rozbiórki
+  OTHER                // Inne
+}
+
+enum JobType {
+  FULL_TIME            // Pełny etat
+  PART_TIME            // Część etatu
+  CONTRACT             // Kontrakt
+  TEMPORARY            // Tymczasowa
+  INTERNSHIP           // Staż
+  FREELANCE            // Freelance
+}
+
+enum ExperienceLevel {
+  JUNIOR               // Początkujący (0-2 lata)
+  MID                  // Średniozaawansowany (2-5 lat)
+  SENIOR               // Doświadczony (5+ lat)
+  EXPERT               // Ekspert (10+ lat)
+}
+
+enum ApplicationStatus {
+  PENDING              // Oczekująca
+  REVIEWED             // Przejrzana
+  ACCEPTED             // Zaakceptowana
+  REJECTED             // Odrzucona
+  WITHDRAWN            // Wycofana przez kandydata
+}
+
+enum WorkCategory {
+  CONSTRUCTION         // Budowa
+  RENOVATION           // Remont
+  REPAIR               // Naprawa
+  INSTALLATION         // Instalacja
+  MAINTENANCE          // Konserwacja
+  DEMOLITION           // Rozbiórka
+  LANDSCAPING          // Ogrodnictwo
+  CLEANING             // Sprzątanie
+  PAINTING             // Malowanie
+  ELECTRICAL           // Elektryka
+  PLUMBING             // Hydraulika
+  ROOFING              // Dekarstwo
+  FLOORING             // Podłogi
+  WINDOWS_DOORS        // Okna i drzwi
+  OTHER                // Inne
+}
+
+enum RequestType {
+  ONE_TIME             // Jednorazowe
+  RECURRING            // Cykliczne
+  PROJECT              // Projekt
+  URGENT               // Pilne
+}
