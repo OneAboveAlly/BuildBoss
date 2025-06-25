@@ -1,5 +1,11 @@
 # 🔧 BuildBoss - Lista problemów do naprawy
 
+## Status Problems
+- **✅ NAPRAWIONE**: 7/25 (28%)
+- **🔄 W TRAKCIE**: 3/25 (12%)
+- **⏳ POZOSTAŁE**: 15/25 (60%)
+- **📊 ŁĄCZNY POSTĘP**: 40%
+
 ## Status napraw
 - ❌ Nie naprawione
 - 🔄 W trakcie
@@ -62,7 +68,7 @@
   - Frontend: Vitest + React Testing Library
   - E2E: Playwright
 - **Szacowany czas**: 8-12h
-- **Status**: 🔄 W TRAKCIE - Backend: 17 testów OK, coverage 0.64%, validation middleware 73%. Frontend: pozostało
+- **Status**: 🔄 W TRAKCIE - Backend: 42 testy OK (health, validation, logging, tasks, materials), coverage 0.64%. Frontend: pozostało
 
 ### 7. ✅ Brak CI/CD
 - **Problem**: Brak automatyzacji deployment'u i testów
@@ -72,7 +78,15 @@
 - **Szacowany czas**: 3-4h
 - **Status**: ✅ NAPRAWIONE - GitHub Actions workflow: backend tests z PostgreSQL, frontend build, Node.js 18
 
-### 8. ❌ Brak linter'a backend
+### 8. ✅ Brak konteneryzacji (Docker)
+- **Problem**: Brak Dockerfile i docker-compose.yml
+- **Lokalizacja**: Root projektu
+- **Priorytet**: 🟡 WYSOKI
+- **Rozwiązanie**: Utworzenie plików Docker
+- **Szacowany czas**: 3-4h
+- **Status**: ✅ NAPRAWIONE - Multi-stage Dockerfile, docker-compose.yml z PostgreSQL/Redis/Nginx, health checks, nginx reverse proxy, volumes, security
+
+### 9. ❌ Brak linter'a backend
 - **Problem**: Backend nie ma ESLint
 - **Lokalizacja**: `server/`
 - **Priorytet**: 🟢 ŚREDNI
@@ -83,14 +97,14 @@
 
 ## 🌍 **LOKALIZACJA (I18N)**
 
-### 9. ❌ Niepełne tłumaczenia ukraińskie
+### 10. ❌ Niepełne tłumaczenia ukraińskie
 - **Problem**: Wszystkie klucze ukraińskie mają prefix `[TODO: UA]`
 - **Lokalizacja**: `client/src/locales/ua/*.json`
 - **Priorytet**: 🟢 ŚREDNI
 - **Rozwiązanie**: Dokończenie tłumaczeń na język ukraiński
 - **Szacowany czas**: 4-6h
 
-### 10. ❌ Walidacja kluczy tłumaczeń
+### 11. ❌ Walidacja kluczy tłumaczeń
 - **Problem**: Możliwe brakujące klucze między językami
 - **Lokalizacja**: `client/src/locales/`
 - **Priorytet**: 🟢 ŚREDNI
@@ -100,13 +114,6 @@
 ---
 
 ## 🐳 **DEVOPS I DEPLOYMENT**
-
-### 11. ❌ Brak konteneryzacji
-- **Problem**: Brak Dockerfile i docker-compose.yml
-- **Lokalizacja**: Root projektu
-- **Priorytet**: 🟡 WYSOKI
-- **Rozwiązanie**: Utworzenie plików Docker
-- **Szacowany czas**: 3-4h
 
 ### 12. ❌ Brak konfiguracji środowiska produkcyjnego
 - **Problem**: Brak jasnych instrukcji deployment'u

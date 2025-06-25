@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+client/dist/
+server/dist/
+
+# Development files
+*.log
+logs/
+coverage/
+.nyc_output/
+
+# Environment files
+.env*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+*.test.js.snap
+
+# Temporary files
+tmp/
+temp/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+README.md
+ISSUES_TO_FIX.md
+docs/
+
+# CI/CD
+.github/
+
+# Uploads in development
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Prisma
+server/prisma/dev.db* 

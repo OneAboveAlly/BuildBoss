@@ -1,13 +1,22 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
 const { notifyLowMaterial } = require('./notifications');
+const { 
+  createMaterialSchema, 
+  updateMaterialSchema, 
+  updateStockSchema,
+  materialFiltersSchema 
+} = require('../schemas/materialSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // GET /api/materials - Lista materiałów firmy z filtrami
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (req, res) => {
   try {
     const { companyId, projectId, category, lowStock, search, sortBy = 'name', sortOrder = 'asc' } = req.query;
     
@@ -81,9 +90,21 @@ router.get('/', authenticateToken, async (req, res) => {
       materialsWithAlerts = materialsWithAlerts.filter(material => material.isLowStock);
     }
 
+    logger.info('Materials fetched', {
+      userId: req.user.id,
+      companyId,
+      materialsCount: materialsWithAlerts.length,
+      filters: { projectId, category, lowStock, search, sortBy, sortOrder }
+    });
+
     res.json(materialsWithAlerts);
   } catch (error) {
-    console.error('Error fetching materials:', error);
+    logger.error('Error fetching materials', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      filters: req.query
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania materiałów' });
   }
 });
@@ -141,7 +162,12 @@ router.get('/alerts', authenticateToken, async (req, res) => {
 
     res.json(lowStockMaterials);
   } catch (error) {
-    console.error('Error fetching material alerts:', error);
+    logger.error('Error fetching material alerts', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      companyId
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania alertów' });
   }
 });
@@ -169,13 +195,18 @@ router.get('/categories', authenticateToken, async (req, res) => {
     const categoryList = categories.map(c => c.category).filter(Boolean);
     res.json(categoryList);
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    logger.error('Error fetching categories', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      companyId
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania kategorii' });
   }
 });
 
 // GET /api/materials/:id - Szczegóły materiału
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -234,7 +265,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // POST /api/materials - Tworzenie nowego materiału
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(createMaterialSchema), async (req, res) => {
   try {
     const {
       name,
@@ -332,7 +363,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/materials/:id - Aktualizacja materiału
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateMaterialSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -461,7 +492,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // PATCH /api/materials/:id/quantity - Aktualizacja ilości materiału
-router.patch('/:id/quantity', authenticateToken, async (req, res) => {
+router.patch('/:id/quantity', authenticateToken, validateParams(idSchema), validate(updateStockSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { quantity, operation = 'set' } = req.body; // operation: 'set', 'add', 'subtract'
@@ -546,7 +577,7 @@ router.patch('/:id/quantity', authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/materials/:id - Usuwanie materiału
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
