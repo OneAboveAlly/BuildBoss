@@ -1,6 +1,10 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
+const { createProjectSchema, updateProjectSchema } = require('../schemas/projectSchemas');
+const { idSchema, paginationSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -96,15 +100,27 @@ router.get('/', authenticateToken, async (req, res) => {
       }
     }));
 
+    logger.info('Projects fetched', {
+      userId,
+      companyId,
+      projectsCount: projectsWithStats.length,
+      filters: { status, priority, search }
+    });
+
     res.json(projectsWithStats);
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    logger.error('Error fetching projects', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      companyId: req.query?.companyId
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania projektów' });
   }
 });
 
 // GET /api/projects/:id - Szczegóły projektu
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -191,9 +207,16 @@ router.get('/:id', authenticateToken, async (req, res) => {
       totalActualHours: project.tasks.reduce((sum, t) => sum + (t.actualHours || 0), 0)
     };
 
+    securityLogger.logDataAccess(userId, 'READ', 'project', id);
+
     res.json({ ...project, stats });
   } catch (error) {
-    console.error('Error fetching project:', error);
+    logger.error('Error fetching project', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      projectId: req.params?.id
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania projektu' });
   }
 });

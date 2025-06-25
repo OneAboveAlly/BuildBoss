@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { logger } = require('../config/logger');
 
 // Konfiguracja transportera email
 const createTransporter = () => {
@@ -57,16 +58,29 @@ const sendConfirmationEmail = async (email, confirmationToken) => {
       `,
     };
 
-    const info = await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
     
     if (process.env.NODE_ENV !== 'production') {
-      console.log('📧 Email confirmation URL:', confirmationUrl);
-      console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
+      logger.debug('Email confirmation sent', {
+        to: email,
+        confirmationUrl,
+        previewUrl: nodemailer.getTestMessageUrl(info)
+      });
     }
-    
+
+    logger.info('Confirmation email sent successfully', {
+      to: email,
+      messageId: info.messageId
+    });
+
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Email sending error:', error);
+    logger.error('Email sending error', {
+      error: error.message,
+      stack: error.stack,
+      to: email,
+      type: 'confirmation'
+    });
     return { success: false, error: error.message };
   }
 };
@@ -102,16 +116,29 @@ const sendPasswordResetEmail = async (email, resetToken) => {
       `,
     };
 
-    const info = await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
     
     if (process.env.NODE_ENV !== 'production') {
-      console.log('📧 Password reset URL:', resetUrl);
-      console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
+      logger.debug('Password reset email sent', {
+        to: email,
+        resetUrl,
+        previewUrl: nodemailer.getTestMessageUrl(info)
+      });
     }
-    
+
+    logger.info('Password reset email sent successfully', {
+      to: email,
+      messageId: info.messageId
+    });
+
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Email sending error:', error);
+    logger.error('Email sending error', {
+      error: error.message,
+      stack: error.stack,
+      to: email,
+      type: 'password_reset'
+    });
     return { success: false, error: error.message };
   }
 };

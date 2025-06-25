@@ -15,7 +15,7 @@
 - **Priorytet**: 🔴 KRYTYCZNY
 - **Rozwiązanie**: Implementacja Winston logger z poziomami logowania
 - **Szacowany czas**: 2-3h
-- **Status**: 🔄 W TRAKCIE - Utworzono Winston logger, zastąpiono logi w server.js i auth.js. Pozostało: pozostałe routes i utils
+- **Status**: 🔄 W TRAKCIE - Utworzono Winston logger, zastąpiono w: server.js, auth.js, companies.js, projects.js, email.js. Pozostało: ~10 routes
 
 ### 2. ✅ Brak rate limiting
 - **Problem**: API endpoints nie mają ochrony przed atakami brute force
@@ -31,7 +31,7 @@
 - **Priorytet**: 🔴 KRYTYCZNY
 - **Rozwiązanie**: Implementacja Joi lub express-validator
 - **Szacowany czas**: 4-6h
-- **Status**: 🔄 W TRAKCIE - Utworzono middleware walidacji i schematy. Zaimplementowano dla endpointów auth. Pozostało: companies, projects, tasks, materials
+- **Status**: 🔄 W TRAKCIE - Utworzono middleware i schematy. Zaimplementowano dla: auth, companies (częściowo), projects (częściowo). Pozostało: tasks, materials, inne routes
 
 ### 4. ✅ Brak CSP headers
 - **Problem**: Content Security Policy nie jest skonfigurowany
@@ -259,9 +259,13 @@
 ## 📊 **Statystyki**
 
 - **Łączna liczba problemów**: 25
-- **Krytyczne**: 5
-- **Wysokie**: 7
+- **Naprawione**: 3 ✅
+- **W trakcie**: 2 🔄
+- **Pozostałe**: 20 ❌
+- **Krytyczne**: 5 (3 w trakcie/naprawione)
+- **Wysokie**: 7 
 - **Średnie**: 9
 - **Niskie**: 4
 - **Szacowany czas całkowity**: 65-85 godzin
-- **Czas do MVP security**: 15-20 godzin 
+- **Czas zainwestowany**: ~4-5 godzin
+- **Pozostały czas**: ~60-80 godzin 

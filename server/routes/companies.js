@@ -2,7 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
 const { sendEmail } = require('../utils/email');
+const { 
+  createCompanySchema, 
+  updateCompanySchema, 
+  inviteWorkerSchema, 
+  updateWorkerSchema,
+  searchUsersSchema 
+} = require('../schemas/companySchemas');
+const { idSchema, paginationSchema } = require('../schemas/commonSchemas');
 
 const prisma = new PrismaClient();
 
@@ -76,15 +86,24 @@ router.get('/', authenticateToken, async (req, res) => {
       };
     });
 
+    logger.info('Companies fetched', {
+      userId,
+      companiesCount: companiesWithRole.length
+    });
+
     res.json(companiesWithRole);
   } catch (error) {
-    console.error('Error fetching companies:', error);
+    logger.error('Error fetching companies', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania firm' });
   }
 });
 
 // GET /api/companies/:id - Szczegóły firmy
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -151,27 +170,29 @@ router.get('/:id', authenticateToken, async (req, res) => {
       canManageFinance: workerProfile.canManageFinance
     } : null;
 
+    securityLogger.logDataAccess(userId, 'READ', 'company', id);
+
     res.json({
       ...company,
       userRole,
       userPermissions
     });
   } catch (error) {
-    console.error('Error fetching company:', error);
+    logger.error('Error fetching company', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      companyId: req.params?.id
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania firmy' });
   }
 });
 
 // POST /api/companies - Tworzenie nowej firmy
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(createCompanySchema), async (req, res) => {
   try {
     const { name, nip, address, latitude, longitude, phone, email, website, description } = req.body;
     const userId = req.user.id;
-
-    // Walidacja
-    if (!name || name.trim().length < 2) {
-      return res.status(400).json({ error: 'Nazwa firmy musi mieć co najmniej 2 znaki' });
-    }
 
     // Sprawdź czy NIP nie jest już zajęty (jeśli podany)
     if (nip) {
@@ -179,7 +200,10 @@ router.post('/', authenticateToken, async (req, res) => {
         where: { nip }
       });
       if (existingCompany) {
-        return res.status(400).json({ error: 'Firma z tym NIP już istnieje' });
+        return res.status(400).json({ 
+          success: false,
+          message: 'Firma z tym NIP już istnieje' 
+        });
       }
     }
 
