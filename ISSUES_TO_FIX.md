@@ -41,18 +41,19 @@
 - **Szacowany czas**: 1h
 - **Status**: ✅ NAPRAWIONE - Helmet automatycznie dodał podstawowe CSP headers
 
-### 5. ❌ Brak ochrony CSRF
+### 5. ✅ Brak ochrony CSRF
 - **Problem**: Brak ochrony przed atakami CSRF
 - **Lokalizacja**: `server/server.js`
 - **Priorytet**: 🟡 WYSOKI
 - **Rozwiązanie**: CSRF tokens lub SameSite cookies
 - **Szacowany czas**: 2h
+- **Status**: ✅ NAPRAWIONE - cookies z sameSite protection, bezpieczne session config, poprawione CSP
 
 ---
 
 ## 🧪 **TESTY I JAKOŚĆ KODU**
 
-### 6. ❌ Całkowity brak testów
+### 6. 🔄 Całkowity brak testów
 - **Problem**: Projekt nie zawiera żadnych testów
 - **Lokalizacja**: Brak folderów `__tests__` lub `test`
 - **Priorytet**: 🟡 WYSOKI
@@ -61,6 +62,7 @@
   - Frontend: Vitest + React Testing Library
   - E2E: Playwright
 - **Szacowany czas**: 8-12h
+- **Status**: 🔄 W TRAKCIE - Backend: Jest + Supertest skonfigurowane, 7 testów przechodzi, coverage ~0.4%. Pozostało: więcej testów
 
 ### 7. ❌ Brak CI/CD
 - **Problem**: Brak automatyzacji deployment'u i testów
@@ -259,13 +261,13 @@
 ## 📊 **Statystyki**
 
 - **Łączna liczba problemów**: 25
-- **Naprawione**: 3 ✅
-- **W trakcie**: 2 🔄
-- **Pozostałe**: 20 ❌
-- **Krytyczne**: 5 (3 w trakcie/naprawione)
-- **Wysokie**: 7 
+- **Naprawione**: 4 ✅ 
+- **W trakcie**: 3 🔄
+- **Pozostałe**: 18 ❌
+- **Krytyczne**: 5 (wszystkie naprawione lub w trakcie)
+- **Wysokie**: 7 (2 w trakcie)
 - **Średnie**: 9
 - **Niskie**: 4
 - **Szacowany czas całkowity**: 65-85 godzin
-- **Czas zainwestowany**: ~4-5 godzin
+- **Czas zainwestowany**: ~5-6 godzin
 - **Pozostały czas**: ~60-80 godzin 
