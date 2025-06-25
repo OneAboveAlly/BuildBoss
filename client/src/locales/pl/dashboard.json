@@ -1,0 +1,51 @@
+{
+  "title": "Panel główny",
+  "welcome": "Witamy w SiteBoss",
+  "welcome_message": "Witamy z powrotem, {{name}}!",
+  "overview": "Przegląd",
+  "statistics": "Statystyki",
+  "recent_activity": "Ostatnia aktywność",
+  "quick_actions": "Szybkie akcje",
+  "widgets": {
+    "total_projects": "Wszystkie projekty",
+    "active_projects": "Aktywne projekty",
+    "completed_projects": "Ukończone projekty",
+    "total_tasks": "Wszystkie zadania",
+    "pending_tasks": "Zadania oczekujące",
+    "completed_tasks": "Zadania ukończone",
+    "overdue_tasks": "Zadania przeterminowane",
+    "total_employees": "Wszyscy pracownicy",
+    "active_employees": "Aktywni pracownicy",
+    "new_applications": "Nowe aplikacje",
+    "unread_messages": "Nieprzeczytane wiadomości",
+    "low_stock_materials": "Materiały na wyczerpaniu",
+    "recent_notifications": "Ostatnie powiadomienia"
+  },
+  "charts": {
+    "project_progress": "Postęp projektów",
+    "task_completion": "Ukończenie zadań",
+    "monthly_activity": "Aktywność miesięczna",
+    "team_performance": "Wydajność zespołu"
+  },
+  "actions": {
+    "create_project": "Utwórz projekt",
+    "add_task": "Dodaj zadanie",
+    "invite_employee": "Zaproś pracownika",
+    "view_all_projects": "Zobacz wszystkie projekty",
+    "view_all_tasks": "Zobacz wszystkie zadania",
+    "manage_materials": "Zarządzaj materiałami"
+  },
+  "activity": {
+    "no_activity": "Brak ostatniej aktywności",
+    "view_all": "Zobacz wszystkie",
+    "project_created": "Projekt utworzony",
+    "task_completed": "Zadanie ukończone",
+    "employee_joined": "Pracownik dołączył",
+    "message_received": "Wiadomość otrzymana"
+  },
+  "notifications": {
+    "no_notifications": "Brak nowych powiadomień",
+    "view_all": "Zobacz wszystkie powiadomienia",
+    "mark_all_read": "Oznacz wszystkie jako przeczytane"
+  }
+} 

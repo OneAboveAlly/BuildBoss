@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import type { TaskWithDetails, CreateTaskRequest, UpdateTaskRequest, TaskStatus, Priority } from '../../types';
+import type { TaskWithDetails, CreateTaskRequest, UpdateTaskRequest, TaskStatus, Priority, ProjectWithStats } from '../../types';
 import { Button } from '../ui/Button';
 import { taskService } from '../../services/taskService';
+import { projectService } from '../../services/projectService';
 
 interface TaskFormProps {
   task?: TaskWithDetails;
-  projectId: string;
+  projectId?: string; // Make optional for tasks page
+  companyId?: string; // For loading projects when projectId not specified
   onSubmit: (task: TaskWithDetails) => void;
   onCancel: () => void;
 }
@@ -13,6 +15,7 @@ interface TaskFormProps {
 export const TaskForm: React.FC<TaskFormProps> = ({
   task,
   projectId,
+  companyId,
   onSubmit,
   onCancel
 }) => {
@@ -25,10 +28,34 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     dueDate: '',
     estimatedHours: '',
     actualHours: '',
-    assignedToId: ''
+    assignedToId: '',
+    projectId: projectId || ''
   });
+  const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load projects if companyId provided and no projectId
+  useEffect(() => {
+    if (companyId && !projectId) {
+      loadProjects();
+    }
+  }, [companyId, projectId]);
+
+  const loadProjects = async () => {
+    if (!companyId) return;
+    
+    try {
+      setLoadingProjects(true);
+      const projectsData = await projectService.getProjects({ companyId });
+      setProjects(projectsData);
+    } catch (err) {
+      console.error('Error loading projects:', err);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
 
   useEffect(() => {
     if (task) {
@@ -41,10 +68,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
         estimatedHours: task.estimatedHours?.toString() || '',
         actualHours: task.actualHours?.toString() || '',
-        assignedToId: task.assignedToId || ''
+        assignedToId: task.assignedToId || '',
+        projectId: task.projectId || projectId || ''
       });
+    } else if (projectId) {
+      setFormData(prev => ({
+        ...prev,
+        projectId
+      }));
     }
-  }, [task]);
+  }, [task, projectId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -60,9 +93,14 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     setError(null);
 
     try {
+      // Validate required fields
+      if (!formData.projectId) {
+        setError('Wybierz projekt dla zadania');
+        return;
+      }
+
       const submitData = {
         ...formData,
-        projectId,
         estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
         actualHours: formData.actualHours ? parseFloat(formData.actualHours) : undefined,
         startDate: formData.startDate || undefined,
@@ -100,6 +138,38 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       {/* Basic Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-secondary-900">Podstawowe informacje</h3>
+        
+        {/* Project Selection - only show if no projectId provided */}
+        {!projectId && companyId && (
+          <div>
+            <label htmlFor="projectId" className="block text-sm font-medium text-secondary-700 mb-1">
+              Projekt *
+            </label>
+            <select
+              id="projectId"
+              name="projectId"
+              value={formData.projectId}
+              onChange={handleChange}
+              required
+              disabled={loadingProjects}
+              className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="">
+                {loadingProjects ? 'Ładowanie projektów...' : 'Wybierz projekt'}
+              </option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+            {projects.length === 0 && !loadingProjects && (
+              <p className="text-xs text-secondary-500 mt-1">
+                Brak dostępnych projektów w tej firmie
+              </p>
+            )}
+          </div>
+        )}
         
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-secondary-700 mb-1">

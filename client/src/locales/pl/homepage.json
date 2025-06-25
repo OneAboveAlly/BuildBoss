@@ -1,0 +1,200 @@
+{
+  "navigation": {
+    "jobs": "💼 Praca",
+    "features": "Funkcje",
+    "pricing": "Cennik",
+    "testimonials": "Opinie",
+    "login": "Zaloguj się",
+    "register": "Rozpocznij za darmo"
+  },
+  "hero": {
+    "title": "Zarządzaj projektami budowlanymi",
+    "title_highlight": "jak profesjonalista", 
+    "subtitle": "Kompleksowe rozwiązanie SaaS dla firm budowlanych. Planuj projekty, zarządzaj zespołem, śledź materiały i generuj faktury w jednej, intuicyjnej aplikacji.",
+    "cta_primary": "Rozpocznij 14-dniowy trial",
+    "cta_secondary": "Zobacz demo",
+    "features_short": "✓ Bez zobowiązań ✓ Pełny dostęp ✓ Anuluj w każdej chwili"
+  },
+  "features": {
+    "title": "Wszystko czego potrzebujesz do zarządzania projektami",
+    "subtitle": "Kompleksowe narzędzia dla firm budowlanych",
+    "project_management": {
+      "title": "Zarządzanie projektami",
+      "description": "Planuj, organizuj i śledź postępy swoich projektów budowlanych w czasie rzeczywistym."
+    },
+    "team_management": {
+      "title": "Zespoły i pracownicy", 
+      "description": "Zarządzaj swoim zespołem, przydzielaj zadania i monitoruj wydajność pracowników."
+    },
+    "materials_tools": {
+      "title": "Materiały i narzędzia",
+      "description": "Śledź zapasy materiałów, planuj zakupy i optymalizuj koszty budowy."
+    },
+    "invoices_payments": {
+      "title": "Faktury i płatności",
+      "description": "Generuj faktury, śledź płatności i zarządzaj finansami swoich projektów."
+    },
+    "reports_analytics": {
+      "title": "Raporty i analityki",
+      "description": "Otrzymuj szczegółowe raporty o wydajności, kosztach i postępach prac."
+    },
+    "notifications": {
+      "title": "Powiadomienia",
+      "description": "Bądź na bieżąco z terminami, zadaniami i ważnymi wydarzeniami."
+    },
+    "view_all": "Sprawdź wszystkie funkcje"
+  },
+  "stats": {
+    "companies": "Firm budowlanych",
+    "projects": "Projektów zrealizowanych", 
+    "tasks": "Zadań wykonanych",
+    "uptime": "Dostępność systemu"
+  },
+  "jobs": {
+    "section_title": "💼 Szukasz pracy w budownictwie?",
+    "section_subtitle": "Znajdź wymarzoną pracę w najlepszych firmach budowlanych. Setki aktualnych ogłoszeń czeka na Ciebie!",
+    "cta_button": "Przeglądaj wszystkie oferty pracy",
+    "sample_jobs": {
+      "mason": {
+        "title": "Murarz",
+        "company": "BudMaster Sp. z o.o.",
+        "location": "Warszawa, mazowieckie",
+        "salary": "4500 - 6000 PLN",
+        "posted": "2 dni temu",
+        "description": "Poszukujemy doświadczonego murarza do pracy przy budowie domów jednorodzinnych...",
+        "tags": {
+          "0": "Robotnik budowlany",
+          "1": "Pełny etat"
+        }
+      },
+      "electrician": {
+        "title": "Elektryk",
+        "company": "Elektro-Bud",
+        "location": "Kraków, małopolskie",
+        "salary": "5000 - 7500 PLN",
+        "posted": "1 dzień temu",
+        "description": "Zatrudnimy elektryka z uprawnikami do pracy przy instalacjach elektrycznych...",
+        "tags": {
+          "0": "Elektryk",
+          "1": "Pełny etat"
+        }
+      },
+      "foreman": {
+        "title": "Kierownik budowy",
+        "company": "Mega Construction",
+        "location": "Gdańsk, pomorskie",
+        "salary": "8000 - 12000 PLN",
+        "posted": "3 dni temu",
+        "description": "Szukamy doświadczonego kierownika budowy do nadzorowania projektów mieszkaniowych...",
+        "tags": {
+          "0": "Kierownictwo",
+          "1": "Pełny etat"
+        }
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Co mówią nasi klienci",
+    "subtitle": "Sprawdź opinie firm, które już używają SiteBoss",
+    "clients": {
+      "kowalski": {
+        "name": "Marek Kowalski",
+        "company": "KowalBud Sp. z o.o.",
+        "role": "Prezes zarządu",
+        "quote": "SiteBoss zrewolucjonizował sposób zarządzania naszymi projektami. Oszczędzamy 30% czasu na administracji."
+      },
+      "nowak": {
+        "name": "Anna Nowak", 
+        "company": "Nowak Construction",
+        "role": "Kierownik projektów",
+        "quote": "Najlepsza aplikacja do zarządzania zespołem budowlanym. Wszystko w jednym miejscu - zadania, materiały, faktury."
+      },
+      "wisniewski": {
+        "name": "Piotr Wiśniewski",
+        "company": "WiśniowskiBud", 
+        "role": "Właściciel firmy",
+        "quote": "Dzięki SiteBoss mam pełną kontrolę nad kosztami i terminami. ROI zwrócił się już w pierwszym miesiącu."
+      }
+    }
+  },
+  "pricing": {
+    "title": "Wybierz plan dla swojej firmy",
+    "subtitle": "Elastyczne plany dostosowane do potrzeb firm każdej wielkości",
+    "need_more": "Potrzebujesz więcej?",
+    "view_full_pricing": "Zobacz pełny cennik",
+    "plans": {
+      "basic": {
+        "name": "Basic",
+        "description": "Idealne dla małych firm",
+        "features": {
+          "0": "1 firma",
+          "1": "5 projektów", 
+          "2": "10 pracowników",
+          "3": "Podstawowe raporty",
+          "4": "Email support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Najpopularniejszy wybór",
+        "features": {
+          "0": "3 firmy",
+          "1": "25 projektów",
+          "2": "50 pracowników", 
+          "3": "Zaawansowane raporty",
+          "4": "Priority support",
+          "5": "Zarządzanie zespołem"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise", 
+        "description": "Dla dużych organizacji",
+        "features": {
+          "0": "Nieograniczone firmy",
+          "1": "Nieograniczone projekty",
+          "2": "Nieograniczeni pracownicy",
+          "3": "API access",
+          "4": "Własny branding", 
+          "5": "Dedykowany manager"
+        }
+      }
+    }
+  },
+  "cta": {
+    "ready_title": "Gotowy na rozpoczęcie?",
+    "ready_description": "Dołącz do setek firm budowlanych, które już używają SiteBoss do zarządzania swoimi projektami.",
+    "start_trial": "Rozpocznij 14-dniowy trial",
+    "contact_us": "Skontaktuj się z nami"
+  },
+  "footer": {
+    "description": "Profesjonalne zarządzanie projektami budowlanymi. Planuj, organizuj i realizuj swoje projekty efektywniej niż kiedykolwiek.",
+    "contact": {
+      "title": "Kontakt",
+      "phone": "+48 123 456 789",
+      "email": "kontakt@siteboss.pl"
+    },
+    "links": {
+      "features": "Funkcje",
+      "pricing": "Cennik"
+    },
+    "product": "Produkt",
+    "company": "Firma",
+    "integrations": "Integracje",
+    "api": "API",
+    "about": "O nas",
+    "blog": "Blog",
+    "career": "Kariera",
+    "contact": "Kontakt",
+    "copyright": "© 2024 SiteBoss. Wszystkie prawa zastrzeżone.",
+    "privacy_policy": "Polityka prywatności",
+    "terms": "Regulamin",
+    "cookies": "Cookies"
+  },
+  "pricing_section": {
+    "title": "Wybierz plan dopasowany do Twojej firmy",
+    "subtitle": "14-dniowy okres próbny za darmo. Bez zobowiązań.",
+    "period": "/miesiąc",
+    "most_popular": "Najpopularniejszy",
+    "start_trial_button": "Rozpocznij trial"
+  }
+} 

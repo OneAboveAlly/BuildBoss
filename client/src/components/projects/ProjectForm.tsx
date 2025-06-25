@@ -5,12 +5,16 @@ import { projectService } from '../../services/projectService';
 
 interface ProjectFormProps {
   project?: ProjectWithDetails;
-  onSubmit: (project: ProjectWithDetails) => void;
+  companyId?: string;
+  loading?: boolean;
+  onSubmit: (data: any) => Promise<void> | void;
   onCancel: () => void;
 }
 
 export const ProjectForm: React.FC<ProjectFormProps> = ({
   project,
+  companyId,
+  loading: externalLoading = false,
   onSubmit,
   onCancel
 }) => {
@@ -72,20 +76,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         deadline: formData.deadline || undefined
       };
 
-      let result: ProjectWithDetails;
-      
       if (project) {
         // Update existing project
-        result = await projectService.updateProject(project.id, submitData as UpdateProjectRequest);
+        const result = await projectService.updateProject(project.id, submitData as UpdateProjectRequest);
+        onSubmit(result);
       } else {
-        // Create new project - this would need companyId from context
-        result = await projectService.createProject({
-          ...submitData,
-          companyId: 'current-company-id' // This should come from context
-        } as CreateProjectRequest);
+        // Create new project - pass form data to parent
+        await onSubmit(submitData);
       }
-
-      onSubmit(result);
     } catch (err) {
       console.error('Error saving project:', err);
       setError('Nie udało się zapisać projektu');
@@ -318,15 +316,15 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={loading}
+          disabled={loading || externalLoading}
         >
           Anuluj
         </Button>
         <Button
           type="submit"
-          disabled={loading || !formData.name.trim()}
+          disabled={(loading || externalLoading) || !formData.name.trim()}
         >
-          {loading ? 'Zapisywanie...' : project ? 'Zaktualizuj projekt' : 'Utwórz projekt'}
+          {(loading || externalLoading) ? 'Zapisywanie...' : project ? 'Zaktualizuj projekt' : 'Utwórz projekt'}
         </Button>
       </div>
     </form>

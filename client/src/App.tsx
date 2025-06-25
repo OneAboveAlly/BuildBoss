@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/Toaster';
+import { Toaster as HotToaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/auth/LoginPage';
@@ -9,18 +10,27 @@ import AuthCallbackPage from './pages/auth/AuthCallbackPage';
 import ConfirmEmailPage from './pages/auth/ConfirmEmailPage';
 import DashboardPage from './pages/DashboardPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
+import CompaniesPage from './pages/CompaniesPage';
 import UserProfilePage from './pages/UserProfilePage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
+import { CreateProjectPage } from './pages/CreateProjectPage';
+import { TasksPage } from './pages/TasksPage';
 import MaterialsPage from './pages/MaterialsPage';
-import JobsPage from './pages/JobsPage';
+import { JobsPage } from './pages/JobsPage';
+import { JobDetailPage } from './pages/JobDetailPage';
+import CreateJobPage from './pages/CreateJobPage';
 import MessagesPage from './pages/MessagesPage';
 import PricingPage from './pages/PricingPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
+import NotificationsPage from './pages/NotificationsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import ReportsPage from './pages/ReportsPage';
+import SearchPage from './pages/SearchPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import './i18n/config';
+import './i18n';
 
 function App() {
   return (
@@ -40,6 +50,13 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <DashboardPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/company" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CompaniesPage />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -64,10 +81,24 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } />
+            <Route path="/projects/new" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateProjectPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
             <Route path="/projects/:id" element={
               <ProtectedRoute>
                 <Layout>
                   <ProjectDetailPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/tasks" element={
+              <ProtectedRoute>
+                <Layout>
+                  <TasksPage />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -80,10 +111,16 @@ function App() {
             } />
             
             {/* ETAP 8 - Jobs & Work Requests */}
-            <Route path="/jobs" element={
-              <Layout>
-                <JobsPage />
-              </Layout>
+            {/* Publiczne oglądanie ofert pracy - layout automatycznie dostosowany w komponencie */}
+            <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/jobs/:id" element={<JobDetailPage />} />
+            {/* Tworzenie ofert tylko dla zalogowanych */}
+            <Route path="/jobs/create" element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateJobPage />
+                </Layout>
+              </ProtectedRoute>
             } />
             
             {/* ETAP 9 - Messages */}
@@ -107,6 +144,42 @@ function App() {
             <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
             <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
             
+            {/* ETAP 11 - Notifications */}
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Layout>
+                  <NotificationsPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            {/* ETAP 15 - Analytics */}
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Layout>
+                  <AnalyticsPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            {/* ETAP 15B - Reports */}
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ReportsPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            {/* ETAP 15C - Search */}
+            <Route path="/search" element={
+              <ProtectedRoute>
+                <Layout>
+                  <SearchPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
             {/* 404 */}
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center">
@@ -118,6 +191,7 @@ function App() {
             } />
           </Routes>
           <Toaster />
+          <HotToaster position="top-right" />
         </div>
       </Router>
     </AuthProvider>

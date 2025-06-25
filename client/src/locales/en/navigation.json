@@ -1,0 +1,30 @@
+{
+  "dashboard": "Dashboard",
+  "projects": "Projects",
+  "tasks": "Tasks",
+  "materials": "Materials",
+  "messages": "Messages",
+  "notifications": "Notifications",
+  "employees": "Employees",
+  "applications": "Applications",
+  "subscription": "Subscription",
+  "billing": "Billing",
+  "settings": "Settings",
+  "profile": "Profile",
+  "help": "Help",
+  "support": "Support",
+  "documentation": "Documentation",
+  "logout": "Logout",
+  "menu": "Menu",
+  "home": "Home",
+  "back_to_dashboard": "Back to Dashboard",
+  "sidebar": {
+    "toggle": "Toggle sidebar",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu"
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "current": "Current page"
+  }
+} 

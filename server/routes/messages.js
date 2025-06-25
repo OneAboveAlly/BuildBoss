@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { notifyNewMessage } = require('./notifications');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -264,6 +265,14 @@ router.post('/', authenticateToken, async (req, res) => {
         }
       }
     });
+
+    // ETAP 11 - Wyślij powiadomienie o nowej wiadomości
+    try {
+      await notifyNewMessage(message.id, receiverId, senderId);
+    } catch (notificationError) {
+      console.error('Error sending message notification:', notificationError);
+      // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
+    }
 
     res.status(201).json(message);
   } catch (error) {

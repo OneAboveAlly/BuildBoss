@@ -208,6 +208,59 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.status(404).json({ error: 'Ogłoszenie nie zostało znalezione' });
     }
 
+    // Zwiększ licznik wyświetleń per IP (asynchronicznie, żeby nie blokować odpowiedzi)
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                     (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+                     req.headers['x-forwarded-for']?.split(',')[0] || 'unknown';
+    const userAgent = req.headers['user-agent'] || null;
+    
+    // Sprawdź czy to IP już oglądało to ogłoszenie w ciągu ostatnich 24h
+    const existingView = await prisma.jobView.findUnique({
+      where: {
+        jobOfferId_ipAddress: {
+          jobOfferId: id,
+          ipAddress: clientIp
+        }
+      }
+    }).catch(() => null);
+
+    // Jeśli nie ma wpisu lub minęło więcej niż 24h, dodaj nowy view
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const shouldCountView = !existingView || existingView.viewedAt < twentyFourHoursAgo;
+
+    if (shouldCountView) {
+      // Dodaj/aktualizuj wpis o wyświetleniu
+      prisma.jobView.upsert({
+        where: {
+          jobOfferId_ipAddress: {
+            jobOfferId: id,
+            ipAddress: clientIp
+          }
+        },
+        update: {
+          viewedAt: new Date(),
+          userAgent,
+          userId: req.user?.id || null
+        },
+        create: {
+          jobOfferId: id,
+          ipAddress: clientIp,
+          userAgent,
+          userId: req.user?.id || null
+        }
+      }).then(() => {
+        // Zwiększ licznik tylko jeśli to nowy view
+        if (!existingView) {
+          return prisma.jobOffer.update({
+            where: { id },
+            data: { viewCount: { increment: 1 } }
+          });
+        }
+      }).catch(error => {
+        console.error('Error tracking job view:', error);
+      });
+    }
+
     // Sprawdź czy użytkownik już aplikował
     let hasApplied = false;
     let userApplication = null;
@@ -394,16 +447,25 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Sprawdź uprawnienia do firmy
-    const worker = await prisma.worker.findUnique({
+    const company = await prisma.company.findFirst({
       where: {
-        userId_companyId: {
-          userId: req.user.id,
-          companyId
-        }
+        id: companyId,
+        OR: [
+          { createdById: req.user.id }, // właściciel firmy
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE',
+                canEdit: true
+              }
+            }
+          }
+        ]
       }
     });
 
-    if (!worker || (!worker.canEdit && req.user.role !== 'BOSS')) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do tworzenia ogłoszeń w tej firmie' });
     }
 

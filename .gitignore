@@ -108,8 +108,11 @@ server/uploads/
 *.sqlite
 *.sqlite3
 
-# Stripe configuration instructions (contains sensitive setup info)
+# Development and business strategy files
+ETAP*.md
 STRIPE_SETUP_INSTRUCTIONS.md
+agent_config.md
+copilot_instructions.md
 
 # Additional environment files
 server/.env*
@@ -118,4 +121,8 @@ client/.env*
 
 # Stripe keys and secrets (extra safety)
 *stripe*key*
-*webhook*secret* 
+*webhook*secret*
+
+# Package-lock files (optional - some prefer to include them)
+package-lock.json
+*/package-lock.json 

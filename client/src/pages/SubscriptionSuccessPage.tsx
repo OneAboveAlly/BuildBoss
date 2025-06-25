@@ -1,23 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { subscriptionService } from '../services/subscriptionService';
 
 const SubscriptionSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    // Sprawdź status płatności po kilku sekundach
-    const timer = setTimeout(() => {
+    // Odśwież dane użytkownika po powrocie ze Stripe aby zapewnić aktualny kontekst
+    const refreshUserData = async () => {
+      try {
+        await refreshUser();
+      } catch (err) {
+        console.error('Błąd odświeżania danych użytkownika:', err);
+        setError('Nie udało się odświeżyć danych użytkownika');
+      }
+    };
+
+    // Poczekaj chwilę na przetworzenie płatności przez webhook, potem odśwież dane
+    const timer = setTimeout(async () => {
+      await refreshUserData();
       setLoading(false);
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [refreshUser]);
 
   const handleGoToDashboard = () => {
     navigate('/dashboard');

@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { notifyLowMaterial } = require('./notifications');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -10,17 +11,26 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const { companyId, projectId, category, lowStock, search, sortBy = 'name', sortOrder = 'asc' } = req.query;
     
-    // Sprawdź czy użytkownik ma dostęp do firmy
+    // Sprawdź czy użytkownik ma dostęp do firmy (jako właściciel lub aktywny pracownik)
     if (companyId) {
-      const worker = await prisma.worker.findFirst({
+      const company = await prisma.company.findFirst({
         where: {
-          userId: req.user.id,
-          companyId: companyId,
-          status: 'ACTIVE'
+          id: companyId,
+          OR: [
+            { createdById: req.user.id },
+            { 
+              workers: {
+                some: {
+                  userId: req.user.id,
+                  status: 'ACTIVE'
+                }
+              }
+            }
+          ]
         }
       });
       
-      if (!worker) {
+      if (!company) {
         return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
       }
     }
@@ -87,16 +97,25 @@ router.get('/alerts', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'companyId jest wymagane' });
     }
 
-    // Sprawdź dostęp do firmy
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź dostęp do firmy (jako właściciel lub aktywny pracownik)
+    const company = await prisma.company.findFirst({
       where: {
-        userId: req.user.id,
-        companyId: companyId,
-        status: 'ACTIVE'
+        id: companyId,
+        OR: [
+          { createdById: req.user.id },
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
       }
     });
     
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
     }
 
@@ -179,16 +198,25 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Materiał nie został znaleziony' });
     }
 
-    // Sprawdź dostęp do firmy
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź dostęp do firmy (jako właściciel lub aktywny pracownik)
+    const company = await prisma.company.findFirst({
       where: {
-        userId: req.user.id,
-        companyId: material.companyId,
-        status: 'ACTIVE'
+        id: material.companyId,
+        OR: [
+          { createdById: req.user.id },
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
       }
     });
     
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tego materiału' });
     }
 
@@ -230,15 +258,25 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Sprawdź dostęp do firmy i uprawnienia
-    const worker = await prisma.worker.findFirst({
+    const company = await prisma.company.findFirst({
       where: {
-        userId: req.user.id,
-        companyId: companyId,
-        status: 'ACTIVE'
+        id: companyId,
+        OR: [
+          { createdById: req.user.id },
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE',
+                canEdit: true
+              }
+            }
+          }
+        ]
       }
     });
     
-    if (!worker || !worker.canEdit) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do tworzenia materiałów' });
     }
 
@@ -321,16 +359,44 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Materiał nie został znaleziony' });
     }
 
-    // Sprawdź uprawnienia
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź uprawnienia (właściciel firmy, pracownik z prawem edycji, lub twórca materiału)
+    const company = await prisma.company.findFirst({
       where: {
-        userId: req.user.id,
-        companyId: existingMaterial.companyId,
-        status: 'ACTIVE'
+        id: existingMaterial.companyId,
+        OR: [
+          { createdById: req.user.id },
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        workers: {
+          where: {
+            userId: req.user.id,
+            status: 'ACTIVE'
+          },
+          select: {
+            canEdit: true
+          }
+        }
       }
     });
     
-    if (!worker || (!worker.canEdit && existingMaterial.createdById !== req.user.id)) {
+    if (!company) {
+      return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
+    }
+
+    const isOwner = company.createdById === req.user.id;
+    const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
+    const isCreator = existingMaterial.createdById === req.user.id;
+    
+    if (!isOwner && !workerCanEdit && !isCreator) {
       return res.status(403).json({ error: 'Brak uprawnień do edycji tego materiału' });
     }
 
@@ -377,6 +443,16 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     });
 
+    // ETAP 11 - Sprawdź niski stan materiału i wyślij powiadomienie
+    try {
+      if (material.minQuantity && material.quantity <= material.minQuantity) {
+        await notifyLowMaterial(material.id);
+      }
+    } catch (notificationError) {
+      console.error('Error sending low material notification:', notificationError);
+      // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
+    }
+
     res.json(material);
   } catch (error) {
     console.error('Error updating material:', error);
@@ -402,16 +478,26 @@ router.patch('/:id/quantity', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Materiał nie został znaleziony' });
     }
 
-    // Sprawdź uprawnienia
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź uprawnienia (właściciel firmy lub pracownik z prawem edycji)
+    const company = await prisma.company.findFirst({
       where: {
-        userId: req.user.id,
-        companyId: existingMaterial.companyId,
-        status: 'ACTIVE'
+        id: existingMaterial.companyId,
+        OR: [
+          { createdById: req.user.id },
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE',
+                canEdit: true
+              }
+            }
+          }
+        ]
       }
     });
     
-    if (!worker || !worker.canEdit) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do modyfikacji ilości' });
     }
 
@@ -442,6 +528,16 @@ router.patch('/:id/quantity', authenticateToken, async (req, res) => {
       }
     });
 
+    // ETAP 11 - Sprawdź niski stan materiału po zmianie ilości
+    try {
+      if (existingMaterial.minQuantity && newQuantity <= existingMaterial.minQuantity) {
+        await notifyLowMaterial(material.id);
+      }
+    } catch (notificationError) {
+      console.error('Error sending low material notification:', notificationError);
+      // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
+    }
+
     res.json(material);
   } catch (error) {
     console.error('Error updating material quantity:', error);
@@ -462,16 +558,44 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Materiał nie został znaleziony' });
     }
 
-    // Sprawdź uprawnienia
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź uprawnienia (właściciel firmy, pracownik z prawem edycji, lub twórca materiału)
+    const company = await prisma.company.findFirst({
       where: {
-        userId: req.user.id,
-        companyId: existingMaterial.companyId,
-        status: 'ACTIVE'
+        id: existingMaterial.companyId,
+        OR: [
+          { createdById: req.user.id },
+          { 
+            workers: {
+              some: {
+                userId: req.user.id,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        workers: {
+          where: {
+            userId: req.user.id,
+            status: 'ACTIVE'
+          },
+          select: {
+            canEdit: true
+          }
+        }
       }
     });
     
-    if (!worker || (!worker.canEdit && existingMaterial.createdById !== req.user.id)) {
+    if (!company) {
+      return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
+    }
+
+    const isOwner = company.createdById === req.user.id;
+    const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
+    const isCreator = existingMaterial.createdById === req.user.id;
+    
+    if (!isOwner && !workerCanEdit && !isCreator) {
       return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego materiału' });
     }
 

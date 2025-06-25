@@ -69,4 +69,11 @@ export const authService = {
     window.location.href = `${API_URL}/auth/google`;
     return 'redirecting';
   },
+
+  async verifyPassword(password: string): Promise<void> {
+    const response = await api.post<ApiResponse>('/auth/verify-password', { password });
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Password verification failed');
+    }
+  },
 }; 

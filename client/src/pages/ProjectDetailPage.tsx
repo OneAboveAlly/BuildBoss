@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { projectService } from '../services/projectService';
 import { taskService } from '../services/taskService';
@@ -30,13 +30,16 @@ type TaskViewType = 'kanban' | 'list';
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   
   const [project, setProject] = useState<ProjectWithDetails | null>(null);
   const [tasks, setTasks] = useState<TaskWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>(
+    (searchParams.get('tab') as TabType) || 'overview'
+  );
   const [taskViewType, setTaskViewType] = useState<TaskViewType>('kanban');
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -71,6 +74,11 @@ export const ProjectDetailPage: React.FC = () => {
   const handleProjectUpdate = async (updatedProject: ProjectWithDetails) => {
     setProject(updatedProject);
     setShowProjectForm(false);
+  };
+
+  const handleProjectUpdateFromSettings = async (updatedProject: ProjectWithDetails) => {
+    setProject(updatedProject);
+    setActiveTab('overview');
   };
 
   const handleTaskCreate = async (newTask: TaskWithDetails) => {
@@ -408,14 +416,28 @@ export const ProjectDetailPage: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'settings' && canEdit && (
+      {activeTab === 'settings' && (
         <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
-          <h2 className="text-xl font-semibold text-secondary-900 mb-6">Ustawienia projektu</h2>
-          <ProjectForm
-            project={project}
-            onSubmit={handleProjectUpdate}
-            onCancel={() => setActiveTab('overview')}
-          />
+          {canEdit ? (
+            <>
+              <h2 className="text-xl font-semibold text-secondary-900 mb-6">Ustawienia projektu</h2>
+              <ProjectForm
+                project={project}
+                onSubmit={handleProjectUpdateFromSettings}
+                onCancel={() => setActiveTab('overview')}
+              />
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="mx-auto w-16 h-16 bg-secondary-100 rounded-full flex items-center justify-center mb-4">
+                <PencilIcon className="w-8 h-8 text-secondary-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-secondary-900 mb-2">Brak uprawnień</h3>
+              <p className="text-secondary-600">
+                Nie masz uprawnień do edycji tego projektu. Skontaktuj się z właścicielem projektu.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -441,7 +463,7 @@ export const ProjectDetailPage: React.FC = () => {
             <div className="p-6">
               <h2 className="text-xl font-semibold text-secondary-900 mb-6">Nowe zadanie</h2>
               <TaskForm
-                projectId={project.id}
+                projectId={project?.id}
                 onSubmit={handleTaskCreate}
                 onCancel={() => setShowTaskForm(false)}
               />
@@ -457,7 +479,7 @@ export const ProjectDetailPage: React.FC = () => {
               <h2 className="text-xl font-semibold text-secondary-900 mb-6">Edytuj zadanie</h2>
               <TaskForm
                 task={editingTask}
-                projectId={project.id}
+                projectId={project?.id}
                 onSubmit={handleTaskUpdate}
                 onCancel={() => setEditingTask(null)}
               />

@@ -1,198 +1,256 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
   MapPinIcon,
   CurrencyDollarIcon,
   ClockIcon,
-  BuildingOfficeIcon,
-  UserGroupIcon,
+  BuildingOffice2Icon,
   AdjustmentsHorizontalIcon,
   PlusIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { Button } from '../components/ui/Button';
+import PublicLayout from '../components/layout/PublicLayout';
+import Layout from '../components/layout/Layout';
 import { jobService } from '../services/jobService';
-import type { JobOffer, JobFilters, JobCategory, JobType, ExperienceLevel } from '../types/job';
-import { JOB_CATEGORIES, JOB_TYPES, EXPERIENCE_LEVELS, VOIVODESHIPS } from '../types/job';
+import type { JobOffer, JobFilters } from '../types/job';
+import { JOB_CATEGORIES, JOB_TYPES, EXPERIENCE_LEVELS } from '../types/job';
 import { useAuth } from '../contexts/AuthContext';
 
-const JobsPage: React.FC = () => {
+// Województwa Polski
+const VOIVODESHIPS = [
+  'dolnośląskie', 'kujawsko-pomorskie', 'lubelskie', 'lubuskie',
+  'łódzkie', 'małopolskie', 'mazowieckie', 'opolskie',
+  'podkarpackie', 'podlaskie', 'pomorskie', 'śląskie',
+  'świętokrzyskie', 'warmińsko-mazurskie', 'wielkopolskie', 'zachodniopomorskie'
+];
+
+interface JobCardProps {
+  job: JobOffer;
+}
+
+const JobCard: React.FC<JobCardProps> = ({ job }) => {
+  const navigate = useNavigate();
+  const salaryText = job.salaryMin || job.salaryMax 
+    ? `${job.salaryMin || 'od'} - ${job.salaryMax || 'do'} ${job.currency || 'PLN'}`
+    : 'Wynagrodzenie do uzgodnienia';
+
+  const timeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'przed chwilą';
+    if (diffInHours < 24) return `${diffInHours}h temu`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} dni temu`;
+    return date.toLocaleDateString('pl-PL');
+  };
+
+  return (
+    <div 
+      className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => navigate(`/jobs/${job.id}`)}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{job.title}</h3>
+          <div className="flex items-center text-gray-600 mb-2">
+            <BuildingOffice2Icon className="w-4 h-4 mr-2" />
+            <span className="font-medium">{job.company.name}</span>
+          </div>
+          <div className="flex items-center text-gray-500 mb-2">
+            <MapPinIcon className="w-4 h-4 mr-2" />
+            <span>{job.city}, {job.voivodeship}</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="flex items-center text-green-600 font-semibold mb-2">
+            <CurrencyDollarIcon className="w-4 h-4 mr-1" />
+            <span>{salaryText}</span>
+          </div>
+          <div className="flex items-center text-gray-400 text-sm">
+            <ClockIcon className="w-4 h-4 mr-1" />
+            <span>{timeAgo(job.createdAt)}</span>
+          </div>
+          {job.viewCount !== undefined && (
+            <div className="flex items-center text-gray-400 text-sm mt-1">
+              <EyeIcon className="w-4 h-4 mr-1" />
+              <span>{job.viewCount.toLocaleString('pl-PL')} wyświetleń</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p className="text-gray-600 mb-4 line-clamp-2">
+        {job.description.substring(0, 150)}...
+      </p>
+
+      <div className="flex items-center justify-between">
+        <div className="flex space-x-2">
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+            {JOB_CATEGORIES[job.category]}
+          </span>
+          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+            {JOB_TYPES[job.type]}
+          </span>
+          <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+            {EXPERIENCE_LEVELS[job.experience]}
+          </span>
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/jobs/${job.id}`);
+          }}
+        >
+          Zobacz szczegóły
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export const JobsPage: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 20,
-    total: 0,
-    pages: 0
-  });
 
-  // Filtry
+  // Filtry z URL params
   const [filters, setFilters] = useState<JobFilters>({
-    search: '',
-    category: undefined,
-    voivodeship: '',
-    city: '',
-    type: undefined,
-    experience: undefined,
-    salaryMin: undefined,
-    salaryMax: undefined,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-    page: 1,
-    limit: 20
+    search: searchParams.get('search') || '',
+    category: searchParams.get('category') as any || undefined,
+    voivodeship: searchParams.get('voivodeship') || undefined,
+    city: searchParams.get('city') || undefined,
+    type: searchParams.get('type') as any || undefined,
+    experience: searchParams.get('experience') as any || undefined,
+    salaryMin: searchParams.get('salaryMin') ? Number(searchParams.get('salaryMin')) : undefined,
+    sortBy: (searchParams.get('sortBy') as any) || 'createdAt',
+    sortOrder: (searchParams.get('sortOrder') as any) || 'desc'
   });
 
-  // Pobieranie ogłoszeń
-  const fetchJobs = async () => {
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 12;
+
+  useEffect(() => {
+    loadJobs();
+  }, [filters, currentPage]);
+
+  const loadJobs = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const response = await jobService.getJobs(filters);
-      setJobs(response.jobs);
-      setPagination(response.pagination);
-    } catch (err) {
-      console.error('Error fetching jobs:', err);
-      setError('Błąd podczas pobierania ogłoszeń');
+      // Używamy publicznego endpointu dla ogłoszeń
+      const params = {
+        ...filters,
+        page: currentPage,
+        limit: jobsPerPage,
+        isPublic: true // tylko publiczne ogłoszenia
+      };
+      
+      const response = await jobService.getJobs(params);
+      setJobs(response.jobs || response);
+      setTotalJobs(response.pagination?.total || response.length || 0);
+    } catch (error) {
+      console.error('Error loading jobs:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchJobs();
-  }, [filters]);
+  const updateFilters = (newFilters: Partial<JobFilters>) => {
+    const updated = { ...filters, ...newFilters };
+    setFilters(updated);
+    setCurrentPage(1);
 
-  // Obsługa filtrów
-  const handleFilterChange = (key: keyof JobFilters, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-      page: 1 // Reset strony przy zmianie filtrów
-    }));
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchJobs();
+    // Aktualizuj URL
+    const params = new URLSearchParams();
+    Object.entries(updated).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.set(key, value.toString());
+      }
+    });
+    setSearchParams(params);
   };
 
   const clearFilters = () => {
     setFilters({
       search: '',
-      category: undefined,
-      voivodeship: '',
-      city: '',
-      type: undefined,
-      experience: undefined,
-      salaryMin: undefined,
-      salaryMax: undefined,
       sortBy: 'createdAt',
-      sortOrder: 'desc',
-      page: 1,
-      limit: 20
+      sortOrder: 'desc'
     });
+    setSearchParams({});
+    setCurrentPage(1);
   };
 
-  // Obsługa paginacji
-  const handlePageChange = (newPage: number) => {
-    setFilters(prev => ({ ...prev, page: newPage }));
-  };
+  const totalPages = Math.ceil(totalJobs / jobsPerPage);
 
-  // Formatowanie daty
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Dzisiaj';
-    if (diffDays === 1) return 'Wczoraj';
-    if (diffDays < 7) return `${diffDays} dni temu`;
-    
-    return new Intl.DateTimeFormat('pl-PL', {
-      day: 'numeric',
-      month: 'short'
-    }).format(date);
-  };
-
-  if (loading && jobs.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Ładowanie ogłoszeń...</p>
-        </div>
-      </div>
-    );
-  }
+  // Wybierz odpowiedni layout w zależności od stanu logowania
+  const LayoutComponent = user ? Layout : PublicLayout;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <LayoutComponent>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                <UserGroupIcon className="h-8 w-8 text-blue-600 mr-3" />
-                Ogłoszenia o pracę
+              <h1 className="text-3xl font-bold text-gray-900">
+                Oferty pracy w budownictwie
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Znajdź pracę w branży budowlanej
+              <p className="text-gray-600 mt-2">
+                Znajdź swoją wymarzoną pracę w branży budowlanej
               </p>
+              <div className="mt-4 text-sm text-gray-500">
+                Znaleziono {totalJobs} ofert pracy
+              </div>
             </div>
             
             {user && (
-              <div className="mt-4 sm:mt-0">
-                <Link
-                  to="/jobs/create"
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Dodaj ogłoszenie
+              <div className="hidden sm:block">
+                <Link to="/jobs/create">
+                  <Button className="bg-primary-600 hover:bg-primary-700">
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Dodaj ogłoszenie
+                  </Button>
                 </Link>
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filtry - Sidebar */}
-          <div className="lg:w-80">
-            <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-medium text-gray-900">Filtry</h3>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
-                >
-                  <AdjustmentsHorizontalIcon className="h-5 w-5" />
-                </button>
-              </div>
+          {/* Search bar */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Szukaj stanowiska, firmy, słów kluczowych..."
+                value={filters.search || ''}
+                onChange={(e) => updateFilters({ search: e.target.value })}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="sm:w-auto"
+            >
+              <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
+              Filtry
+            </Button>
+          </div>
 
-              <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                {/* Wyszukiwanie */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Wyszukaj
-                  </label>
-                  <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={filters.search || ''}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
-                      placeholder="Stanowisko, firma, miasto..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
+          {/* Filters */}
+          {showFilters && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Kategoria */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -200,8 +258,8 @@ const JobsPage: React.FC = () => {
                   </label>
                   <select
                     value={filters.category || ''}
-                    onChange={(e) => handleFilterChange('category', e.target.value || undefined)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => updateFilters({ category: e.target.value as any || undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Wszystkie kategorie</option>
                     {Object.entries(JOB_CATEGORIES).map(([key, label]) => (
@@ -217,8 +275,8 @@ const JobsPage: React.FC = () => {
                   </label>
                   <select
                     value={filters.voivodeship || ''}
-                    onChange={(e) => handleFilterChange('voivodeship', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => updateFilters({ voivodeship: e.target.value || undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Wszystkie województwa</option>
                     {VOIVODESHIPS.map(voivodeship => (
@@ -229,20 +287,6 @@ const JobsPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Miasto */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Miasto
-                  </label>
-                  <input
-                    type="text"
-                    value={filters.city || ''}
-                    onChange={(e) => handleFilterChange('city', e.target.value)}
-                    placeholder="Nazwa miasta"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
                 {/* Typ pracy */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -250,8 +294,8 @@ const JobsPage: React.FC = () => {
                   </label>
                   <select
                     value={filters.type || ''}
-                    onChange={(e) => handleFilterChange('type', e.target.value || undefined)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => updateFilters({ type: e.target.value as any || undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Wszystkie typy</option>
                     {Object.entries(JOB_TYPES).map(([key, label]) => (
@@ -260,200 +304,99 @@ const JobsPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Doświadczenie */}
+                {/* Minimalne wynagrodzenie */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Doświadczenie
+                    Min. wynagrodzenie (PLN)
                   </label>
-                  <select
-                    value={filters.experience || ''}
-                    onChange={(e) => handleFilterChange('experience', e.target.value || undefined)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Wszystkie poziomy</option>
-                    {Object.entries(EXPERIENCE_LEVELS).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Wynagrodzenie */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Wynagrodzenie (PLN)
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
-                      value={filters.salaryMin || ''}
-                      onChange={(e) => handleFilterChange('salaryMin', e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="Od"
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <input
-                      type="number"
-                      value={filters.salaryMax || ''}
-                      onChange={(e) => handleFilterChange('salaryMax', e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="Do"
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Sortowanie */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sortuj według
-                  </label>
-                  <select
-                    value={`${filters.sortBy}-${filters.sortOrder}`}
-                    onChange={(e) => {
-                      const [sortBy, sortOrder] = e.target.value.split('-');
-                      handleFilterChange('sortBy', sortBy);
-                      handleFilterChange('sortOrder', sortOrder);
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="createdAt-desc">Najnowsze</option>
-                    <option value="createdAt-asc">Najstarsze</option>
-                    <option value="title-asc">Nazwa A-Z</option>
-                    <option value="title-desc">Nazwa Z-A</option>
-                    <option value="salaryMin-desc">Wynagrodzenie malejąco</option>
-                    <option value="salaryMin-asc">Wynagrodzenie rosnąco</option>
-                  </select>
-                </div>
-
-                {/* Przyciski akcji */}
-                <div className="flex space-x-3">
-                  <button
-                    onClick={clearFilters}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Wyczyść
-                  </button>
+                  <input
+                    type="number"
+                    placeholder="3000"
+                    value={filters.salaryMin || ''}
+                    onChange={(e) => updateFilters({ salaryMin: e.target.value ? Number(e.target.value) : undefined })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
                 </div>
               </div>
+
+              <div className="mt-4 flex justify-between">
+                <Button variant="outline" onClick={clearFilters}>
+                  Wyczyść filtry
+                </Button>
+                
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm text-gray-700">Sortuj:</label>
+                  <select
+                    value={`${filters.sortBy}_${filters.sortOrder}`}
+                    onChange={(e) => {
+                      const [sortBy, sortOrder] = e.target.value.split('_');
+                      updateFilters({ sortBy: sortBy as any, sortOrder: sortOrder as any });
+                    }}
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="createdAt_desc">Najnowsze</option>
+                    <option value="createdAt_asc">Najstarsze</option>
+                    <option value="title_asc">Nazwa A-Z</option>
+                    <option value="title_desc">Nazwa Z-A</option>
+                    <option value="salaryMin_desc">Najwyższe wynagrodzenie</option>
+                    <option value="salaryMin_asc">Najniższe wynagrodzenie</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Job listings */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : jobs.length === 0 ? (
+          <div className="text-center py-12">
+            <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Brak ogłoszeń</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Nie znaleziono ogłoszeń spełniających kryteria wyszukiwania.
+            </p>
+            <div className="mt-6">
+              <Button variant="outline" onClick={clearFilters}>
+                Wyczyść filtry
+              </Button>
             </div>
           </div>
-
-          {/* Lista ogłoszeń */}
-          <div className="flex-1">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-                <p className="text-red-800">{error}</p>
-              </div>
-            )}
-
-            {/* Statystyki */}
-            <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  Znaleziono <span className="font-medium">{pagination.total}</span> ogłoszeń
-                </p>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">Strona</span>
-                  <span className="text-sm font-medium">
-                    {pagination.page} z {pagination.pages}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Lista ogłoszeń */}
-            <div className="space-y-4">
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {jobs.map((job) => (
-                <div key={job.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600">
-                            <Link to={`/jobs/${job.id}`}>
-                              {job.title}
-                            </Link>
-                          </h3>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {JOB_CATEGORIES[job.category]}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                          <div className="flex items-center">
-                            <BuildingOfficeIcon className="h-4 w-4 mr-1" />
-                            {job.company.name}
-                          </div>
-                          <div className="flex items-center">
-                            <MapPinIcon className="h-4 w-4 mr-1" />
-                            {job.city}, {job.voivodeship}
-                          </div>
-                          <div className="flex items-center">
-                            <ClockIcon className="h-4 w-4 mr-1" />
-                            {formatDate(job.createdAt)}
-                          </div>
-                        </div>
-
-                        <p className="text-gray-700 mb-4 line-clamp-2">
-                          {job.description}
-                        </p>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center text-sm text-gray-600">
-                              <CurrencyDollarIcon className="h-4 w-4 mr-1" />
-                              {jobService.formatSalary(job.salaryMin, job.salaryMax, job.currency)}
-                            </div>
-                            <span className="text-sm text-gray-500">
-                              {JOB_TYPES[job.type]}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {EXPERIENCE_LEVELS[job.experience]}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            {job.applicationCount !== undefined && (
-                              <span className="text-sm text-gray-500">
-                                {job.applicationCount} aplikacji
-                              </span>
-                            )}
-                            <Link
-                              to={`/jobs/${job.id}`}
-                              className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                              <EyeIcon className="h-4 w-4 mr-1" />
-                              Zobacz
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <JobCard key={job.id} job={job} />
               ))}
             </div>
 
-            {/* Paginacja */}
-            {pagination.pages > 1 && (
-              <div className="mt-8 flex items-center justify-center">
-                <nav className="flex items-center space-x-2">
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <nav className="inline-flex -space-x-px rounded-md shadow-sm">
                   <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Poprzednia
                   </button>
                   
-                  {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     const page = i + 1;
                     return (
                       <button
                         key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 text-sm font-medium rounded-md ${
-                          page === pagination.page
-                            ? 'text-blue-600 bg-blue-50 border border-blue-300'
-                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 text-sm font-medium border ${
+                          currentPage === page
+                            ? 'bg-primary-50 border-primary-500 text-primary-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                         }`}
                       >
                         {page}
@@ -462,39 +405,44 @@ const JobsPage: React.FC = () => {
                   })}
                   
                   <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === pagination.pages}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Następna
                   </button>
                 </nav>
               </div>
             )}
+          </>
+        )}
+      </div>
 
-            {/* Brak wyników */}
-            {!loading && jobs.length === 0 && (
-              <div className="text-center py-12">
-                <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Brak ogłoszeń</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Nie znaleziono ogłoszeń spełniających kryteria wyszukiwania.
-                </p>
-                <div className="mt-6">
-                  <button
-                    onClick={clearFilters}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Wyczyść filtry
-                  </button>
-                </div>
-              </div>
-            )}
+      {/* CTA for companies */}
+      {!user && (
+        <div className="bg-primary-50 border-t border-primary-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Szukasz pracowników?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Dołącz do SiteBoss i dodawaj ogłoszenia o pracę za darmo!
+            </p>
+            <div className="space-x-4">
+              <Link to="/login">
+                <Button variant="outline">
+                  Zaloguj się
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button className="bg-primary-600 hover:bg-primary-700">
+                  Zarejestruj firmę
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </LayoutComponent>
   );
-};
-
-export default JobsPage; 
+}; 

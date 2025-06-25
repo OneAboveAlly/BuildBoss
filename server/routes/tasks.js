@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { notifyTaskAssigned, notifyTaskCompleted } = require('./notifications');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -19,35 +20,62 @@ router.get('/', authenticateToken, async (req, res) => {
       
       // Sprawdź dostęp do projektu
       const project = await prisma.project.findUnique({
-        where: { id: projectId }
+        where: { id: projectId },
+        include: {
+          company: {
+            select: {
+              id: true,
+              createdById: true
+            }
+          }
+        }
       });
 
       if (!project) {
         return res.status(404).json({ error: 'Projekt nie został znaleziony' });
       }
 
-      const worker = await prisma.worker.findFirst({
+      // Sprawdź czy użytkownik ma dostęp do firmy (jako właściciel lub aktywny pracownik)
+      const company = await prisma.company.findFirst({
         where: {
-          userId,
-          companyId: project.companyId,
-          status: 'ACTIVE'
+          id: project.company.id,
+          OR: [
+            { createdById: userId },
+            { 
+              workers: {
+                some: {
+                  userId: userId,
+                  status: 'ACTIVE'
+                }
+              }
+            }
+          ]
         }
       });
 
-      if (!worker) {
+      if (!company) {
         return res.status(403).json({ error: 'Brak dostępu do tego projektu' });
       }
     } else if (companyId) {
-      // Filtrowanie po firmie - sprawdź dostęp
-      const worker = await prisma.worker.findFirst({
+      // Filtrowanie po firmie - sprawdź dostęp (jako właściciel lub aktywny pracownik)
+      const company = await prisma.company.findFirst({
         where: {
-          userId,
-          companyId,
-          status: 'ACTIVE'
+          id: companyId,
+          OR: [
+            { createdById: userId },
+            { 
+              workers: {
+                some: {
+                  userId: userId,
+                  status: 'ACTIVE'
+                }
+              }
+            }
+          ]
         }
       });
 
-      if (!worker) {
+      if (!company) {
         return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
       }
 
@@ -55,20 +83,29 @@ router.get('/', authenticateToken, async (req, res) => {
         companyId
       };
     } else {
-      // Bez filtrów - pokaż zadania ze wszystkich firm użytkownika
-      const userCompanies = await prisma.worker.findMany({
+      // Bez filtrów - pokaż zadania ze wszystkich firm użytkownika (jako właściciel lub aktywny pracownik)
+      const companies = await prisma.company.findMany({
         where: {
-          userId,
-          status: 'ACTIVE'
+          OR: [
+            { createdById: userId },
+            { 
+              workers: {
+                some: {
+                  userId: userId,
+                  status: 'ACTIVE'
+                }
+              }
+            }
+          ]
         },
         select: {
-          companyId: true
+          id: true
         }
       });
 
       where.project = {
         companyId: {
-          in: userCompanies.map(w => w.companyId)
+          in: companies.map(c => c.id)
         }
       };
     }
@@ -183,16 +220,25 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Zadanie nie zostało znalezione' });
     }
 
-    // Sprawdź dostęp do firmy
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź dostęp do firmy (jako właściciel lub aktywny pracownik)
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId: task.project.company.id,
-        status: 'ACTIVE'
+        id: task.project.company.id,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
       }
     });
 
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tego zadania' });
     }
 
@@ -206,12 +252,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // POST /api/tasks - Tworzenie nowego zadania
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log('POST /api/tasks - Request body:', req.body);
+    console.log('POST /api/tasks - User ID:', req.user.id);
+    
     const {
       title,
       description,
       projectId,
       priority = 'MEDIUM',
-      assignedToId,
+      assignedToId: rawAssignedToId,
       startDate,
       dueDate,
       estimatedHours
@@ -225,37 +274,77 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Sprawdź czy projekt istnieje i czy użytkownik ma dostęp
     const project = await prisma.project.findUnique({
-      where: { id: projectId }
+      where: { id: projectId },
+      include: {
+        company: {
+          select: {
+            id: true,
+            createdById: true
+          }
+        }
+      }
     });
 
     if (!project) {
       return res.status(404).json({ error: 'Projekt nie został znaleziony' });
     }
 
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź czy użytkownik ma dostęp do firmy (jako właściciel lub aktywny pracownik z prawem edycji)
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId: project.companyId,
-        status: 'ACTIVE'
+        id: project.company.id,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE',
+                canEdit: true
+              }
+            }
+          }
+        ]
       }
     });
 
-    if (!worker || !worker.canEdit) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do tworzenia zadań w tym projekcie' });
     }
 
+    // Process assignedToId
+    let assignedToId = rawAssignedToId;
+    
     // Sprawdź czy assignedToId jest prawidłowy (jeśli podany)
     if (assignedToId) {
-      const assignedWorker = await prisma.worker.findFirst({
+      console.log('Checking assignedToId:', assignedToId);
+      
+      // Handle special case for "current-user"
+      if (assignedToId === 'current-user') {
+        assignedToId = userId;
+        console.log('Converting current-user to actual userId:', assignedToId);
+      }
+      
+      const assignedUserCompany = await prisma.company.findFirst({
         where: {
-          userId: assignedToId,
-          companyId: project.companyId,
-          status: 'ACTIVE'
+          id: project.company.id,
+          OR: [
+            { createdById: assignedToId },
+            { 
+              workers: {
+                some: {
+                  userId: assignedToId,
+                  status: 'ACTIVE'
+                }
+              }
+            }
+          ]
         }
       });
 
-      if (!assignedWorker) {
-        return res.status(400).json({ error: 'Wybrany użytkownik nie jest pracownikiem tej firmy' });
+      if (!assignedUserCompany) {
+        console.log('User not found in company. AssignedToId:', assignedToId, 'CompanyId:', project.company.id);
+        return res.status(400).json({ error: 'Wybrany użytkownik nie jest członkiem tej firmy' });
       }
     }
 
@@ -305,6 +394,16 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     });
 
+    // ETAP 11 - Wyślij powiadomienie o przypisaniu zadania
+    if (assignedToId && assignedToId !== userId) {
+      try {
+        await notifyTaskAssigned(task.id, assignedToId, userId);
+      } catch (notificationError) {
+        console.error('Error sending task assignment notification:', notificationError);
+        // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
+      }
+    }
+
     res.status(201).json(task);
   } catch (error) {
     console.error('Error creating task:', error);
@@ -316,12 +415,15 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('PUT /api/tasks/:id - Request body:', req.body);
+    console.log('PUT /api/tasks/:id - User ID:', req.user.id);
+    
     const {
       title,
       description,
       status,
       priority,
-      assignedToId,
+      assignedToId: rawAssignedToId,
       startDate,
       dueDate,
       estimatedHours,
@@ -341,40 +443,84 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Zadanie nie zostało znalezione' });
     }
 
-    // Sprawdź uprawnienia
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź uprawnienia - użytkownik musi mieć dostęp do firmy
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId: existingTask.project.companyId,
-        status: 'ACTIVE'
+        id: existingTask.project.companyId,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        workers: {
+          where: {
+            userId: userId,
+            status: 'ACTIVE'
+          },
+          select: {
+            canEdit: true
+          }
+        }
       }
     });
 
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tego zadania' });
     }
 
-    // Sprawdź czy może edytować (właściciel, twórca, lub przypisany)
-    const canEdit = worker.canEdit || 
-                   existingTask.createdById === userId || 
-                   existingTask.assignedToId === userId;
+    // Sprawdź czy może edytować (właściciel firmy, pracownik z prawem edycji, twórca zadania, lub przypisany)
+    const isOwner = company.createdById === userId;
+    const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
+    const isCreator = existingTask.createdById === userId;
+    const isAssigned = existingTask.assignedToId === userId;
+    
+    const canEdit = isOwner || workerCanEdit || isCreator || isAssigned;
 
     if (!canEdit) {
       return res.status(403).json({ error: 'Brak uprawnień do edycji tego zadania' });
     }
 
+    // Process assignedToId
+    let assignedToId = rawAssignedToId;
+    
     // Sprawdź czy assignedToId jest prawidłowy (jeśli podany)
     if (assignedToId) {
-      const assignedWorker = await prisma.worker.findFirst({
+      console.log('Checking assignedToId for update:', assignedToId);
+      
+      // Handle special case for "current-user"
+      if (assignedToId === 'current-user') {
+        assignedToId = userId;
+        console.log('Converting current-user to actual userId:', assignedToId);
+      }
+      
+      const assignedUserCompany = await prisma.company.findFirst({
         where: {
-          userId: assignedToId,
-          companyId: existingTask.project.companyId,
-          status: 'ACTIVE'
+          id: existingTask.project.companyId,
+          OR: [
+            { createdById: assignedToId },
+            { 
+              workers: {
+                some: {
+                  userId: assignedToId,
+                  status: 'ACTIVE'
+                }
+              }
+            }
+          ]
         }
       });
 
-      if (!assignedWorker) {
-        return res.status(400).json({ error: 'Wybrany użytkownik nie jest pracownikiem tej firmy' });
+      if (!assignedUserCompany) {
+        console.log('User not found in company for update. AssignedToId:', assignedToId, 'CompanyId:', existingTask.project.companyId);
+        return res.status(400).json({ error: 'Wybrany użytkownik nie jest członkiem tej firmy' });
       }
     }
 
@@ -425,6 +571,22 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     });
 
+    // ETAP 11 - Powiadomienia o zmianach w zadaniu
+    try {
+      // Powiadomienie o nowym przypisaniu
+      if (assignedToId && assignedToId !== existingTask.assignedToId && assignedToId !== userId) {
+        await notifyTaskAssigned(task.id, assignedToId, userId);
+      }
+
+      // Powiadomienie o ukończeniu zadania
+      if (status === 'DONE' && existingTask.status !== 'DONE') {
+        await notifyTaskCompleted(task.id, userId);
+      }
+    } catch (notificationError) {
+      console.error('Error sending task update notifications:', notificationError);
+      // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
+    }
+
     res.json(task);
   } catch (error) {
     console.error('Error updating task:', error);
@@ -450,22 +612,44 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Zadanie nie zostało znalezione' });
     }
 
-    // Sprawdź uprawnienia - tylko twórca lub właściciel firmy
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź uprawnienia - właściciel firmy, pracownik z prawem edycji lub twórca zadania
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId: existingTask.project.companyId,
-        status: 'ACTIVE'
+        id: existingTask.project.companyId,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
       },
       include: {
-        company: true
+        workers: {
+          where: {
+            userId: userId,
+            status: 'ACTIVE'
+          },
+          select: {
+            canEdit: true
+          }
+        }
       }
     });
 
-    const isOwner = worker?.company.createdById === userId;
+    if (!company) {
+      return res.status(403).json({ error: 'Brak dostępu do tego zadania' });
+    }
+
+    const isOwner = company.createdById === userId;
+    const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
     const isCreator = existingTask.createdById === userId;
 
-    if (!worker || (!isOwner && !isCreator && !worker.canEdit)) {
+    if (!isOwner && !isCreator && !workerCanEdit) {
       return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego zadania' });
     }
 
@@ -503,23 +687,46 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Zadanie nie zostało znalezione' });
     }
 
-    // Sprawdź dostęp
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź dostęp do firmy
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId: existingTask.project.companyId,
-        status: 'ACTIVE'
+        id: existingTask.project.companyId,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        workers: {
+          where: {
+            userId: userId,
+            status: 'ACTIVE'
+          },
+          select: {
+            canEdit: true
+          }
+        }
       }
     });
 
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tego zadania' });
     }
 
     // Sprawdź czy może zmieniać status
-    const canChangeStatus = worker.canEdit || 
-                           existingTask.createdById === userId || 
-                           existingTask.assignedToId === userId;
+    const isOwner = company.createdById === userId;
+    const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
+    const isCreator = existingTask.createdById === userId;
+    const isAssigned = existingTask.assignedToId === userId;
+    
+    const canChangeStatus = isOwner || workerCanEdit || isCreator || isAssigned;
 
     if (!canChangeStatus) {
       return res.status(403).json({ error: 'Brak uprawnień do zmiany statusu tego zadania' });
@@ -546,6 +753,16 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
         }
       }
     });
+
+    // ETAP 11 - Powiadomienie o ukończeniu zadania
+    if (status === 'DONE' && existingTask.status !== 'DONE') {
+      try {
+        await notifyTaskCompleted(task.id, userId);
+      } catch (notificationError) {
+        console.error('Error sending task completion notification:', notificationError);
+        // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
+      }
+    }
 
     res.json(task);
   } catch (error) {

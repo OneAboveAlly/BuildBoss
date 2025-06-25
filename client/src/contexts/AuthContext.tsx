@@ -73,6 +73,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    const currentToken = token || localStorage.getItem('token');
+    if (currentToken) {
+      try {
+        const userData = await authService.getMe(currentToken);
+        setUser(userData);
+        return userData;
+      } catch (error) {
+        // Token jest nieprawidłowy, wyloguj użytkownika
+        logout();
+        throw error;
+      }
+    }
+    throw new Error('No token available');
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -85,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,
     loading,
   };
 

@@ -65,33 +65,122 @@ SiteBoss/
 └── README.md              # This file
 ```
 
-## 🚀 Jak uruchomić
+## 🚀 Uruchamianie projektu
 
-### Wymagania
-- Node.js 18+
-- PostgreSQL 14+
-- npm lub yarn
-
-### Backend
+### Opcja 1: Szybkie uruchomienie (zalecane)
 ```bash
+# W katalogu głównym projektu
+npm install
+npm start
+```
+
+### Opcja 2: Uruchomienie ręczne
+```bash
+# Terminal 1 - Server (backend)
 cd server
 npm install
-# Skopiuj env.example do .env i skonfiguruj
-cp env.example .env
-# Skonfiguruj bazę danych w .env
-npx prisma generate
-npx prisma db push
+npm run dev
+
+# Terminal 2 - Client (frontend)
+cd client
+npm install
 npm run dev
 ```
 
-### Frontend
+## 🛠️ Dostępne komendy
+
 ```bash
-cd client
-npm install
-# Skopiuj env.example do .env
-cp env.example .env
-npm run dev
+# Uruchomienie całego projektu
+npm start
+
+# Uruchomienie tylko frontendu
+npm run start:client
+
+# Uruchomienie tylko backendu
+npm run start:server
+
+# Instalacja zależności
+npm run install
+
+# Build produkcyjny
+npm run build
+
+# Baza danych
+npm run db:generate    # Generuj klienta Prismy
+npm run db:push        # Wypchnij zmiany do bazy
+npm run db:migrate     # Migracje
+npm run db:studio      # Studio Prismy
 ```
+
+## 🔧 Konfiguracja
+
+### Wymagania
+- Node.js >= 18.0.0
+- PostgreSQL
+- npm >= 9.0.0
+
+### Zmienne środowiskowe
+
+#### Server (.env w katalogu /server)
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/siteboss"
+JWT_SECRET="your-jwt-secret"
+CLIENT_URL="http://localhost:5173"
+NODE_ENV="development"
+
+# Opcjonalne - płatności Stripe
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+# Opcjonalne - email
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-password"
+
+# Opcjonalne - Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
+
+#### Client (.env w katalogu /client)
+```env
+VITE_API_URL="http://localhost:5000/api"
+```
+
+## 📚 Funkcjonalności
+
+- ✅ Zarządzanie firmami budowlanymi
+- ✅ Zapraszanie i zarządzanie pracownikami
+- ✅ Projekty i zadania w systemie Kanban
+- ✅ Materiały budowlane z alertami stanów
+- ✅ System uprawnień (właściciel/pracownik)
+- ✅ Subskrypcje i płatności (Stripe)
+- ✅ Publiczne ogłoszenia o pracę
+- ✅ Wielojęzyczność (PL, EN, DE, UA)
+- ✅ Responsive design
+
+## 🐛 Rozwiązywanie problemów
+
+### Problem: "npm start" zwraca błąd "Missing script"
+**Rozwiązanie:** Upewnij się, że jesteś w katalogu głównym projektu (nie w /client ani /server).
+
+### Problem: Błąd połączenia z bazą danych
+**Rozwiązanie:** 
+1. Sprawdź czy PostgreSQL jest uruchomiony
+2. Zweryfikuj `DATABASE_URL` w pliku `.env`
+3. Uruchom `npm run db:generate` i `npm run db:push`
+
+### Problem: Utrata uprawnień po subskrypcji
+**Rozwiązanie:** Odśwież stronę lub przejdź do Dashboard - system automatycznie odświeży dane użytkownika.
+
+## 🔗 Porty
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000
+- Prisma Studio: http://localhost:5555 (gdy uruchomione)
+
+## 📞 Wsparcie
+W razie problemów skontaktuj się z zespołem rozwoju.
 
 ## 🎯 Następne kroki (Etap 2)
 

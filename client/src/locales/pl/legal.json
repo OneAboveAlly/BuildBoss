@@ -1,0 +1,224 @@
+{
+  "common": {
+    "save": "Zapisz",
+    "saving": "Zapisywanie...",
+    "cancel": "Anuluj",
+    "back": "Wstecz",
+    "continue": "Kontynuuj",
+    "confirm": "Potwierdź",
+    "close": "Zamknij",
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Sukces"
+  },
+  "documents": {
+    "terms": "Regulamin",
+    "privacy": "Polityka Prywatności",
+    "gdpr": "Informacje RODO",
+    "last_updated": "Ostatnia aktualizacja",
+    "print": "Drukuj",
+    "search": "Szukaj",
+    "searchPlaceholder": "Szukaj w dokumencie...",
+    "searchResults": "Znaleziono {{count}} wyników",
+    "noResults": "Brak wyników",
+    "loading": "Ładowanie dokumentu...",
+    "error": "Błąd podczas ładowania dokumentu",
+    "backToTop": "Powrót na górę"
+  },
+  "terms": {
+    "title": "Regulamin SiteBoss",
+    "accept": "Akceptuję regulamin",
+    "required": "Akceptacja regulaminu jest wymagana",
+    "link": "Przeczytaj regulamin",
+    "version": "Wersja {{version}}",
+    "acceptedOn": "Zaakceptowano {{date}}"
+  },
+  "privacy": {
+    "title": "Polityka Prywatności",
+    "settings": {
+      "title": "Ustawienia Prywatności",
+      "description": "Zarządzaj swoimi preferencjami dotyczącymi prywatności i ochrony danych",
+      "saved": "Ustawienia zostały zapisane"
+    },
+    "cookies": {
+      "title": "Pliki Cookie i Śledzenie",
+      "functional": "Funkcjonalne",
+      "functionalDesc": "Niezbędne do działania platformy",
+      "analytics": "Analityczne",
+      "analyticsDesc": "Pomagają nam zrozumieć, jak korzystasz z platformy",
+      "marketing": "Marketingowe",
+      "marketingDesc": "Używane do personalizacji reklam i treści"
+    },
+    "dataProcessing": {
+      "title": "Przetwarzanie Danych",
+      "core": "Podstawowe przetwarzanie",
+      "coreDesc": "Wymagane do świadczenia usług",
+      "activity": "Śledzenie aktywności",
+      "activityDesc": "Monitorowanie aktywności na platformie",
+      "notifications": "Powiadomienia e-mail",
+      "notificationsDesc": "Otrzymywanie powiadomień o aktywności"
+    },
+    "visibility": {
+      "title": "Widoczność Profilu",
+      "public": "Publiczny",
+      "publicDesc": "Profil widoczny dla wszystkich użytkowników",
+      "team": "Zespół",
+      "teamDesc": "Profil widoczny tylko dla członków zespołu",
+      "private": "Prywatny",
+      "privateDesc": "Profil widoczny tylko dla Ciebie"
+    }
+  },
+  "gdpr": {
+    "title": "Informacje RODO",
+    "rights": {
+      "title": "Twoje Prawa RODO",
+      "info": "Zgodnie z RODO masz następujące prawa",
+      "infoDesc": "Możesz skorzystać z tych praw w dowolnym momencie, kontaktując się z nami",
+      "access": "Prawo dostępu",
+      "accessDesc": "Możesz poprosić o informacje o przetwarzanych danych",
+      "rectification": "Prawo sprostowania",
+      "rectificationDesc": "Możesz poprosić o poprawienie nieprawidłowych danych",
+      "erasure": "Prawo do usunięcia",
+      "erasureDesc": "Możesz poprosić o usunięcie swoich danych",
+      "restriction": "Prawo do ograniczenia",
+      "restrictionDesc": "Możesz poprosić o ograniczenie przetwarzania",
+      "portability": "Prawo do przenoszenia",
+      "portabilityDesc": "Możesz otrzymać swoje dane w formacie umożliwiającym przeniesienie",
+      "objection": "Prawo sprzeciwu",
+      "objectionDesc": "Możesz sprzeciwić się przetwarzaniu swoich danych"
+    },
+    "export": {
+      "title": "Eksport Danych",
+      "description": "Pobierz kopię wszystkich swoich danych przechowywanych w SiteBoss",
+      "button": "Eksportuj Dane",
+      "newRequest": "Nowy Wniosek o Eksport",
+      "currentRequest": "Aktualny Wniosek",
+      "history": "Historia Wniosków",
+      "format": "Format pliku",
+      "includeData": "Dane do uwzględnienia",
+      "submitRequest": "Złóż Wniosek",
+      "requesting": "Składanie wniosku...",
+      "download": "Pobierz",
+      "requestedOn": "Złożono {{date}}",
+      "expiresOn": "Wygasa {{date}}",
+      "confirm": "Potwierdź Eksport",
+      "info": "Informacje o eksporcie danych",
+      "infoPoint1": "Eksport może potrwać do 30 dni",
+      "infoPoint2": "Otrzymasz powiadomienie e-mail gdy dane będą gotowe",
+      "infoPoint3": "Link do pobrania będzie aktywny przez 7 dni",
+      "status": {
+        "pending": "Oczekujący",
+        "processing": "Przetwarzanie",
+        "ready": "Gotowy",
+        "expired": "Wygasły",
+        "failed": "Nieudany"
+      },
+      "dataTypes": {
+        "profile": "Dane profilu",
+        "profileDesc": "Podstawowe informacje o koncie",
+        "projects": "Projekty",
+        "projectsDesc": "Wszystkie projekty i ich dane",
+        "tasks": "Zadania",
+        "tasksDesc": "Zadania i ich szczegóły",
+        "messages": "Wiadomości",
+        "messagesDesc": "Historia komunikacji",
+        "files": "Pliki",
+        "filesDesc": "Przesłane pliki i dokumenty",
+        "analytics": "Dane analityczne",
+        "analyticsDesc": "Dane o aktywności i użytkowaniu"
+      }
+    },
+    "delete": {
+      "title": "Usuń Konto",
+      "description": "Trwale usuń swoje konto i wszystkie dane",
+      "button": "Usuń Konto",
+      "warning": "OSTRZEŻENIE",
+      "warningTitle": "Usunięcie konta jest nieodwracalne",
+      "warningSubtitle": "Ta akcja nie może zostać cofnięta. Wszystkie Twoje dane zostaną trwale usunięte.",
+      "consequences": "Konsekwencje usunięcia konta:",
+      "warnings": {
+        "dataLoss": {
+          "title": "Utrata wszystkich danych",
+          "description": "Wszystkie Twoje projekty, zadania, wiadomości i pliki zostaną trwale usunięte"
+        },
+        "accountClosure": {
+          "title": "Zamknięcie konta",
+          "description": "Nie będziesz mógł zalogować się ani korzystać z platformy"
+        },
+        "irreversible": {
+          "title": "Nieodwracalność",
+          "description": "Ta akcja nie może zostać cofnięta - nie będzie możliwości odzyskania danych"
+        },
+        "projectAccess": {
+          "title": "Utrata dostępu do projektów zespołowych",
+          "description": "Stracisz dostęp do wszystkich projektów, w których uczestniczysz"
+        }
+      },
+      "alternativeTitle": "Rozważ alternatywy",
+      "alternativeDescription": "Zamiast usuwać konto, możesz wyeksportować swoje dane lub skontaktować się z nami w sprawie konkretnych problemów.",
+      "proceedButton": "Kontynuuj Usuwanie",
+      "confirmationTitle": "Potwierdź Usunięcie Konta",
+      "confirmationSubtitle": "Aby potwierdzić, wpisz poniższy tekst",
+      "confirmationLabel": "Potwierdzenie",
+      "confirmationInstruction": "Wpisz \"{{text}}\" aby potwierdzić",
+      "confirmationError": "Tekst potwierdzenia nie jest poprawny",
+      "finalWarning": "Ostatnie ostrzeżenie",
+      "finalWarningDescription": "Po kliknięciu przycisku poniżej Twoje konto zostanie trwale usunięte.",
+      "confirmButton": "USUŃ MOJE KONTO",
+      "processing": "Usuwanie...",
+      "processingTitle": "Usuwanie Konta",
+      "processingDescription": "Trwa usuwanie Twojego konta i wszystkich danych. To może potrwać kilka minut.",
+      "completedTitle": "Konto Zostało Usunięte",
+      "completedDescription": "Twoje konto i wszystkie dane zostały trwale usunięte.",
+      "completedNote": "Dziękujemy za korzystanie z SiteBoss. Jeśli zmienisz zdanie, zawsze możesz utworzyć nowe konto."
+    }
+  },
+  "footer": {
+    "copyright": "Wszystkie prawa zastrzeżone",
+    "terms": "Regulamin",
+    "privacy": "Prywatność",
+    "gdpr": "RODO",
+    "contact": "Kontakt",
+    "legal": "Informacje prawne"
+  },
+  "contact": {
+    "title": "Kontakt w sprawach prawnych",
+    "description": "Skontaktuj się z nami w sprawach dotyczących prywatności, RODO lub regulaminu",
+    "type": "Typ zapytania",
+    "subject": "Temat",
+    "message": "Wiadomość",
+    "email": "Adres e-mail (opcjonalnie)",
+    "submit": "Wyślij Zapytanie",
+    "types": {
+      "privacy": "Prywatność",
+      "gdpr": "RODO",
+      "terms": "Regulamin",
+      "other": "Inne"
+    },
+    "success": "Zapytanie zostało wysłane. Numer zgłoszenia: {{ticketId}}",
+    "error": "Błąd podczas wysyłania zapytania"
+  },
+  "consent": {
+    "title": "Zgoda na przetwarzanie danych",
+    "description": "Aby korzystać z SiteBoss, musisz wyrazić zgodę na przetwarzanie danych",
+    "required": "Wymagane",
+    "optional": "Opcjonalne",
+    "accept": "Akceptuję",
+    "decline": "Odrzucam",
+    "functional": {
+      "title": "Funkcjonalne pliki cookie",
+      "description": "Niezbędne do działania platformy"
+    },
+    "analytics": {
+      "title": "Analityczne pliki cookie",
+      "description": "Pomagają nam ulepszać platformę"
+    },
+    "marketing": {
+      "title": "Marketingowe pliki cookie",
+      "description": "Personalizacja treści i reklam"
+    },
+    "savePreferences": "Zapisz Preferencje",
+    "acceptAll": "Akceptuj Wszystkie",
+    "rejectAll": "Odrzuć Wszystkie"
+  }
+} 

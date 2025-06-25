@@ -1,0 +1,36 @@
+{
+  "types": {
+    "TASK_ASSIGNED": "Zadanie przypisane",
+    "TASK_COMPLETED": "Zadanie ukończone",
+    "TASK_OVERDUE": "Zadanie przeterminowane",
+    "PROJECT_CREATED": "Projekt utworzony",
+    "PROJECT_UPDATED": "Projekt zaktualizowany",
+    "MESSAGE_RECEIVED": "Nowa wiadomość",
+    "EMPLOYEE_INVITED": "Pracownik zaproszony",
+    "EMPLOYEE_JOINED": "Pracownik dołączył",
+    "APPLICATION_RECEIVED": "Nowa aplikacja",
+    "MATERIAL_LOW_STOCK": "Niski stan magazynowy",
+    "SUBSCRIPTION_TRIAL_ENDING": "Koniec okresu próbnego",
+    "SUBSCRIPTION_EXPIRED": "Subskrypcja wygasła",
+    "PAYMENT_SUCCESS": "Płatność pomyślna",
+    "PAYMENT_FAILED": "Płatność nieudana",
+    "SYSTEM_UPDATE": "Aktualizacja systemu"
+  },
+  "messages": {
+    "task_assigned": "Przypisano Ci nowe zadanie: {{taskTitle}}",
+    "task_completed": "Zadanie zostało ukończone: {{taskTitle}}",
+    "task_overdue": "Zadanie jest przeterminowane: {{taskTitle}}",
+    "project_created": "Utworzono nowy projekt: {{projectName}}",
+    "project_updated": "Projekt został zaktualizowany: {{projectName}}",
+    "message_received": "Otrzymałeś nową wiadomość od {{senderName}}",
+    "employee_invited": "Zaproszono nowego pracownika: {{employeeName}}",
+    "employee_joined": "Pracownik dołączył do zespołu: {{employeeName}}",
+    "application_received": "Otrzymano nową aplikację o pracę od {{applicantName}}",
+    "material_low_stock": "Niski stan magazynowy: {{materialName}} ({{quantity}} szt.)",
+    "subscription_trial_ending": "Twój okres próbny kończy się za {{days}} dni",
+    "subscription_expired": "Twoja subskrypcja wygasła",
+    "payment_success": "Płatność została zrealizowana pomyślnie",
+    "payment_failed": "Płatność nie powiodła się",
+    "system_update": "System został zaktualizowany do wersji {{version}}"
+  }
+} 

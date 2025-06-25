@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useAutoRefreshUser } from '../hooks/useAuth';
 import type { CompanyWithDetails } from '../types';
 import { companyService } from '../services/companyService';
 import { Button } from '../components/ui/Button';
@@ -9,6 +11,11 @@ import WorkersList from '../components/companies/WorkersList';
 const CompanyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Hook do automatycznego odświeżania danych użytkownika
+  useAutoRefreshUser();
+
   const [company, setCompany] = useState<CompanyWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

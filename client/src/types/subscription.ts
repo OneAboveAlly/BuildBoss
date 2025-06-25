@@ -113,6 +113,7 @@ export interface CancelSubscriptionRequest {
 
 export interface CreateCheckoutRequest {
   planId: string;
+  billingCycle?: BillingCycle;
 }
 
 // Enums
@@ -135,6 +136,11 @@ export enum PaymentStatus {
   CANCELED = 'CANCELED',
   REFUNDED = 'REFUNDED',
   PARTIALLY_REFUNDED = 'PARTIALLY_REFUNDED'
+}
+
+export enum BillingCycle {
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY'
 }
 
 // Helper functions
@@ -233,7 +239,27 @@ export const isUnlimited = (value: number): boolean => {
 
 export const formatLimit = (value: number, unit: string = ''): string => {
   if (isUnlimited(value)) {
-    return 'Bez limitu';
+    return 'Nieograniczone';
   }
-  return `${value}${unit}`;
+  return `${value}${unit ? ' ' + unit : ''}`;
+};
+
+// Oblicz cenę roczną z rabatem
+export const calculateYearlyPrice = (monthlyPrice: number, discountPercent: number = 20): {
+  yearlyPrice: number;
+  monthlyEquivalent: number;
+  savings: number;
+  discountPercent: number;
+} => {
+  const fullYearlyPrice = monthlyPrice * 12;
+  const yearlyPrice = fullYearlyPrice * (1 - discountPercent / 100);
+  const monthlyEquivalent = yearlyPrice / 12;
+  const savings = fullYearlyPrice - yearlyPrice;
+
+  return {
+    yearlyPrice,
+    monthlyEquivalent,
+    savings,
+    discountPercent
+  };
 }; 

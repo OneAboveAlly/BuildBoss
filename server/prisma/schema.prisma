@@ -44,6 +44,16 @@ model User {
   
   // ETAP 10 - Subscription relation
   subscription        Subscription?
+  
+  // ETAP 11 - Notifications relation
+  notifications       Notification[]
+  
+  // ETAP 15 - Analytics relations
+  analytics           Analytics[]
+  reports             Report[]
+  searchHistory       SearchHistory[]
+  savedSearches       SavedSearch[]
+  jobViews            JobView[]
 
   @@map("users")
 }
@@ -53,6 +63,8 @@ model Company {
   name        String
   nip         String?  @unique
   address     String?
+  latitude    Float?   // współrzędne GPS
+  longitude   Float?
   phone       String?
   email       String?
   website     String?
@@ -71,6 +83,11 @@ model Company {
   // ETAP 8 - Jobs & Requests Relations
   jobOffers    JobOffer[]
   workRequests WorkRequest[]
+  
+  // ETAP 15 - Analytics relations
+  analytics    Analytics[]
+  reports      Report[]
+  tags         Tag[]
 
   @@map("companies")
 }
@@ -122,6 +139,9 @@ model Project {
   createdById String
   tasks       Task[]
   materials   Material[]
+  
+  // ETAP 15 - Tags relation
+  tags        Tag[]
 
   @@map("projects")
 }
@@ -146,6 +166,9 @@ model Task {
   assignedToId String?
   createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id])
   createdById String
+  
+  // ETAP 15 - Tags relation
+  tags        Tag[]
 
   @@map("tasks")
 }
@@ -173,6 +196,9 @@ model Material {
   projectId   String?  // opcjonalne przypisanie do projektu
   createdBy   User     @relation("MaterialCreator", fields: [createdById], references: [id])
   createdById String
+  
+  // ETAP 15 - Tags relation
+  tags        Tag[]
 
   @@map("materials")
 }
@@ -211,6 +237,9 @@ model JobOffer {
   isPublic     Boolean    @default(true) // czy widoczne publicznie
   expiresAt    DateTime?  // data wygaśnięcia
   
+  // Analytics
+  viewCount    Int        @default(0) // liczba wyświetleń ogłoszenia
+  
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -221,8 +250,28 @@ model JobOffer {
   createdById  String
   applications JobApplication[]
   messages     Message[]
+  views        JobView[]       // views tracking
 
   @@map("job_offers")
+}
+
+// Model do śledzenia unikalnych wyświetleń ogłoszeń
+model JobView {
+  id        String   @id @default(cuid())
+  ipAddress String   // adres IP użytkownika
+  userAgent String?  // user agent przeglądarki
+  sessionId String?  // ID sesji (jeśli dostępne)
+  userId    String?  // ID użytkownika (jeśli zalogowany)
+  viewedAt  DateTime @default(now())
+
+  // Relations
+  jobOffer   JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  jobOfferId String
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Unikalność: jedno IP może być liczone raz na 24h dla danego ogłoszenia
+  @@unique([jobOfferId, ipAddress])
+  @@map("job_views")
 }
 
 model JobApplication {
@@ -535,4 +584,168 @@ enum PaymentStatus {
   CANCELED             // Anulowana
   REFUNDED             // Zwrócona
   PARTIALLY_REFUNDED   // Częściowo zwrócona
+}
+
+// ETAP 11 - NOTIFICATIONS MODEL
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  data      Json?            // dodatkowe dane (np. ID zadania, projektu)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TASK_ASSIGNED      // Przypisano zadanie
+  TASK_COMPLETED     // Zadanie ukończone
+  TASK_OVERDUE       // Zadanie przeterminowane
+  PROJECT_CREATED    // Nowy projekt
+  PROJECT_UPDATED    // Projekt zaktualizowany
+  MESSAGE_RECEIVED   // Nowa wiadomość
+  WORKER_INVITED     // Zaproszenie do firmy
+  WORKER_JOINED      // Pracownik dołączył
+  JOB_APPLICATION    // Nowa aplikacja o pracę
+  MATERIAL_LOW       // Niski stan materiału
+  SUBSCRIPTION_TRIAL_ENDING  // Koniec okresu próbnego
+  SUBSCRIPTION_EXPIRED       // Subskrypcja wygasła
+  PAYMENT_SUCCESS    // Płatność udana
+  PAYMENT_FAILED     // Płatność nieudana
+  SYSTEM_UPDATE      // Aktualizacja systemu
+}
+
+// ETAP 15 - ANALYTICS & REPORTING MODELS
+
+model Analytics {
+  id          String        @id @default(cuid())
+  type        AnalyticsType
+  data        Json          // dane analityczne w formacie JSON
+  period      String        // daily, weekly, monthly, yearly
+  startDate   DateTime      // początek okresu
+  endDate     DateTime      // koniec okresu
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+
+  @@map("analytics")
+}
+
+model Report {
+  id          String     @id @default(cuid())
+  name        String
+  type        ReportType
+  config      Json       // konfiguracja raportu (filtry, parametry)
+  data        Json?      // wygenerowane dane raportu
+  status      ReportStatus @default(PENDING)
+  isScheduled Boolean    @default(false)
+  schedule    String?    // cron expression dla automatycznych raportów
+  filePath    String?    // ścieżka do wygenerowanego pliku
+  fileFormat  String?    // PDF, EXCEL, CSV
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  generatedAt DateTime?  // kiedy raport został wygenerowany
+
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+
+  @@map("reports")
+}
+
+model Tag {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#3B82F6") // domyślny niebieski
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   String
+  projects    Project[]
+  tasks       Task[]
+  materials   Material[]
+
+  @@unique([name, companyId]) // unikalna nazwa tagu w firmie
+  @@map("tags")
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  query     String   // zapytanie wyszukiwania
+  filters   Json?    // zastosowane filtry
+  results   Int      @default(0) // liczba wyników
+  category  String?  // kategoria wyszukiwania (projects, tasks, materials, etc.)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@map("search_history")
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  name      String   // nazwa zapisanego wyszukiwania
+  query     String   // zapytanie wyszukiwania
+  filters   Json?    // zastosowane filtry
+  category  String?  // kategoria wyszukiwania
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@unique([userId, name]) // unikalna nazwa dla użytkownika
+  @@map("saved_searches")
+}
+
+// ETAP 15 - NEW ENUMS
+
+enum AnalyticsType {
+  PROJECT_PROGRESS     // Postęp projektów
+  COST_ANALYSIS       // Analiza kosztów
+  TIME_TRACKING       // Śledzenie czasu
+  TEAM_PERFORMANCE    // Wydajność zespołu
+  TASK_METRICS        // Metryki zadań
+  MATERIAL_USAGE      // Wykorzystanie materiałów
+  FINANCIAL_OVERVIEW  // Przegląd finansowy
+  PRODUCTIVITY_TRENDS // Trendy produktywności
+}
+
+enum ReportType {
+  PROJECT_SUMMARY     // Podsumowanie projektu
+  FINANCIAL_REPORT    // Raport finansowy
+  TEAM_PRODUCTIVITY   // Produktywność zespołu
+  TASK_COMPLETION     // Ukończenie zadań
+  MATERIAL_INVENTORY  // Inwentarz materiałów
+  TIME_TRACKING       // Śledzenie czasu
+  COST_BREAKDOWN      // Podział kosztów
+  CUSTOM_REPORT       // Raport niestandardowy
+}
+
+enum ReportStatus {
+  PENDING             // Oczekujący
+  GENERATING          // Generowanie
+  COMPLETED           // Ukończony
+  FAILED              // Nieudany
+  SCHEDULED           // Zaplanowany
 }

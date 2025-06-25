@@ -1,0 +1,30 @@
+{
+  "dashboard": "Dashboard",
+  "projects": "Projekte",
+  "tasks": "Aufgaben",
+  "materials": "Materialien",
+  "messages": "Nachrichten",
+  "notifications": "Benachrichtigungen",
+  "employees": "Mitarbeiter",
+  "applications": "Bewerbungen",
+  "subscription": "Abonnement",
+  "billing": "Abrechnung",
+  "settings": "Einstellungen",
+  "profile": "Profil",
+  "help": "Hilfe",
+  "support": "Support",
+  "documentation": "Dokumentation",
+  "logout": "Abmelden",
+  "menu": "Menü",
+  "home": "Startseite",
+  "back_to_dashboard": "Zurück zum Dashboard",
+  "sidebar": {
+    "toggle": "Seitenleiste umschalten",
+    "collapse": "Menü einklappen",
+    "expand": "Menü ausklappen"
+  },
+  "breadcrumbs": {
+    "home": "Startseite",
+    "current": "Aktuelle Seite"
+  }
+} 

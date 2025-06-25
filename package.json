@@ -1,0 +1,35 @@
+{
+  "name": "siteboss",
+  "version": "1.0.0",
+  "description": "SiteBoss - SaaS for construction teams",
+  "scripts": {
+    "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
+    "start:client": "cd client && npm run dev",
+    "start:server": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "install": "npm run install:client && npm run install:server",
+    "install:client": "cd client && npm install",
+    "install:server": "cd server && npm install",
+    "dev": "concurrently \"npm run start:server\" \"npm run start:client\"",
+    "db:generate": "cd server && npm run db:generate",
+    "db:push": "cd server && npm run db:push",
+    "db:migrate": "cd server && npm run db:migrate",
+    "db:studio": "cd server && npm run db:studio"
+  },
+  "keywords": [
+    "construction",
+    "saas",
+    "management",
+    "react",
+    "nodejs"
+  ],
+  "author": "SiteBoss Team",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+} 

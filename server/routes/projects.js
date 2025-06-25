@@ -11,16 +11,25 @@ router.get('/', authenticateToken, async (req, res) => {
     const { companyId, status, priority, search } = req.query;
     const userId = req.user.id;
 
-    // Sprawdź czy użytkownik ma dostęp do firmy
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź czy użytkownik ma dostęp do firmy (jako właściciel lub aktywny pracownik)
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId,
-        status: 'ACTIVE'
+        id: companyId,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
       }
     });
 
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
     }
 
@@ -149,16 +158,25 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Projekt nie został znaleziony' });
     }
 
-    // Sprawdź czy użytkownik ma dostęp do firmy
-    const worker = await prisma.worker.findFirst({
+    // Sprawdź czy użytkownik ma dostęp do firmy (jako właściciel lub aktywny pracownik)
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId: project.companyId,
-        status: 'ACTIVE'
+        id: project.companyId,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        ]
       }
     });
 
-    if (!worker) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tego projektu' });
     }
 
@@ -205,15 +223,25 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Sprawdź czy użytkownik może tworzyć projekty w tej firmie
-    const worker = await prisma.worker.findFirst({
+    const company = await prisma.company.findFirst({
       where: {
-        userId,
-        companyId,
-        status: 'ACTIVE'
+        id: companyId,
+        OR: [
+          { createdById: userId },
+          { 
+            workers: {
+              some: {
+                userId: userId,
+                status: 'ACTIVE',
+                canEdit: true
+              }
+            }
+          }
+        ]
       }
     });
 
-    if (!worker || !worker.canEdit) {
+    if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do tworzenia projektów w tej firmie' });
     }
 

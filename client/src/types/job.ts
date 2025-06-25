@@ -32,6 +32,9 @@ export interface JobOffer {
   isPublic: boolean;
   expiresAt?: string;
   
+  // Analytics
+  viewCount?: number;
+  
   createdAt: string;
   updatedAt: string;
 

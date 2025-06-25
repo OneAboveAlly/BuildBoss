@@ -1,0 +1,49 @@
+{
+  "validation": {
+    "required": "Pole {{field}} jest wymagane",
+    "email_invalid": "Nieprawidłowy format adresu email",
+    "password_too_short": "Hasło musi mieć co najmniej {{min}} znaków",
+    "password_too_weak": "Hasło jest zbyt słabe",
+    "passwords_dont_match": "Hasła nie są identyczne",
+    "phone_invalid": "Nieprawidłowy numer telefonu",
+    "date_invalid": "Nieprawidłowa data",
+    "number_invalid": "Nieprawidłowa liczba",
+    "min_length": "Pole {{field}} musi mieć co najmniej {{min}} znaków",
+    "max_length": "Pole {{field}} może mieć maksymalnie {{max}} znaków",
+    "min_value": "Wartość musi być większa lub równa {{min}}",
+    "max_value": "Wartość musi być mniejsza lub równa {{max}}"
+  },
+  "auth": {
+    "invalid_credentials": "Nieprawidłowy email lub hasło",
+    "user_not_found": "Użytkownik nie został znaleziony",
+    "user_already_exists": "Użytkownik o tym adresie email już istnieje",
+    "token_invalid": "Nieprawidłowy token",
+    "token_expired": "Token wygasł",
+    "unauthorized": "Brak autoryzacji",
+    "forbidden": "Brak uprawnień",
+    "account_locked": "Konto zostało zablokowane",
+    "email_not_verified": "Email nie został zweryfikowany"
+  },
+  "database": {
+    "connection_error": "Błąd połączenia z bazą danych",
+    "query_error": "Błąd zapytania do bazy danych",
+    "record_not_found": "Rekord nie został znaleziony",
+    "duplicate_entry": "Rekord już istnieje",
+    "foreign_key_constraint": "Naruszenie ograniczenia klucza obcego"
+  },
+  "file": {
+    "upload_failed": "Przesyłanie pliku nie powiodło się",
+    "file_too_large": "Plik jest zbyt duży (maksymalnie {{max}}MB)",
+    "invalid_file_type": "Nieprawidłowy typ pliku",
+    "file_not_found": "Plik nie został znaleziony",
+    "storage_error": "Błąd przechowywania pliku"
+  },
+  "general": {
+    "internal_server_error": "Wewnętrzny błąd serwera",
+    "service_unavailable": "Usługa niedostępna",
+    "bad_request": "Nieprawidłowe żądanie",
+    "not_found": "Nie znaleziono",
+    "method_not_allowed": "Metoda niedozwolona",
+    "rate_limit_exceeded": "Przekroczono limit żądań"
+  }
+} 

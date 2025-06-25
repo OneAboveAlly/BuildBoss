@@ -1,0 +1,30 @@
+{
+  "dashboard": "Panel główny",
+  "projects": "Projekty",
+  "tasks": "Zadania",
+  "materials": "Materiały",
+  "messages": "Wiadomości",
+  "notifications": "Powiadomienia",
+  "employees": "Pracownicy",
+  "applications": "Aplikacje",
+  "subscription": "Subskrypcja",
+  "billing": "Płatności",
+  "settings": "Ustawienia",
+  "profile": "Profil",
+  "help": "Pomoc",
+  "support": "Wsparcie",
+  "documentation": "Dokumentacja",
+  "logout": "Wyloguj się",
+  "menu": "Menu",
+  "home": "Strona główna",
+  "back_to_dashboard": "Powrót do panelu",
+  "sidebar": {
+    "toggle": "Przełącz menu boczne",
+    "collapse": "Zwiń menu",
+    "expand": "Rozwiń menu"
+  },
+  "breadcrumbs": {
+    "home": "Strona główna",
+    "current": "Bieżąca strona"
+  }
+} 

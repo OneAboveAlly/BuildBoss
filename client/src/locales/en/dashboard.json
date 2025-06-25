@@ -1,0 +1,51 @@
+{
+  "title": "[TODO: EN] Panel główny",
+  "welcome": "[TODO: EN] Witamy w SiteBoss",
+  "welcome_message": "[TODO: EN] Witamy z powrotem, {{name}}!",
+  "overview": "[TODO: EN] Przegląd",
+  "statistics": "[TODO: EN] Statystyki",
+  "recent_activity": "[TODO: EN] Ostatnia aktywność",
+  "quick_actions": "[TODO: EN] Szybkie akcje",
+  "widgets": {
+    "total_projects": "[TODO: EN] Wszystkie projekty",
+    "active_projects": "[TODO: EN] Aktywne projekty",
+    "completed_projects": "[TODO: EN] Ukończone projekty",
+    "total_tasks": "[TODO: EN] Wszystkie zadania",
+    "pending_tasks": "[TODO: EN] Zadania oczekujące",
+    "completed_tasks": "[TODO: EN] Zadania ukończone",
+    "overdue_tasks": "[TODO: EN] Zadania przeterminowane",
+    "total_employees": "[TODO: EN] Wszyscy pracownicy",
+    "active_employees": "[TODO: EN] Aktywni pracownicy",
+    "new_applications": "[TODO: EN] Nowe aplikacje",
+    "unread_messages": "[TODO: EN] Nieprzeczytane wiadomości",
+    "low_stock_materials": "[TODO: EN] Materiały na wyczerpaniu",
+    "recent_notifications": "[TODO: EN] Ostatnie powiadomienia"
+  },
+  "charts": {
+    "project_progress": "[TODO: EN] Postęp projektów",
+    "task_completion": "[TODO: EN] Ukończenie zadań",
+    "monthly_activity": "[TODO: EN] Aktywność miesięczna",
+    "team_performance": "[TODO: EN] Wydajność zespołu"
+  },
+  "actions": {
+    "create_project": "[TODO: EN] Utwórz projekt",
+    "add_task": "[TODO: EN] Dodaj zadanie",
+    "invite_employee": "[TODO: EN] Zaproś pracownika",
+    "view_all_projects": "[TODO: EN] Zobacz wszystkie projekty",
+    "view_all_tasks": "[TODO: EN] Zobacz wszystkie zadania",
+    "manage_materials": "[TODO: EN] Zarządzaj materiałami"
+  },
+  "activity": {
+    "no_activity": "[TODO: EN] Brak ostatniej aktywności",
+    "view_all": "[TODO: EN] Zobacz wszystkie",
+    "project_created": "[TODO: EN] Projekt utworzony",
+    "task_completed": "[TODO: EN] Zadanie ukończone",
+    "employee_joined": "[TODO: EN] Pracownik dołączył",
+    "message_received": "[TODO: EN] Wiadomość otrzymana"
+  },
+  "notifications": {
+    "no_notifications": "[TODO: EN] Brak nowych powiadomień",
+    "view_all": "[TODO: EN] Zobacz wszystkie powiadomienia",
+    "mark_all_read": "[TODO: EN] Oznacz wszystkie jako przeczytane"
+  }
+}

@@ -15,6 +15,8 @@ export interface Company {
   name: string;
   nip?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
   phone?: string;
   email?: string;
   website?: string;
@@ -44,6 +46,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<User>;
   loading: boolean;
 }
 
@@ -106,6 +109,8 @@ export interface CreateCompanyRequest {
   name: string;
   nip?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
   phone?: string;
   email?: string;
   website?: string;

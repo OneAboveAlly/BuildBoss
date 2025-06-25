@@ -352,6 +352,58 @@ router.post('/resend-confirmation', authenticateToken, async (req, res) => {
   }
 });
 
+// POST /api/auth/verify-password - Weryfikacja hasła
+router.post('/verify-password', authenticateToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const userId = req.user.id;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Hasło jest wymagane'
+      });
+    }
+
+    // Znajdź użytkownika
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        password: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Użytkownik nie został znaleziony'
+      });
+    }
+
+    // Sprawdź hasło
+    const isPasswordValid = await comparePassword(password, user.password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Nieprawidłowe hasło'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Hasło zweryfikowane pomyślnie'
+    });
+
+  } catch (error) {
+    console.error('Password verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Błąd serwera podczas weryfikacji hasła'
+    });
+  }
+});
+
 // Google OAuth Routes
 // GET /api/auth/google
 router.get('/google', 

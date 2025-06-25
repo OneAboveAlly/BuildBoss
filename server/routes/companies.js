@@ -165,7 +165,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // POST /api/companies - Tworzenie nowej firmy
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { name, nip, address, phone, email, website, description } = req.body;
+    const { name, nip, address, latitude, longitude, phone, email, website, description } = req.body;
     const userId = req.user.id;
 
     // Walidacja
@@ -188,6 +188,8 @@ router.post('/', authenticateToken, async (req, res) => {
         name: name.trim(),
         nip: nip?.trim() || null,
         address: address?.trim() || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
         phone: phone?.trim() || null,
         email: email?.trim() || null,
         website: website?.trim() || null,
@@ -230,7 +232,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, nip, address, phone, email, website, description } = req.body;
+    const { name, nip, address, latitude, longitude, phone, email, website, description } = req.body;
     const userId = req.user.id;
 
     // Sprawdź czy użytkownik ma uprawnienia do edycji
@@ -277,6 +279,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
         name: name.trim(),
         nip: nip?.trim() || null,
         address: address?.trim() || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
         phone: phone?.trim() || null,
         email: email?.trim() || null,
         website: website?.trim() || null,

@@ -1,0 +1,51 @@
+{
+  "title": "[TODO: UA] Panel główny",
+  "welcome": "[TODO: UA] Witamy w SiteBoss",
+  "welcome_message": "[TODO: UA] Witamy z powrotem, {{name}}!",
+  "overview": "[TODO: UA] Przegląd",
+  "statistics": "[TODO: UA] Statystyki",
+  "recent_activity": "[TODO: UA] Ostatnia aktywność",
+  "quick_actions": "[TODO: UA] Szybkie akcje",
+  "widgets": {
+    "total_projects": "[TODO: UA] Wszystkie projekty",
+    "active_projects": "[TODO: UA] Aktywne projekty",
+    "completed_projects": "[TODO: UA] Ukończone projekty",
+    "total_tasks": "[TODO: UA] Wszystkie zadania",
+    "pending_tasks": "[TODO: UA] Zadania oczekujące",
+    "completed_tasks": "[TODO: UA] Zadania ukończone",
+    "overdue_tasks": "[TODO: UA] Zadania przeterminowane",
+    "total_employees": "[TODO: UA] Wszyscy pracownicy",
+    "active_employees": "[TODO: UA] Aktywni pracownicy",
+    "new_applications": "[TODO: UA] Nowe aplikacje",
+    "unread_messages": "[TODO: UA] Nieprzeczytane wiadomości",
+    "low_stock_materials": "[TODO: UA] Materiały na wyczerpaniu",
+    "recent_notifications": "[TODO: UA] Ostatnie powiadomienia"
+  },
+  "charts": {
+    "project_progress": "[TODO: UA] Postęp projektów",
+    "task_completion": "[TODO: UA] Ukończenie zadań",
+    "monthly_activity": "[TODO: UA] Aktywność miesięczna",
+    "team_performance": "[TODO: UA] Wydajność zespołu"
+  },
+  "actions": {
+    "create_project": "[TODO: UA] Utwórz projekt",
+    "add_task": "[TODO: UA] Dodaj zadanie",
+    "invite_employee": "[TODO: UA] Zaproś pracownika",
+    "view_all_projects": "[TODO: UA] Zobacz wszystkie projekty",
+    "view_all_tasks": "[TODO: UA] Zobacz wszystkie zadania",
+    "manage_materials": "[TODO: UA] Zarządzaj materiałami"
+  },
+  "activity": {
+    "no_activity": "[TODO: UA] Brak ostatniej aktywności",
+    "view_all": "[TODO: UA] Zobacz wszystkie",
+    "project_created": "[TODO: UA] Projekt utworzony",
+    "task_completed": "[TODO: UA] Zadanie ukończone",
+    "employee_joined": "[TODO: UA] Pracownik dołączył",
+    "message_received": "[TODO: UA] Wiadomość otrzymana"
+  },
+  "notifications": {
+    "no_notifications": "[TODO: UA] Brak nowych powiadomień",
+    "view_all": "[TODO: UA] Zobacz wszystkie powiadomienia",
+    "mark_all_read": "[TODO: UA] Oznacz wszystkie jako przeczytane"
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "navigation": {
+    "jobs": "💼 Jobs",
+    "features": "Features",
+    "pricing": "Pricing",
+    "testimonials": "Testimonials",
+    "login": "Sign In",
+    "register": "Get Started Free"
+  },
+  "hero": {
+    "title": "Manage construction projects",
+    "title_highlight": "like a professional", 
+    "subtitle": "Comprehensive SaaS solution for construction companies. Plan projects, manage teams, track materials and generate invoices in one intuitive application.",
+    "cta_primary": "Start 14-day trial",
+    "cta_secondary": "Watch demo",
+    "features_short": "✓ No commitments ✓ Full access ✓ Cancel anytime"
+  },
+  "features": {
+    "title": "Everything you need to manage projects",
+    "subtitle": "Comprehensive tools for construction companies",
+    "project_management": {
+      "title": "Project management",
+      "description": "Plan, organize and track the progress of your construction projects in real time."
+    },
+    "team_management": {
+      "title": "Teams and employees", 
+      "description": "Manage your team, assign tasks and monitor employee performance."
+    },
+    "materials_tools": {
+      "title": "Materials and tools",
+      "description": "Track material inventory, plan purchases and optimize construction costs."
+    },
+    "invoices_payments": {
+      "title": "Invoices and payments",
+      "description": "Generate invoices, track payments and manage your project finances."
+    },
+    "reports_analytics": {
+      "title": "Reports and analytics",
+      "description": "Get detailed reports on performance, costs and work progress."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Stay up to date with deadlines, tasks and important events."
+    },
+    "view_all": "Check all features"
+  },
+  "stats": {
+    "companies": "Construction companies",
+    "projects": "Completed projects", 
+    "tasks": "Completed tasks",
+    "uptime": "System uptime"
+  },
+  "jobs": {
+    "section_title": "💼 Looking for construction work?",
+    "section_subtitle": "Find your dream job at the best construction companies. Hundreds of current listings are waiting for you!",
+    "cta_button": "Browse all job listings",
+    "sample_jobs": {
+      "mason": {
+        "title": "Mason",
+        "company": "BudMaster Ltd.",
+        "location": "Warsaw, Mazovia",
+        "salary": "4500 - 6000 PLN",
+        "posted": "2 days ago",
+        "description": "We are looking for an experienced mason to work on single-family home construction...",
+        "tags": {
+          "0": "Construction worker",
+          "1": "Full-time"
+        }
+      },
+      "electrician": {
+        "title": "Electrician",
+        "company": "Elektro-Bud",
+        "location": "Krakow, Lesser Poland",
+        "salary": "5000 - 7500 PLN",
+        "posted": "1 day ago",
+        "description": "We will hire an electrician with qualifications to work on electrical installations...",
+        "tags": {
+          "0": "Electrician",
+          "1": "Full-time"
+        }
+      },
+      "foreman": {
+        "title": "Construction Foreman",
+        "company": "Mega Construction",
+        "location": "Gdansk, Pomerania",
+        "salary": "8000 - 12000 PLN",
+        "posted": "3 days ago",
+        "description": "We are looking for an experienced construction foreman to supervise residential projects...",
+        "tags": {
+          "0": "Management",
+          "1": "Full-time"
+        }
+      }
+    }
+  },
+  "testimonials": {
+    "title": "What our clients say",
+    "subtitle": "Check reviews from companies already using SiteBoss",
+    "clients": {
+      "kowalski": {
+        "name": "Mark Kowalski",
+        "company": "KowalBud Ltd.",
+        "role": "CEO",
+        "quote": "SiteBoss revolutionized the way we manage our projects. We save 30% of time on administration."
+      },
+      "nowak": {
+        "name": "Anna Nowak", 
+        "company": "Nowak Construction",
+        "role": "Project Manager",
+        "quote": "The best app for managing construction teams. Everything in one place - tasks, materials, invoices."
+      },
+      "wisniewski": {
+        "name": "Peter Wisniewski",
+        "company": "WiśniowskiBud", 
+        "role": "Company Owner",
+        "quote": "Thanks to SiteBoss I have full control over costs and deadlines. ROI paid off in the first month."
+      }
+    }
+  },
+  "pricing": {
+    "title": "Choose a plan for your company",
+    "subtitle": "Flexible plans tailored to the needs of companies of all sizes",
+    "need_more": "Need more?",
+    "view_full_pricing": "View full pricing",
+    "plans": {
+      "basic": {
+        "name": "Basic",
+        "description": "Perfect for small companies",
+        "features": {
+          "0": "1 company",
+          "1": "5 projects", 
+          "2": "10 employees",
+          "3": "Basic reports",
+          "4": "Email support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Most popular choice",
+        "features": {
+          "0": "3 companies",
+          "1": "25 projects",
+          "2": "50 employees", 
+          "3": "Advanced reports",
+          "4": "Priority support",
+          "5": "Team management"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise", 
+        "description": "For large organizations",
+        "features": {
+          "0": "Unlimited companies",
+          "1": "Unlimited projects",
+          "2": "Unlimited employees",
+          "3": "API access",
+          "4": "Custom branding", 
+          "5": "Dedicated manager"
+        }
+      }
+    }
+  },
+  "cta": {
+    "ready_title": "Ready to get started?",
+    "ready_description": "Join hundreds of construction companies that already use SiteBoss to manage their projects.",
+    "start_trial": "Start 14-day trial",
+    "contact_us": "Contact us"
+  },
+  "footer": {
+    "description": "Professional construction project management. Plan, organize and execute your projects more efficiently than ever before.",
+    "contact": {
+      "title": "Contact",
+      "phone": "+48 123 456 789",
+      "email": "contact@siteboss.com"
+    },
+    "links": {
+      "features": "Features",
+      "pricing": "Pricing"
+    },
+    "product": "Product",
+    "company": "Company",
+    "integrations": "Integrations",
+    "api": "API",
+    "about": "About us",
+    "blog": "Blog",
+    "career": "Career",
+    "contact": "Contact",
+    "copyright": "© 2024 SiteBoss. All rights reserved.",
+    "privacy_policy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookies"
+  },
+  "pricing_section": {
+    "title": "Choose a plan for your company",
+    "subtitle": "14-day free trial. No commitments.",
+    "period": "/month",
+    "most_popular": "Most Popular",
+    "start_trial_button": "Start trial"
+  }
+} 
