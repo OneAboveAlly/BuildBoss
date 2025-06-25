@@ -31,7 +31,7 @@
 - **Priorytet**: 🔴 KRYTYCZNY
 - **Rozwiązanie**: Implementacja Joi lub express-validator
 - **Szacowany czas**: 4-6h
-- **Status**: 🔄 W TRAKCIE - Utworzono middleware i schematy. Zaimplementowano dla: auth, companies (częściowo), projects (częściowo). Pozostało: tasks, materials, inne routes
+- **Status**: 🔄 W TRAKCIE - Schematy: auth, companies, projects, tasks, materials. Zaimplementowano: auth, companies, projects, tasks. Pozostało: materials + inne
 
 ### 4. ✅ Brak CSP headers
 - **Problem**: Content Security Policy nie jest skonfigurowany
@@ -62,14 +62,15 @@
   - Frontend: Vitest + React Testing Library
   - E2E: Playwright
 - **Szacowany czas**: 8-12h
-- **Status**: 🔄 W TRAKCIE - Backend: Jest + Supertest skonfigurowane, 7 testów przechodzi, coverage ~0.4%. Pozostało: więcej testów
+- **Status**: 🔄 W TRAKCIE - Backend: 17 testów OK, coverage 0.64%, validation middleware 73%. Frontend: pozostało
 
-### 7. ❌ Brak CI/CD
+### 7. ✅ Brak CI/CD
 - **Problem**: Brak automatyzacji deployment'u i testów
 - **Lokalizacja**: Brak `.github/workflows/`
 - **Priorytet**: 🟡 WYSOKI
 - **Rozwiązanie**: GitHub Actions workflows
 - **Szacowany czas**: 3-4h
+- **Status**: ✅ NAPRAWIONE - GitHub Actions workflow: backend tests z PostgreSQL, frontend build, Node.js 18
 
 ### 8. ❌ Brak linter'a backend
 - **Problem**: Backend nie ma ESLint
@@ -261,13 +262,13 @@
 ## 📊 **Statystyki**
 
 - **Łączna liczba problemów**: 25
-- **Naprawione**: 4 ✅ 
+- **Naprawione**: 5 ✅ 
 - **W trakcie**: 3 🔄
-- **Pozostałe**: 18 ❌
-- **Krytyczne**: 5 (wszystkie naprawione lub w trakcie)
-- **Wysokie**: 7 (2 w trakcie)
+- **Pozostałe**: 17 ❌
+- **Krytyczne**: 5 (wszystkie naprawione lub w trakcie) 🎯
+- **Wysokie**: 7 (3 naprawione, 2 w trakcie)
 - **Średnie**: 9
 - **Niskie**: 4
 - **Szacowany czas całkowity**: 65-85 godzin
-- **Czas zainwestowany**: ~5-6 godzin
-- **Pozostały czas**: ~60-80 godzin 
+- **Czas zainwestowany**: ~6-7 godzin
+- **Pozostały czas**: ~55-75 godzin 

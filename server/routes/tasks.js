@@ -1,13 +1,22 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
 const { notifyTaskAssigned, notifyTaskCompleted } = require('./notifications');
+const { 
+  createTaskSchema, 
+  updateTaskSchema, 
+  updateTaskStatusSchema,
+  taskFiltersSchema 
+} = require('../schemas/taskSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // GET /api/tasks - Lista zadań (z filtrowaniem)
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, validateQuery(taskFiltersSchema), async (req, res) => {
   try {
     const { projectId, companyId, status, priority, assignedToId, search } = req.query;
     const userId = req.user.id;
@@ -169,15 +178,26 @@ router.get('/', authenticateToken, async (req, res) => {
       ]
     });
 
+    logger.info('Tasks fetched', {
+      userId,
+      tasksCount: tasks.length,
+      filters: { projectId, companyId, status, priority, assignedToId, search }
+    });
+
     res.json(tasks);
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    logger.error('Error fetching tasks', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      filters: req.query
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania zadań' });
   }
 });
 
 // GET /api/tasks/:id - Szczegóły zadania
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -242,18 +262,27 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Brak dostępu do tego zadania' });
     }
 
+    securityLogger.logDataAccess(userId, 'READ', 'task', id);
+
     res.json(task);
   } catch (error) {
-    console.error('Error fetching task:', error);
+    logger.error('Error fetching task', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      taskId: req.params?.id
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania zadania' });
   }
 });
 
 // POST /api/tasks - Tworzenie nowego zadania
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(createTaskSchema), async (req, res) => {
   try {
-    console.log('POST /api/tasks - Request body:', req.body);
-    console.log('POST /api/tasks - User ID:', req.user.id);
+    logger.debug('Creating new task', {
+      userId: req.user.id,
+      requestBody: req.body
+    });
     
     const {
       title,
@@ -317,12 +346,12 @@ router.post('/', authenticateToken, async (req, res) => {
     
     // Sprawdź czy assignedToId jest prawidłowy (jeśli podany)
     if (assignedToId) {
-      console.log('Checking assignedToId:', assignedToId);
+      logger.debug('Processing assignedToId for task creation', { assignedToId, userId });
       
       // Handle special case for "current-user"
       if (assignedToId === 'current-user') {
         assignedToId = userId;
-        console.log('Converting current-user to actual userId:', assignedToId);
+        logger.debug('Converted current-user to actual userId', { assignedToId });
       }
       
       const assignedUserCompany = await prisma.company.findFirst({
@@ -343,7 +372,11 @@ router.post('/', authenticateToken, async (req, res) => {
       });
 
       if (!assignedUserCompany) {
-        console.log('User not found in company. AssignedToId:', assignedToId, 'CompanyId:', project.company.id);
+        logger.warn('User not found in company for task assignment', { 
+          assignedToId, 
+          companyId: project.company.id,
+          userId 
+        });
         return res.status(400).json({ error: 'Wybrany użytkownik nie jest członkiem tej firmy' });
       }
     }
@@ -399,20 +432,37 @@ router.post('/', authenticateToken, async (req, res) => {
       try {
         await notifyTaskAssigned(task.id, assignedToId, userId);
       } catch (notificationError) {
-        console.error('Error sending task assignment notification:', notificationError);
+        logger.error('Error sending task assignment notification', {
+          error: notificationError.message,
+          taskId: task.id,
+          assignedToId,
+          userId: req.user.id
+        });
         // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
       }
     }
 
+    logger.info('Task created successfully', {
+      taskId: task.id,
+      projectId,
+      userId: req.user.id,
+      assignedToId
+    });
+
     res.status(201).json(task);
   } catch (error) {
-    console.error('Error creating task:', error);
+    logger.error('Error creating task', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      projectId: req.body?.projectId
+    });
     res.status(500).json({ error: 'Błąd podczas tworzenia zadania' });
   }
 });
 
 // PUT /api/tasks/:id - Aktualizacja zadania
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateTaskSchema), async (req, res) => {
   try {
     const { id } = req.params;
     console.log('PUT /api/tasks/:id - Request body:', req.body);
@@ -595,7 +645,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/tasks/:id - Usuwanie zadania
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -665,7 +715,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 // PATCH /api/tasks/:id/status - Zmiana statusu zadania (szybka akcja)
-router.patch('/:id/status', authenticateToken, async (req, res) => {
+router.patch('/:id/status', authenticateToken, validateParams(idSchema), validate(updateTaskStatusSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
