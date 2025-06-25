@@ -29,8 +29,22 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState(i18n.language);
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLanguage = languages.find(lang => lang.code === currentLang) || languages[0];
+  
+  // Listen for language changes
+  useEffect(() => {
+    const handleLanguageChange = (lng: string) => {
+      setCurrentLang(lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+    
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
 
   const handleLanguageChange = async (languageCode: string) => {
     try {
@@ -54,19 +68,14 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     }
   };
 
-  // Auto-detect browser language on first visit
+  // Initialize language on component mount
   useEffect(() => {
     const savedLanguage = localStorage.getItem('preferred-language');
-    if (!savedLanguage) {
-      const browserLanguage = navigator.language.split('-')[0];
-      const supportedLanguage = languages.find(lang => lang.code === browserLanguage);
-      if (supportedLanguage) {
-        handleLanguageChange(supportedLanguage.code);
-      }
-    } else {
-      // Apply saved language
-      document.documentElement.lang = savedLanguage;
+    if (savedLanguage && savedLanguage !== i18n.language) {
+      i18n.changeLanguage(savedLanguage);
     }
+    // Set document language to current i18n language
+    document.documentElement.lang = i18n.language;
   }, []);
 
   // Close dropdown when clicking outside

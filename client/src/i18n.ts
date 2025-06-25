@@ -9,6 +9,12 @@ import navigationPL from './locales/pl/navigation.json';
 import authPL from './locales/pl/auth.json';
 import dashboardPL from './locales/pl/dashboard.json';
 import notificationsPL from './locales/pl/notifications.json';
+import homepagePL from './locales/pl/homepage.json';
+import projectsPL from './locales/pl/projects.json';
+import tasksPL from './locales/pl/tasks.json';
+import materialsPL from './locales/pl/materials.json';
+import messagesPL from './locales/pl/messages.json';
+import formsPL from './locales/pl/forms.json';
 
 const resources = {
   pl: {
@@ -17,6 +23,12 @@ const resources = {
     auth: authPL,
     dashboard: dashboardPL,
     notifications: notificationsPL,
+    homepage: homepagePL,
+    projects: projectsPL,
+    tasks: tasksPL,
+    materials: materialsPL,
+    messages: messagesPL,
+    forms: formsPL,
   },
   // Inne języki będą ładowane dynamicznie
 };
@@ -31,21 +43,34 @@ i18n
     defaultNS: 'common',
     ns: ['common', 'navigation', 'auth', 'dashboard', 'notifications', 'projects', 'tasks', 'materials', 'messages', 'forms', 'homepage'],
     
-    debug: process.env.NODE_ENV === 'development',
+    debug: true, // Enable debug to see what's happening
+    
+    // Set explicit language on init
+    lng: 'pl', // Default to Polish
     
     interpolation: {
       escapeValue: false, // React już escapuje
     },
     
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      order: ['localStorage', 'htmlTag'],
       caches: ['localStorage'],
       lookupLocalStorage: 'preferred-language',
+      // Don't use navigator detection on first visit - use explicit default
+      lookupQuerystring: 'lng',
+      lookupCookie: 'i18next',
     },
+    
+    // Always load fallback language first
+    preload: ['pl'],
     
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
+      // Allow cross-origin requests
+      crossDomain: true,
       requestOptions: {
+        mode: 'cors',
+        credentials: 'same-origin',
         cache: 'no-cache',
       },
     },
@@ -70,5 +95,11 @@ i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng;
   localStorage.setItem('preferred-language', lng);
 });
+
+// Initialize with Polish if no language is stored
+if (!localStorage.getItem('preferred-language')) {
+  localStorage.setItem('preferred-language', 'pl');
+  i18n.changeLanguage('pl');
+}
 
 export default i18n; 
