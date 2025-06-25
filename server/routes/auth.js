@@ -1,49 +1,27 @@
 const express = require('express');
 const router = express.Router();
+const Joi = require('joi');
 const prisma = require('../config/database');
 const { generateToken } = require('../config/jwt');
 const { hashPassword, comparePassword, generateRandomToken } = require('../utils/password');
 const { sendConfirmationEmail } = require('../utils/email');
 const { authenticateToken } = require('../middleware/auth');
+const { validate, validateParams } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
+const { 
+  registerSchema, 
+  loginSchema, 
+  resetPasswordSchema, 
+  newPasswordSchema, 
+  confirmEmailSchema 
+} = require('../schemas/authSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 const passport = require('../config/passport');
 
-// Walidacja email
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-// Walidacja hasła
-const isValidPassword = (password) => {
-  return password && password.length >= 6;
-};
-
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', validate(registerSchema), async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
-
-    // Walidacja danych
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email i hasło są wymagane'
-      });
-    }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Nieprawidłowy format email'
-      });
-    }
-
-    if (!isValidPassword(password)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Hasło musi mieć co najmniej 6 znaków'
-      });
-    }
 
     // Sprawdź czy użytkownik już istnieje
     const existingUser = await prisma.user.findUnique({
@@ -88,11 +66,23 @@ router.post('/register', async (req, res) => {
     const emailResult = await sendConfirmationEmail(user.email, confirmationToken);
     
     if (!emailResult.success) {
-      console.error('Failed to send confirmation email:', emailResult.error);
+      logger.warn('Failed to send confirmation email', {
+        email: user.email,
+        error: emailResult.error,
+        userId: user.id
+      });
     }
 
     // Generuj JWT token
     const token = generateToken({ userId: user.id });
+
+    // Log successful registration
+    securityLogger.logAuthAttempt(user.email, true, req.ip, req.get('User-Agent'));
+    logger.info('User registered successfully', {
+      userId: user.id,
+      email: user.email,
+      emailConfirmed: user.isEmailConfirmed
+    });
 
     res.status(201).json({
       success: true,
@@ -105,7 +95,11 @@ router.post('/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error', {
+      error: error.message,
+      stack: error.stack,
+      email: req.body?.email
+    });
     res.status(500).json({
       success: false,
       message: 'Błąd serwera podczas rejestracji'
@@ -114,17 +108,9 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Walidacja danych
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email i hasło są wymagane'
-      });
-    }
 
     // Znajdź użytkownika
     const user = await prisma.user.findUnique({
@@ -143,6 +129,8 @@ router.post('/login', async (req, res) => {
     });
 
     if (!user) {
+      // Log failed login attempt
+      securityLogger.logAuthAttempt(email, false, req.ip, req.get('User-Agent'));
       return res.status(401).json({
         success: false,
         message: 'Nieprawidłowy email lub hasło'
@@ -153,6 +141,8 @@ router.post('/login', async (req, res) => {
     const isPasswordValid = await comparePassword(password, user.password);
     
     if (!isPasswordValid) {
+      // Log failed login attempt
+      securityLogger.logAuthAttempt(email, false, req.ip, req.get('User-Agent'));
       return res.status(401).json({
         success: false,
         message: 'Nieprawidłowy email lub hasło'
@@ -165,6 +155,13 @@ router.post('/login', async (req, res) => {
     // Usuń hasło z odpowiedzi
     const { password: _, ...userWithoutPassword } = user;
 
+    // Log successful login
+    securityLogger.logAuthAttempt(user.email, true, req.ip, req.get('User-Agent'));
+    logger.info('User logged in successfully', {
+      userId: user.id,
+      email: user.email
+    });
+
     res.json({
       success: true,
       message: 'Logowanie pomyślne',
@@ -175,7 +172,11 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', {
+      error: error.message,
+      stack: error.stack,
+      email: req.body?.email
+    });
     res.status(500).json({
       success: false,
       message: 'Błąd serwera podczas logowania'
@@ -184,16 +185,13 @@ router.post('/login', async (req, res) => {
 });
 
 // GET /api/auth/confirm/:token
-router.get('/confirm/:token', async (req, res) => {
+router.get('/confirm/:token', validateParams(Joi.object({
+  token: Joi.string().required().messages({
+    'any.required': 'Token potwierdzenia jest wymagany'
+  })
+})), async (req, res) => {
   try {
     const { token } = req.params;
-
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token potwierdzenia jest wymagany'
-      });
-    }
 
     // Znajdź użytkownika z tym tokenem
     const user = await prisma.user.findUnique({

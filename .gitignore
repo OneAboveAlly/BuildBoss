@@ -98,10 +98,13 @@ ehthumbs.db
 Thumbs.db
 
 # Prisma
-server/prisma/migrations/
+# server/prisma/migrations/ - USUNIĘTE: migracje powinny być w repo
 
 # Uploads
 server/uploads/
+
+# Logs
+server/logs/
 
 # Database
 *.db

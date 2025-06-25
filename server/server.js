@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 const path = require('path');
 const session = require('express-session');
@@ -8,6 +9,9 @@ const http = require('http');
 
 // Load environment variables
 dotenv.config();
+
+// Import logger
+const { logger, httpLogger } = require('./config/logger');
 
 // Import passport configuration
 const passport = require('./config/passport');
@@ -24,6 +28,36 @@ const PORT = process.env.PORT || 5000;
 
 // Security middleware
 app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minut
+  max: 100, // maksymalnie 100 requestów na IP w ciągu 15 minut
+  message: {
+    error: 'Zbyt wiele requestów z tego IP, spróbuj ponownie za 15 minut.',
+    success: false
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting dla uwierzytelniania (bardziej restrykcyjne)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minut
+  max: 5, // maksymalnie 5 prób logowania na IP w ciągu 15 minut
+  message: {
+    error: 'Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut.',
+    success: false
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Zastosuj podstawowy rate limiting do wszystkich requestów
+app.use(limiter);
+
+// HTTP request logging
+app.use(httpLogger);
 
 // CORS configuration
 app.use(cors({
@@ -74,7 +108,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/companies', require('./routes/companies'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/users', require('./routes/users'));
@@ -110,7 +144,15 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  logger.error('Global error handler', {
+    error: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    userId: req.user?.id
+  });
   
   // Prisma errors
   if (err.code === 'P2002') {
@@ -140,9 +182,15 @@ socketManager.initialize(server);
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`🚀 SiteBoss Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔔 Socket.io notifications enabled`);
-  console.log(`🌍 i18n enabled with languages: pl, de, en, ua`);
+  logger.info('Server started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    healthCheck: `http://localhost:${PORT}/api/health`,
+    features: {
+      socketIO: true,
+      i18n: ['pl', 'de', 'en', 'ua'],
+      rateLimit: true,
+      logging: true
+    }
+  });
 }); 
