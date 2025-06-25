@@ -1,6 +1,15 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
+const { 
+  createJobSchema, 
+  updateJobSchema, 
+  jobFiltersSchema, 
+  applyJobSchema 
+} = require('../schemas/jobSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -34,7 +43,7 @@ const VOIVODESHIPS = [
 // ===== PUBLICZNE ENDPOINTY =====
 
 // GET /api/jobs - Lista publicznych ogłoszeń o pracę (bez autoryzacji)
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', optionalAuth, validateQuery(jobFiltersSchema), async (req, res) => {
   try {
     const {
       category,
@@ -139,6 +148,14 @@ router.get('/', optionalAuth, async (req, res) => {
       })
     );
 
+    logger.info('Jobs fetched', {
+      userId: req.user?.id,
+      filtersUsed: { category, voivodeship, city, type, experience, salaryMin, salaryMax, search },
+      jobsCount: jobsWithApplicationStatus.length,
+      totalJobs: total,
+      page: parseInt(page)
+    });
+
     res.json({
       jobs: jobsWithApplicationStatus,
       pagination: {
@@ -149,7 +166,12 @@ router.get('/', optionalAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching jobs:', error);
+    logger.error('Error fetching jobs', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      filters: req.query
+    });
     res.status(500).json({ error: 'Błąd podczas pobierania ogłoszeń' });
   }
 });
@@ -165,7 +187,7 @@ router.get('/voivodeships', (req, res) => {
 });
 
 // GET /api/jobs/:id - Szczegóły ogłoszenia (publiczne)
-router.get('/:id', optionalAuth, async (req, res) => {
+router.get('/:id', optionalAuth, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -414,7 +436,7 @@ router.get('/my/offers', authenticateToken, async (req, res) => {
 });
 
 // POST /api/jobs - Tworzenie nowego ogłoszenia (wymaga autoryzacji)
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(createJobSchema), async (req, res) => {
   try {
     const {
       title,
@@ -504,15 +526,30 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     });
 
+    logger.info('Job created', {
+      userId: req.user.id,
+      jobId: job.id,
+      companyId: job.companyId,
+      title: job.title,
+      category: job.category
+    });
+
+    securityLogger.logDataAccess(req.user.id, 'CREATE', 'job', job.id);
+
     res.status(201).json(job);
   } catch (error) {
-    console.error('Error creating job:', error);
+    logger.error('Error creating job', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      jobData: req.body
+    });
     res.status(500).json({ error: 'Błąd podczas tworzenia ogłoszenia' });
   }
 });
 
 // PUT /api/jobs/:id - Aktualizacja ogłoszenia (wymaga autoryzacji)
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateJobSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -605,15 +642,27 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     });
 
+    logger.info('Job updated', {
+      userId: req.user.id,
+      jobId: updatedJob.id,
+      changes: Object.keys(req.body)
+    });
+
     res.json(updatedJob);
   } catch (error) {
-    console.error('Error updating job:', error);
+    logger.error('Error updating job', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      jobId: req.params.id,
+      updateData: req.body
+    });
     res.status(500).json({ error: 'Błąd podczas aktualizacji ogłoszenia' });
   }
 });
 
 // DELETE /api/jobs/:id - Usuwanie ogłoszenia (wymaga autoryzacji)
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -647,9 +696,22 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       where: { id }
     });
 
+    logger.info('Job deleted', {
+      userId: req.user.id,
+      jobId: id,
+      companyId: existingJob.companyId
+    });
+
+    securityLogger.logDataAccess(req.user.id, 'DELETE', 'job', id);
+
     res.json({ message: 'Ogłoszenie zostało usunięte' });
   } catch (error) {
-    console.error('Error deleting job:', error);
+    logger.error('Error deleting job', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      jobId: req.params.id
+    });
     res.status(500).json({ error: 'Błąd podczas usuwania ogłoszenia' });
   }
 });

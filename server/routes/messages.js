@@ -1,7 +1,11 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { validate, validateParams } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
 const { notifyNewMessage } = require('./notifications');
+const { createMessageSchema } = require('../schemas/messageSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -183,7 +187,7 @@ router.get('/thread', authenticateToken, async (req, res) => {
 });
 
 // POST /api/messages - Wysyłanie nowej wiadomości
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(createMessageSchema), async (req, res) => {
   try {
     const { receiverId, content, jobOfferId, workRequestId } = req.body;
     const senderId = req.user.id;
@@ -370,7 +374,7 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/messages/:id - Usuwanie wiadomości (tylko dla nadawcy)
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
