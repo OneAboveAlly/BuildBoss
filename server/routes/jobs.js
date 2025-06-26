@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
@@ -12,8 +12,6 @@ const {
 const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // Stałe dla kategorii i lokalizacji
 const JOB_CATEGORIES = {
   CONSTRUCTION_WORKER: 'Robotnik budowlany',

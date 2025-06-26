@@ -1,10 +1,8 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // GET /api/users/search?email= - Wyszukiwanie użytkowników do zaproszenia
 router.get('/search', authenticateToken, async (req, res) => {
   try {

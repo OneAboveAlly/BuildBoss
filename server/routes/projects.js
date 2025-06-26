@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { validateParams } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
@@ -10,8 +10,6 @@ const {
 const { idSchema, _paginationSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // GET /api/projects - Lista projektów firmy
 router.get('/', authenticateToken, async (req, res) => {
   try {

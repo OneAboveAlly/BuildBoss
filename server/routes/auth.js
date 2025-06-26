@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Joi = require('joi');
-const prisma = require('../config/database');
+const { prisma } = require('../config/database');
 const { generateToken } = require('../config/jwt');
 const { hashPassword, comparePassword, generateRandomToken } = require('../utils/password');
 const { sendConfirmationEmail } = require('../utils/email');

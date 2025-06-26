@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
@@ -13,8 +13,6 @@ const {
 const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // GET /api/tasks - Lista zadań (z filtrowaniem)
 router.get('/', authenticateToken, validateQuery(taskFiltersSchema), async (req, res) => {
   try {

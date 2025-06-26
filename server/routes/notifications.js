@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
@@ -8,8 +8,6 @@ const { idSchema } = require('../schemas/commonSchemas');
 const socketManager = require('../config/socket');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // GET /api/notifications - Pobierz powiadomienia użytkownika
 router.get('/', authenticateToken, validateQuery(notificationFiltersSchema), async (req, res) => {
   try {

@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { SUBSCRIPTION_PLANS: _SUBSCRIPTION_PLANS } = require('../config/stripe');
-
-const prisma = new PrismaClient();
 
 // Sprawdza czy użytkownik ma aktywną subskrypcję
 const checkActiveSubscription = async (req, res, next) => {

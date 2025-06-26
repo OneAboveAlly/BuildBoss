@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { stripe, SUBSCRIPTION_PLANS: _SUBSCRIPTION_PLANS, getAllPlans: _getAllPlans, getPlanByName: _getPlanByName } = require('../config/stripe');
 
 // Middleware do sprawdzania czy Stripe jest skonfigurowany
@@ -16,8 +16,6 @@ const { authenticateToken } = require('../middleware/auth');
 const { checkActiveSubscription, getUsageStats } = require('../middleware/subscription');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // GET /api/subscriptions/plans - Pobierz dostępne plany
 router.get('/plans', async (req, res) => {
   try {

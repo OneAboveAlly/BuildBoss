@@ -1,12 +1,10 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { checkActiveSubscription, checkPremiumFeature } = require('../middleware/subscription');
 const { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths, format } = require('date-fns');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // Middleware - wszystkie endpointy wymagają autoryzacji
 router.use(authenticateToken);
 

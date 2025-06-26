@@ -1,6 +1,6 @@
 const express = require('express');
+const { prisma } = require('../config/database');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, _requireRole } = require('../middleware/auth');
 const { validate, validateParams, _validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
@@ -13,8 +13,6 @@ const {
   _searchUsersSchema
 } = require('../schemas/companySchemas');
 const { idSchema, _paginationSchema } = require('../schemas/commonSchemas');
-
-const prisma = new PrismaClient();
 
 // GET /api/companies - Lista firm użytkownika
 router.get('/', authenticateToken, async (req, res) => {

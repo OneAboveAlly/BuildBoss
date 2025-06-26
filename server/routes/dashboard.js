@@ -1,9 +1,7 @@
 const express = require('express');
+const { prisma } = require('../config/database');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
-
-const prisma = new PrismaClient();
 
 // GET /api/dashboard/stats - Statystyki dla dashboardu
 router.get('/stats', authenticateToken, async (req, res) => {

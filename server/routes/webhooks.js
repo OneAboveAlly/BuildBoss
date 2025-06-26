@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { stripe } = require('../config/stripe');
 
 // Sprawdź czy Stripe jest skonfigurowany
@@ -8,8 +8,6 @@ if (!stripe) {
 }
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // Middleware do parsowania raw body dla webhooków Stripe
 const parseRawBody = (req, res, next) => {
   if (req.originalUrl === '/api/webhooks/stripe') {

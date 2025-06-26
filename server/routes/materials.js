@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const { authenticateToken, _requireRole } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, _securityLogger } = require('../config/logger');
@@ -13,8 +13,6 @@ const {
 const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
 // GET /api/materials - Lista materiałów firmy z filtrami
 router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (req, res) => {
   try {
