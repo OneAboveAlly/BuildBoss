@@ -1,13 +1,17 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
+const { notificationFiltersSchema, testNotificationSchema } = require('../schemas/notificationSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 const socketManager = require('../config/socket');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 // GET /api/notifications - Pobierz powiadomienia użytkownika
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, validateQuery(notificationFiltersSchema), async (req, res) => {
   try {
     const { page = 1, limit = 20, unreadOnly = false } = req.query;
     const offset = (page - 1) * limit;
@@ -63,7 +67,7 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/notifications/:id/read - Oznacz powiadomienie jako przeczytane
-router.put('/:id/read', authenticateToken, async (req, res) => {
+router.put('/:id/read', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -112,7 +116,7 @@ router.put('/mark-all-read', authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/notifications/:id - Usuń powiadomienie
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -131,9 +135,21 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       where: { id }
     });
 
+    logger.info('Notification deleted', {
+      userId: req.user.userId,
+      notificationId: id
+    });
+
+    securityLogger.logDataAccess(req.user.userId, 'DELETE', 'notification', id);
+
     res.json({ message: 'Notification deleted successfully' });
   } catch (error) {
-    console.error('Error deleting notification:', error);
+    logger.error('Error deleting notification', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.userId,
+      notificationId: req.params.id
+    });
     res.status(500).json({ error: 'Failed to delete notification' });
   }
 });
@@ -147,18 +163,29 @@ router.delete('/clear-all', authenticateToken, async (req, res) => {
       }
     });
 
+    logger.info('All notifications cleared', {
+      userId: req.user.userId,
+      count: result.count
+    });
+
+    securityLogger.logDataAccess(req.user.userId, 'DELETE', 'notification', 'ALL');
+
     res.json({ 
       message: 'All notifications cleared',
       count: result.count 
     });
   } catch (error) {
-    console.error('Error clearing all notifications:', error);
+    logger.error('Error clearing all notifications', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.userId
+    });
     res.status(500).json({ error: 'Failed to clear all notifications' });
   }
 });
 
 // POST /api/notifications/test - Testowe powiadomienie (tylko dla developmentu)
-router.post('/test', authenticateToken, async (req, res) => {
+router.post('/test', authenticateToken, validate(testNotificationSchema), async (req, res) => {
   try {
     if (process.env.NODE_ENV === 'production') {
       return res.status(403).json({ error: 'Test notifications not allowed in production' });

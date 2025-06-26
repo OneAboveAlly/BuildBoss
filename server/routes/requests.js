@@ -1,6 +1,15 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
+const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { logger, securityLogger } = require('../config/logger');
+const { 
+  createRequestSchema, 
+  updateRequestSchema, 
+  requestFiltersSchema, 
+  myRequestFiltersSchema 
+} = require('../schemas/requestSchemas');
+const { idSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -34,7 +43,7 @@ const VOIVODESHIPS = [
 // ===== PUBLICZNE ENDPOINTY =====
 
 // GET /api/requests - Lista publicznych zleceń (bez autoryzacji)
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', optionalAuth, validateQuery(requestFiltersSchema), async (req, res) => {
   try {
     const {
       category,
@@ -146,7 +155,7 @@ router.get('/voivodeships', (req, res) => {
 });
 
 // GET /api/requests/:id - Szczegóły zlecenia (publiczne)
-router.get('/:id', optionalAuth, async (req, res) => {
+router.get('/:id', optionalAuth, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -203,7 +212,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // ===== PRYWATNE ENDPOINTY (dla użytkowników) =====
 
 // GET /api/requests/my/requests - Moje zlecenia (wymaga autoryzacji)
-router.get('/my/requests', authenticateToken, async (req, res) => {
+router.get('/my/requests', authenticateToken, validateQuery(myRequestFiltersSchema), async (req, res) => {
   try {
     const {
       companyId,
@@ -251,7 +260,7 @@ router.get('/my/requests', authenticateToken, async (req, res) => {
 });
 
 // POST /api/requests - Tworzenie nowego zlecenia (wymaga autoryzacji)
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(createRequestSchema), async (req, res) => {
   try {
     const {
       title,
@@ -334,15 +343,30 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     });
 
+    logger.info('Work request created', {
+      userId: req.user.id,
+      requestId: request.id,
+      companyId: request.companyId,
+      title: request.title,
+      category: request.category
+    });
+
+    securityLogger.logDataAccess(req.user.id, 'CREATE', 'work_request', request.id);
+
     res.status(201).json(request);
   } catch (error) {
-    console.error('Error creating request:', error);
+    logger.error('Error creating request', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      requestData: req.body
+    });
     res.status(500).json({ error: 'Błąd podczas tworzenia zlecenia' });
   }
 });
 
 // PUT /api/requests/:id - Aktualizacja zlecenia (wymaga autoryzacji)
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateRequestSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -422,15 +446,27 @@ router.put('/:id', authenticateToken, async (req, res) => {
       }
     });
 
+    logger.info('Work request updated', {
+      userId: req.user.id,
+      requestId: updatedRequest.id,
+      changes: Object.keys(req.body)
+    });
+
     res.json(updatedRequest);
   } catch (error) {
-    console.error('Error updating request:', error);
+    logger.error('Error updating request', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      requestId: req.params.id,
+      updateData: req.body
+    });
     res.status(500).json({ error: 'Błąd podczas aktualizacji zlecenia' });
   }
 });
 
 // DELETE /api/requests/:id - Usuwanie zlecenia (wymaga autoryzacji)
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -451,9 +487,22 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       where: { id }
     });
 
+    logger.info('Work request deleted', {
+      userId: req.user.id,
+      requestId: id,
+      companyId: existingRequest.companyId
+    });
+
+    securityLogger.logDataAccess(req.user.id, 'DELETE', 'work_request', id);
+
     res.json({ message: 'Zlecenie zostało usunięte' });
   } catch (error) {
-    console.error('Error deleting request:', error);
+    logger.error('Error deleting request', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      requestId: req.params.id
+    });
     res.status(500).json({ error: 'Błąd podczas usuwania zlecenia' });
   }
 });

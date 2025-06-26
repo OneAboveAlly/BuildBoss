@@ -1,12 +1,12 @@
 const Joi = require('joi');
 
-// Schemat ID (dla parametrów URL)
+// Schemat ID (dla parametrów URL) - obsługuje zarówno UUID jak i alfanumeryczne ID
 const idSchema = Joi.object({
   id: Joi.string()
-    .pattern(/^[a-zA-Z0-9]+$/)
+    .pattern(/^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$|^[a-zA-Z0-9]+$/)
     .required()
     .messages({
-      'string.pattern.base': 'ID musi zawierać tylko litery i cyfry',
+      'string.pattern.base': 'ID musi być w formacie UUID lub zawierać tylko litery i cyfry',
       'any.required': 'ID jest wymagane'
     })
 });

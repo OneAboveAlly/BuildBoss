@@ -37,7 +37,7 @@
 - **Priorytet**: 🔴 KRYTYCZNY
 - **Rozwiązanie**: Implementacja Joi lub express-validator
 - **Szacowany czas**: 4-6h
-- **Status**: 🔄 W TRAKCIE - Schematy: auth, companies, projects, tasks, materials. Zaimplementowano: auth, companies, projects, tasks. Pozostało: materials + inne
+- **Status**: 🔄 W TRAKCIE - Schematy: auth, companies, projects, tasks, materials, jobs, messages. Zaimplementowano: auth, companies, projects, tasks, materials, jobs, messages. Pozostało: requests, notifications + inne
 
 ### 4. ✅ Brak CSP headers
 - **Problem**: Content Security Policy nie jest skonfigurowany
@@ -68,7 +68,7 @@
   - Frontend: Vitest + React Testing Library
   - E2E: Playwright
 - **Szacowany czas**: 8-12h
-- **Status**: 🔄 W TRAKCIE - Backend: 42 testy OK (health, validation, logging, tasks, materials), coverage 0.64%. Frontend: pozostało
+- **Status**: 🔄 W TRAKCIE - Backend: 71 testów OK (health, validation, logging, tasks, materials, jobs, messages), coverage 0.64%. Frontend: pozostało
 
 ### 7. ✅ Brak CI/CD
 - **Problem**: Brak automatyzacji deployment'u i testów
