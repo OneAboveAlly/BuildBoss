@@ -3,11 +3,11 @@ const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
-const { 
-  createRequestSchema, 
-  updateRequestSchema, 
-  requestFiltersSchema, 
-  myRequestFiltersSchema 
+const {
+  createRequestSchema,
+  updateRequestSchema,
+  requestFiltersSchema,
+  myRequestFiltersSchema
 } = require('../schemas/requestSchemas');
 const { idSchema } = require('../schemas/commonSchemas');
 
@@ -287,8 +287,8 @@ router.post('/', authenticateToken, validate(createRequestSchema), async (req, r
 
     // Walidacja wymaganych pól
     if (!title || !description || !category || !voivodeship || !city) {
-      return res.status(400).json({ 
-        error: 'Wymagane pola: title, description, category, voivodeship, city' 
+      return res.status(400).json({
+        error: 'Wymagane pola: title, description, category, voivodeship, city'
       });
     }
 
@@ -507,4 +507,4 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
   }
 });
 
-module.exports = router; 
+module.exports = router;

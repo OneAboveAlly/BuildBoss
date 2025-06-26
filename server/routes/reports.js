@@ -7,7 +7,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs').promises;
 const path = require('path');
 const cron = require('node-cron');
-const { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } = require('date-fns');
+const { format, _startOfMonth, _endOfMonth, _startOfWeek, _endOfWeek } = require('date-fns');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -127,7 +127,7 @@ router.post('/generate', checkActiveSubscription, async (req, res) => {
       });
 
       if (!subscription || !subscription.plan.features.hasAdvancedReports) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: 'Premium feature required',
           message: 'Ten raport jest dostępny tylko w planach premium'
         });
@@ -165,7 +165,7 @@ router.post('/generate', checkActiveSubscription, async (req, res) => {
     // Generuj raport asynchronicznie
     generateReportAsync(report.id, type, config, format);
 
-    res.status(202).json({ 
+    res.status(202).json({
       reportId: report.id,
       status: 'GENERATING',
       message: 'Raport jest generowany. Sprawdź status za chwilę.'
@@ -230,7 +230,7 @@ router.get('/:id/download', checkActiveSubscription, async (req, res) => {
     }
 
     const filePath = path.join(__dirname, '..', report.filePath);
-    
+
     try {
       await fs.access(filePath);
     } catch {
@@ -238,10 +238,10 @@ router.get('/:id/download', checkActiveSubscription, async (req, res) => {
     }
 
     const fileName = `${report.name}_${format(report.createdAt, 'yyyy-MM-dd')}.${report.fileFormat.toLowerCase()}`;
-    
+
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Type', getContentType(report.fileFormat));
-    
+
     const fileBuffer = await fs.readFile(filePath);
     res.send(fileBuffer);
 
@@ -353,7 +353,7 @@ async function generateReportAsync(reportId, type, config, format) {
 
     // Pobierz dane dla raportu
     const reportData = await getReportData(type, config);
-    
+
     // Generuj plik
     let filePath;
     if (format === 'EXCEL') {
@@ -377,7 +377,7 @@ async function generateReportAsync(reportId, type, config, format) {
 
   } catch (error) {
     console.error(`Failed to generate report ${reportId}:`, error);
-    
+
     await prisma.report.update({
       where: { id: reportId },
       data: {
@@ -389,20 +389,20 @@ async function generateReportAsync(reportId, type, config, format) {
 
 async function getReportData(type, config) {
   switch (type) {
-    case 'PROJECT_SUMMARY':
-      return await getProjectSummaryData(config);
-    case 'FINANCIAL_REPORT':
-      return await getFinancialReportData(config);
-    case 'TEAM_PRODUCTIVITY':
-      return await getTeamProductivityData(config);
-    case 'TASK_COMPLETION':
-      return await getTaskCompletionData(config);
-    case 'MATERIAL_INVENTORY':
-      return await getMaterialInventoryData(config);
-    case 'TIME_TRACKING':
-      return await getTimeTrackingData(config);
-    default:
-      throw new Error(`Unknown report type: ${type}`);
+  case 'PROJECT_SUMMARY':
+    return await getProjectSummaryData(config);
+  case 'FINANCIAL_REPORT':
+    return await getFinancialReportData(config);
+  case 'TEAM_PRODUCTIVITY':
+    return await getTeamProductivityData(config);
+  case 'TASK_COMPLETION':
+    return await getTaskCompletionData(config);
+  case 'MATERIAL_INVENTORY':
+    return await getMaterialInventoryData(config);
+  case 'TIME_TRACKING':
+    return await getTimeTrackingData(config);
+  default:
+    throw new Error(`Unknown report type: ${type}`);
   }
 }
 
@@ -457,7 +457,7 @@ async function getFinancialReportData(config) {
   const financialData = projects.map(project => {
     const materialsCost = project.materials.reduce((sum, m) => sum + (m.quantity * (m.price || 0)), 0);
     const laborCost = project.tasks.reduce((sum, t) => sum + ((t.actualHours || 0) * 50), 0);
-    
+
     return {
       project: project.name,
       budget: project.budget || 0,
@@ -481,144 +481,144 @@ async function generateExcelReport(reportId, type, data) {
 
   // Dodaj dane w zależności od typu raportu
   switch (type) {
-    case 'PROJECT_SUMMARY':
-      if (data.project) {
-        worksheet.addRow(['Projekt:', data.project.name]);
-        worksheet.addRow(['Status:', data.project.status]);
-        worksheet.addRow(['Budżet:', data.project.budget || 0]);
-        worksheet.addRow(['Ukończenie:', `${data.summary.completionRate.toFixed(1)}%`]);
-        worksheet.addRow([]);
-        
-        worksheet.addRow(['Zadania']);
-        worksheet.addRow(['Tytuł', 'Status', 'Priorytet', 'Przypisany do']);
-        
-        data.project.tasks.forEach(task => {
-          worksheet.addRow([
-            task.title,
-            task.status,
-            task.priority,
-            task.assignedTo ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : 'Nieprzypisane'
-          ]);
-        });
-      }
-      break;
+  case 'PROJECT_SUMMARY':
+    if (data.project) {
+      worksheet.addRow(['Projekt:', data.project.name]);
+      worksheet.addRow(['Status:', data.project.status]);
+      worksheet.addRow(['Budżet:', data.project.budget || 0]);
+      worksheet.addRow(['Ukończenie:', `${data.summary.completionRate.toFixed(1)}%`]);
+      worksheet.addRow([]);
 
-    case 'FINANCIAL_REPORT':
-      if (data.projects) {
-        worksheet.addRow(['Raport Finansowy']);
-        worksheet.addRow(['Projekt', 'Budżet', 'Koszty Materiałów', 'Koszty Pracy', 'Całkowite Koszty', 'Odchylenie']);
-        
-        data.projects.forEach(project => {
-          worksheet.addRow([
-            project.project,
-            project.budget,
-            project.materialsCost,
-            project.laborCost,
-            project.totalCost,
-            project.variance
-          ]);
-        });
-      }
-      break;
+      worksheet.addRow(['Zadania']);
+      worksheet.addRow(['Tytuł', 'Status', 'Priorytet', 'Przypisany do']);
 
-    case 'TEAM_PRODUCTIVITY':
-      if (data.workers) {
-        worksheet.addRow(['Produktywność Zespołu']);
-        worksheet.addRow(['Pracownik', 'Stanowisko', 'Zadania Ogółem', 'Ukończone', 'Wskaźnik Ukończenia', 'Godziny', 'Efektywność']);
-        
-        data.workers.forEach(worker => {
-          worksheet.addRow([
-            worker.worker.name,
-            worker.worker.position || 'Brak',
-            worker.metrics.totalTasks,
-            worker.metrics.completedTasks,
-            `${worker.metrics.completionRate.toFixed(1)}%`,
-            worker.metrics.totalHours,
-            `${worker.metrics.efficiency.toFixed(1)}%`
-          ]);
-        });
-      }
-      break;
+      data.project.tasks.forEach(task => {
+        worksheet.addRow([
+          task.title,
+          task.status,
+          task.priority,
+          task.assignedTo ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : 'Nieprzypisane'
+        ]);
+      });
+    }
+    break;
 
-    case 'TASK_COMPLETION':
-      if (data.tasks) {
-        worksheet.addRow(['Ukończenie Zadań']);
-        worksheet.addRow(['Podsumowanie']);
-        worksheet.addRow(['Ogółem:', data.summary.total]);
-        worksheet.addRow(['Ukończone:', data.summary.completed]);
-        worksheet.addRow(['W trakcie:', data.summary.inProgress]);
-        worksheet.addRow(['Do zrobienia:', data.summary.todo]);
-        worksheet.addRow(['Przeterminowane:', data.summary.overdue]);
-        worksheet.addRow([]);
-        
-        worksheet.addRow(['Szczegóły zadań']);
-        worksheet.addRow(['Tytuł', 'Status', 'Priorytet', 'Projekt', 'Przypisany do']);
-        
-        data.tasks.forEach(task => {
-          worksheet.addRow([
-            task.title,
-            task.status,
-            task.priority,
-            task.project.name,
-            task.assignedTo ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : 'Nieprzypisane'
-          ]);
-        });
-      }
-      break;
+  case 'FINANCIAL_REPORT':
+    if (data.projects) {
+      worksheet.addRow(['Raport Finansowy']);
+      worksheet.addRow(['Projekt', 'Budżet', 'Koszty Materiałów', 'Koszty Pracy', 'Całkowite Koszty', 'Odchylenie']);
 
-    case 'MATERIAL_INVENTORY':
-      if (data.materials) {
-        worksheet.addRow(['Inwentarz Materiałów']);
-        worksheet.addRow(['Podsumowanie']);
-        worksheet.addRow(['Ogółem materiałów:', data.summary.totalMaterials]);
-        worksheet.addRow(['Wartość całkowita:', data.summary.totalValue]);
-        worksheet.addRow(['Niski stan:', data.summary.lowStockCount]);
-        worksheet.addRow([]);
-        
-        worksheet.addRow(['Szczegóły materiałów']);
-        worksheet.addRow(['Nazwa', 'Kategoria', 'Ilość', 'Jednostka', 'Cena', 'Wartość', 'Lokalizacja']);
-        
-        data.materials.forEach(material => {
-          worksheet.addRow([
-            material.name,
-            material.category || 'Brak',
-            material.quantity,
-            material.unit,
-            material.price || 0,
-            material.quantity * (material.price || 0),
-            material.location || 'Brak'
-          ]);
-        });
-      }
-      break;
+      data.projects.forEach(project => {
+        worksheet.addRow([
+          project.project,
+          project.budget,
+          project.materialsCost,
+          project.laborCost,
+          project.totalCost,
+          project.variance
+        ]);
+      });
+    }
+    break;
 
-    case 'TIME_TRACKING':
-      if (data.tasks) {
-        worksheet.addRow(['Śledzenie Czasu']);
-        worksheet.addRow(['Podsumowanie']);
-        worksheet.addRow(['Zadania ogółem:', data.summary.totalTasks]);
-        worksheet.addRow(['Szacowane godziny:', data.summary.totalEstimatedHours]);
-        worksheet.addRow(['Rzeczywiste godziny:', data.summary.totalActualHours]);
-        worksheet.addRow(['Odchylenie:', data.summary.timeVariance]);
-        worksheet.addRow(['Efektywność:', `${data.summary.timeEfficiency.toFixed(1)}%`]);
-        worksheet.addRow([]);
-        
-        worksheet.addRow(['Szczegóły zadań']);
-        worksheet.addRow(['Zadanie', 'Projekt', 'Przypisany do', 'Szacowane', 'Rzeczywiste', 'Odchylenie', 'Efektywność']);
-        
-        data.tasks.forEach(task => {
-          worksheet.addRow([
-            task.title,
-            task.project,
-            task.assignedTo,
-            task.estimatedHours,
-            task.actualHours,
-            task.variance,
-            `${task.efficiency.toFixed(1)}%`
-          ]);
-        });
-      }
-      break;
+  case 'TEAM_PRODUCTIVITY':
+    if (data.workers) {
+      worksheet.addRow(['Produktywność Zespołu']);
+      worksheet.addRow(['Pracownik', 'Stanowisko', 'Zadania Ogółem', 'Ukończone', 'Wskaźnik Ukończenia', 'Godziny', 'Efektywność']);
+
+      data.workers.forEach(worker => {
+        worksheet.addRow([
+          worker.worker.name,
+          worker.worker.position || 'Brak',
+          worker.metrics.totalTasks,
+          worker.metrics.completedTasks,
+          `${worker.metrics.completionRate.toFixed(1)}%`,
+          worker.metrics.totalHours,
+          `${worker.metrics.efficiency.toFixed(1)}%`
+        ]);
+      });
+    }
+    break;
+
+  case 'TASK_COMPLETION':
+    if (data.tasks) {
+      worksheet.addRow(['Ukończenie Zadań']);
+      worksheet.addRow(['Podsumowanie']);
+      worksheet.addRow(['Ogółem:', data.summary.total]);
+      worksheet.addRow(['Ukończone:', data.summary.completed]);
+      worksheet.addRow(['W trakcie:', data.summary.inProgress]);
+      worksheet.addRow(['Do zrobienia:', data.summary.todo]);
+      worksheet.addRow(['Przeterminowane:', data.summary.overdue]);
+      worksheet.addRow([]);
+
+      worksheet.addRow(['Szczegóły zadań']);
+      worksheet.addRow(['Tytuł', 'Status', 'Priorytet', 'Projekt', 'Przypisany do']);
+
+      data.tasks.forEach(task => {
+        worksheet.addRow([
+          task.title,
+          task.status,
+          task.priority,
+          task.project.name,
+          task.assignedTo ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : 'Nieprzypisane'
+        ]);
+      });
+    }
+    break;
+
+  case 'MATERIAL_INVENTORY':
+    if (data.materials) {
+      worksheet.addRow(['Inwentarz Materiałów']);
+      worksheet.addRow(['Podsumowanie']);
+      worksheet.addRow(['Ogółem materiałów:', data.summary.totalMaterials]);
+      worksheet.addRow(['Wartość całkowita:', data.summary.totalValue]);
+      worksheet.addRow(['Niski stan:', data.summary.lowStockCount]);
+      worksheet.addRow([]);
+
+      worksheet.addRow(['Szczegóły materiałów']);
+      worksheet.addRow(['Nazwa', 'Kategoria', 'Ilość', 'Jednostka', 'Cena', 'Wartość', 'Lokalizacja']);
+
+      data.materials.forEach(material => {
+        worksheet.addRow([
+          material.name,
+          material.category || 'Brak',
+          material.quantity,
+          material.unit,
+          material.price || 0,
+          material.quantity * (material.price || 0),
+          material.location || 'Brak'
+        ]);
+      });
+    }
+    break;
+
+  case 'TIME_TRACKING':
+    if (data.tasks) {
+      worksheet.addRow(['Śledzenie Czasu']);
+      worksheet.addRow(['Podsumowanie']);
+      worksheet.addRow(['Zadania ogółem:', data.summary.totalTasks]);
+      worksheet.addRow(['Szacowane godziny:', data.summary.totalEstimatedHours]);
+      worksheet.addRow(['Rzeczywiste godziny:', data.summary.totalActualHours]);
+      worksheet.addRow(['Odchylenie:', data.summary.timeVariance]);
+      worksheet.addRow(['Efektywność:', `${data.summary.timeEfficiency.toFixed(1)}%`]);
+      worksheet.addRow([]);
+
+      worksheet.addRow(['Szczegóły zadań']);
+      worksheet.addRow(['Zadanie', 'Projekt', 'Przypisany do', 'Szacowane', 'Rzeczywiste', 'Odchylenie', 'Efektywność']);
+
+      data.tasks.forEach(task => {
+        worksheet.addRow([
+          task.title,
+          task.project,
+          task.assignedTo,
+          task.estimatedHours,
+          task.actualHours,
+          task.variance,
+          `${task.efficiency.toFixed(1)}%`
+        ]);
+      });
+    }
+    break;
   }
 
   const fileName = `report_${reportId}.xlsx`;
@@ -635,9 +635,9 @@ async function generatePDFReport(reportId, type, data) {
 
   // Generuj HTML dla raportu
   const html = generateReportHTML(type, data);
-  
+
   await page.setContent(html);
-  
+
   const fileName = `report_${reportId}.pdf`;
   const filePath = `generated/reports/${fileName}`;
   const fullPath = path.join(__dirname, '..', filePath);
@@ -660,7 +660,7 @@ async function generatePDFReport(reportId, type, data) {
 
 function generateReportHTML(type, data) {
   const currentDate = format(new Date(), 'dd.MM.yyyy HH:mm');
-  
+
   let content = `
     <!DOCTYPE html>
     <html>
@@ -693,9 +693,9 @@ function generateReportHTML(type, data) {
   `;
 
   switch (type) {
-    case 'PROJECT_SUMMARY':
-      if (data.project) {
-        content += `
+  case 'PROJECT_SUMMARY':
+    if (data.project) {
+      content += `
           <div class="section">
             <h2>Informacje o projekcie</h2>
             <div class="summary">
@@ -734,9 +734,9 @@ function generateReportHTML(type, data) {
               </thead>
               <tbody>
         `;
-        
-        data.project.tasks.forEach(task => {
-          content += `
+
+      data.project.tasks.forEach(task => {
+        content += `
             <tr>
               <td>${task.title}</td>
               <td><span class="${task.status === 'DONE' ? 'status-positive' : task.status === 'IN_PROGRESS' ? 'status-warning' : ''}">${task.status}</span></td>
@@ -745,23 +745,23 @@ function generateReportHTML(type, data) {
               <td>${task.dueDate ? format(new Date(task.dueDate), 'dd.MM.yyyy') : 'Brak'}</td>
             </tr>
           `;
-        });
-        
-        content += `
+      });
+
+      content += `
               </tbody>
             </table>
           </div>
         `;
-      }
-      break;
+    }
+    break;
 
-    case 'FINANCIAL_REPORT':
-      if (data.projects) {
-        const totalBudget = data.projects.reduce((sum, p) => sum + p.budget, 0);
-        const totalCost = data.projects.reduce((sum, p) => sum + p.totalCost, 0);
-        const totalVariance = totalBudget - totalCost;
-        
-        content += `
+  case 'FINANCIAL_REPORT':
+    if (data.projects) {
+      const totalBudget = data.projects.reduce((sum, p) => sum + p.budget, 0);
+      const totalCost = data.projects.reduce((sum, p) => sum + p.totalCost, 0);
+      const totalVariance = totalBudget - totalCost;
+
+      content += `
           <div class="section">
             <h2>Podsumowanie finansowe</h2>
             <div class="summary">
@@ -801,9 +801,9 @@ function generateReportHTML(type, data) {
               </thead>
               <tbody>
         `;
-        
-        data.projects.forEach(project => {
-          content += `
+
+      data.projects.forEach(project => {
+        content += `
             <tr>
               <td>${project.project}</td>
               <td>${project.budget.toFixed(2)} PLN</td>
@@ -813,19 +813,19 @@ function generateReportHTML(type, data) {
               <td><span class="${project.variance >= 0 ? 'status-positive' : 'status-negative'}">${project.variance.toFixed(2)} PLN</span></td>
             </tr>
           `;
-        });
-        
-        content += `
+      });
+
+      content += `
               </tbody>
             </table>
           </div>
         `;
-      }
-      break;
+    }
+    break;
 
-    case 'TEAM_PRODUCTIVITY':
-      if (data.workers && data.summary) {
-        content += `
+  case 'TEAM_PRODUCTIVITY':
+    if (data.workers && data.summary) {
+      content += `
           <div class="section">
             <h2>Podsumowanie zespołu</h2>
             <div class="summary">
@@ -866,9 +866,9 @@ function generateReportHTML(type, data) {
               </thead>
               <tbody>
         `;
-        
-        data.workers.forEach(worker => {
-          content += `
+
+      data.workers.forEach(worker => {
+        content += `
             <tr>
               <td>${worker.worker.name}</td>
               <td>${worker.worker.position || 'Brak'}</td>
@@ -879,19 +879,19 @@ function generateReportHTML(type, data) {
               <td><span class="${worker.metrics.efficiency >= 100 ? 'status-positive' : worker.metrics.efficiency >= 80 ? 'status-warning' : 'status-negative'}">${worker.metrics.efficiency.toFixed(1)}%</span></td>
             </tr>
           `;
-        });
-        
-        content += `
+      });
+
+      content += `
               </tbody>
             </table>
           </div>
         `;
-      }
-      break;
+    }
+    break;
 
-    case 'TASK_COMPLETION':
-      if (data.tasks && data.summary) {
-        content += `
+  case 'TASK_COMPLETION':
+    if (data.tasks && data.summary) {
+      content += `
           <div class="section">
             <h2>Podsumowanie zadań</h2>
             <div class="summary">
@@ -931,10 +931,10 @@ function generateReportHTML(type, data) {
               </thead>
               <tbody>
         `;
-        
-        data.tasks.forEach(task => {
-          const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE';
-          content += `
+
+      data.tasks.forEach(task => {
+        const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE';
+        content += `
             <tr>
               <td>${task.title}</td>
               <td><span class="${task.status === 'DONE' ? 'status-positive' : task.status === 'IN_PROGRESS' ? 'status-warning' : ''}">${task.status}</span></td>
@@ -944,19 +944,19 @@ function generateReportHTML(type, data) {
               <td><span class="${isOverdue ? 'status-negative' : ''}">${task.dueDate ? format(new Date(task.dueDate), 'dd.MM.yyyy') : 'Brak'}</span></td>
             </tr>
           `;
-        });
-        
-        content += `
+      });
+
+      content += `
               </tbody>
             </table>
           </div>
         `;
-      }
-      break;
+    }
+    break;
 
-    case 'MATERIAL_INVENTORY':
-      if (data.materials && data.summary) {
-        content += `
+  case 'MATERIAL_INVENTORY':
+    if (data.materials && data.summary) {
+      content += `
           <div class="section">
             <h2>Podsumowanie inwentarza</h2>
             <div class="summary">
@@ -997,11 +997,11 @@ function generateReportHTML(type, data) {
               </thead>
               <tbody>
         `;
-        
-        data.materials.forEach(material => {
-          const isLowStock = material.minQuantity && material.quantity <= material.minQuantity;
-          const value = material.quantity * (material.price || 0);
-          content += `
+
+      data.materials.forEach(material => {
+        const isLowStock = material.minQuantity && material.quantity <= material.minQuantity;
+        const value = material.quantity * (material.price || 0);
+        content += `
             <tr>
               <td>${material.name}</td>
               <td>${material.category || 'Brak'}</td>
@@ -1012,19 +1012,19 @@ function generateReportHTML(type, data) {
               <td><span class="${isLowStock ? 'status-negative' : 'status-positive'}">${isLowStock ? 'Niski stan' : 'OK'}</span></td>
             </tr>
           `;
-        });
-        
-        content += `
+      });
+
+      content += `
               </tbody>
             </table>
           </div>
         `;
-      }
-      break;
+    }
+    break;
 
-    case 'TIME_TRACKING':
-      if (data.tasks && data.summary) {
-        content += `
+  case 'TIME_TRACKING':
+    if (data.tasks && data.summary) {
+      content += `
           <div class="section">
             <h2>Podsumowanie czasu pracy</h2>
             <div class="summary">
@@ -1065,9 +1065,9 @@ function generateReportHTML(type, data) {
               </thead>
               <tbody>
         `;
-        
-        data.tasks.forEach(task => {
-          content += `
+
+      data.tasks.forEach(task => {
+        content += `
             <tr>
               <td>${task.title}</td>
               <td>${task.project}</td>
@@ -1078,15 +1078,15 @@ function generateReportHTML(type, data) {
               <td><span class="${task.efficiency >= 100 ? 'status-positive' : task.efficiency >= 80 ? 'status-warning' : 'status-negative'}">${task.efficiency.toFixed(1)}%</span></td>
             </tr>
           `;
-        });
-        
-        content += `
+      });
+
+      content += `
               </tbody>
             </table>
           </div>
         `;
-      }
-      break;
+    }
+    break;
   }
 
   content += `
@@ -1113,19 +1113,19 @@ function getReportTypeName(type) {
 
 function getContentType(format) {
   switch (format) {
-    case 'PDF':
-      return 'application/pdf';
-    case 'EXCEL':
-      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    default:
-      return 'application/octet-stream';
+  case 'PDF':
+    return 'application/pdf';
+  case 'EXCEL':
+    return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  default:
+    return 'application/octet-stream';
   }
 }
 
 function scheduleReportGeneration(report) {
   cron.schedule(report.schedule, async () => {
     console.log(`Generating scheduled report: ${report.id}`);
-    
+
     try {
       const newReport = await prisma.report.create({
         data: {
@@ -1140,7 +1140,7 @@ function scheduleReportGeneration(report) {
       });
 
       await generateReportAsync(newReport.id, report.type, report.config, report.fileFormat);
-      
+
     } catch (error) {
       console.error('Scheduled report generation failed:', error);
     }
@@ -1151,10 +1151,10 @@ function scheduleReportGeneration(report) {
 
 async function getTeamProductivityData(config) {
   const { companyId, period = 'monthly' } = config;
-  
+
   // Pobierz pracowników firmy
   const workers = await prisma.worker.findMany({
-    where: { 
+    where: {
       companyId,
       status: 'ACTIVE'
     },
@@ -1223,11 +1223,11 @@ async function getTeamProductivityData(config) {
 
 async function getTaskCompletionData(config) {
   const { companyId, projectId, period = 'monthly' } = config;
-  
+
   const whereClause = {
     project: { companyId }
   };
-  
+
   if (projectId) {
     whereClause.projectId = projectId;
   }
@@ -1262,7 +1262,7 @@ async function getTaskCompletionData(config) {
   };
 
   // Zadania przeterminowane
-  const overdueTasks = tasks.filter(task => 
+  const overdueTasks = tasks.filter(task =>
     task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE'
   );
 
@@ -1294,7 +1294,7 @@ async function getTaskCompletionData(config) {
 
 async function getMaterialInventoryData(config) {
   const { companyId } = config;
-  
+
   const materials = await prisma.material.findMany({
     where: { companyId },
     include: {
@@ -1309,12 +1309,12 @@ async function getMaterialInventoryData(config) {
   });
 
   // Materiały o niskim stanie
-  const lowStockMaterials = materials.filter(material => 
+  const lowStockMaterials = materials.filter(material =>
     material.minQuantity && material.quantity <= material.minQuantity
   );
 
   // Wartość całkowita inwentarza
-  const totalValue = materials.reduce((sum, material) => 
+  const totalValue = materials.reduce((sum, material) =>
     sum + (material.quantity * (material.price || 0)), 0
   );
 
@@ -1355,7 +1355,7 @@ async function getMaterialInventoryData(config) {
 
 async function getTimeTrackingData(config) {
   const { companyId, period = 'monthly' } = config;
-  
+
   // Pobierz zadania z czasem pracy
   const tasks = await prisma.task.findMany({
     where: {
@@ -1455,4 +1455,4 @@ async function getTimeTrackingData(config) {
   };
 }
 
-module.exports = router; 
+module.exports = router;

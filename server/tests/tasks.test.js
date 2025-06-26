@@ -9,7 +9,7 @@ describe('Tasks API Validation', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mock endpoints z walidacją
     app.post('/api/tasks', validate(createTaskSchema), (req, res) => {
       res.json({ success: true, data: req.body });
@@ -158,4 +158,4 @@ describe('Tasks API Validation', () => {
       expect(response.body.success).toBe(false);
     });
   });
-}); 
+});

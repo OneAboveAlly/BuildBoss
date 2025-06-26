@@ -158,4 +158,4 @@ module.exports = {
   markAsReadSchema,
   messageFiltersSchema,
   markThreadAsReadSchema
-}; 
+};

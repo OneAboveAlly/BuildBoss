@@ -10,7 +10,7 @@ describe('Notifications API Validation', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mock endpoints z walidacją
     app.get('/api/notifications', validateQuery(notificationFiltersSchema), (req, res) => {
       res.json({ success: true, query: req.query });
@@ -113,7 +113,7 @@ describe('Notifications API Validation', () => {
   describe('PUT /api/notifications/:id/read', () => {
     test('should accept valid UUID parameter', async () => {
       const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       const response = await request(app)
         .put(`/api/notifications/${validUuid}/read`)
         .expect(200);
@@ -142,7 +142,7 @@ describe('Notifications API Validation', () => {
   describe('DELETE /api/notifications/:id', () => {
     test('should accept valid UUID parameter', async () => {
       const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       const response = await request(app)
         .delete(`/api/notifications/${validUuid}`)
         .expect(200);
@@ -205,7 +205,7 @@ describe('Notifications API Validation', () => {
 
     test('should accept all valid notification types', async () => {
       const validTypes = [
-        'TASK_ASSIGNED', 'TASK_COMPLETED', 'MESSAGE_RECEIVED', 
+        'TASK_ASSIGNED', 'TASK_COMPLETED', 'MESSAGE_RECEIVED',
         'MATERIAL_LOW', 'SYSTEM_UPDATE', 'COMPANY_INVITE',
         'PROJECT_UPDATE', 'DEADLINE_REMINDER'
       ];
@@ -304,4 +304,4 @@ describe('Notifications API Validation', () => {
       expect(response.body.data.data.assignedBy.name).toBe('John Doe');
     });
   });
-}); 
+});

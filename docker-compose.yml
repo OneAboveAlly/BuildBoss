@@ -77,11 +77,11 @@ services:
       - app_uploads:/app/server/uploads
       - app_logs:/app/server/logs
     healthcheck:
-      test: ["CMD", "node", "server/healthcheck.js"]
+      test: ["CMD", "node", "server/healthcheck.js", "detailed"]
       interval: 30s
-      timeout: 10s
+      timeout: 15s
       retries: 3
-      start_period: 40s
+      start_period: 60s
     networks:
       - buildboss-network
 

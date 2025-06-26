@@ -100,7 +100,7 @@ router.get('/data-summary', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const summary = await getUserDataSummary(userId);
-    
+
     res.json({
       success: true,
       data: summary
@@ -120,7 +120,7 @@ router.post('/export-data', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { format = 'json' } = req.body;
-    
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -181,7 +181,7 @@ router.post('/export-data', authenticateToken, async (req, res) => {
         ]
       }
     };
-    
+
     if (format === 'json') {
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="siteboss-data-export-${userId}-${Date.now()}.json"`);
@@ -207,7 +207,7 @@ router.post('/delete-account', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { confirmation } = req.body;
-    
+
     // Require explicit confirmation
     if (confirmation !== 'DELETE_MY_ACCOUNT') {
       return res.status(400).json({
@@ -215,7 +215,7 @@ router.post('/delete-account', authenticateToken, async (req, res) => {
         message: 'Account deletion requires explicit confirmation. Please provide confirmation: "DELETE_MY_ACCOUNT"'
       });
     }
-    
+
     // Start transaction to delete all user data
     const result = await prisma.$transaction(async (tx) => {
       // 1. Delete notifications
@@ -266,7 +266,7 @@ router.post('/delete-account', authenticateToken, async (req, res) => {
 
       // Delete tasks created by user (if no other dependencies)
       await tx.task.deleteMany({
-        where: { 
+        where: {
           createdById: userId,
           assignedToId: null
         }
@@ -315,7 +315,7 @@ router.post('/delete-account', authenticateToken, async (req, res) => {
 
       return { success: true, deletedUserId: userId };
     });
-    
+
     res.json({
       success: true,
       message: 'Account and all associated data have been permanently deleted',
@@ -401,7 +401,7 @@ router.get('/processing-info', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const summary = await getUserDataSummary(userId);
-    
+
     res.json({
       success: true,
       data: {
@@ -468,4 +468,4 @@ router.get('/processing-info', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -12,8 +12,8 @@ router.get('/global', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     if (!query || query.trim().length < 2) {
-      return res.status(400).json({ 
-        error: 'Zapytanie musi mieć co najmniej 2 znaki' 
+      return res.status(400).json({
+        error: 'Zapytanie musi mieć co najmniej 2 znaki'
       });
     }
 
@@ -272,7 +272,7 @@ router.get('/global', authenticateToken, async (req, res) => {
     }
 
     // Oblicz całkowitą liczbę wyników
-    results.total = results.projects.length + results.tasks.length + 
+    results.total = results.projects.length + results.tasks.length +
                    results.materials.length + results.users.length + results.companies.length;
 
     // Zapisz historię wyszukiwania
@@ -528,8 +528,8 @@ router.post('/save', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     if (!name || !query) {
-      return res.status(400).json({ 
-        error: 'Nazwa i zapytanie są wymagane' 
+      return res.status(400).json({
+        error: 'Nazwa i zapytanie są wymagane'
       });
     }
 
@@ -542,8 +542,8 @@ router.post('/save', authenticateToken, async (req, res) => {
     });
 
     if (existing) {
-      return res.status(400).json({ 
-        error: 'Wyszukiwanie o tej nazwie już istnieje' 
+      return res.status(400).json({
+        error: 'Wyszukiwanie o tej nazwie już istnieje'
       });
     }
 

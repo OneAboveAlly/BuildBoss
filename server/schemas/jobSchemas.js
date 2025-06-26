@@ -162,11 +162,11 @@ const createJobSchema = Joi.object({
       'string.max': 'Email może mieć maksimum 255 znaków'
     }),
 
-  contactPhone: Joi.string()
-    .pattern(/^[\+]?[0-9\s\-\(\)]{9,20}$/)
-    .allow('')
+  phone: Joi.string()
+    .pattern(/^(\+48)?[0-9\s()-]{8,15}$/)
+    .optional()
     .messages({
-      'string.pattern.base': 'Nieprawidłowy format numeru telefonu'
+      'string.pattern.base': 'Numer telefonu musi być prawidłowy (8-15 znaków, może zawierać +48, cyfry, spacje, nawiasy i myślniki)'
     }),
 
   isPublic: Joi.boolean()
@@ -284,9 +284,12 @@ const updateJobSchema = Joi.object({
     .max(255)
     .allow(''),
 
-  contactPhone: Joi.string()
-    .pattern(/^[\+]?[0-9\s\-\(\)]{9,20}$/)
-    .allow(''),
+  phone: Joi.string()
+    .pattern(/^(\+48)?[0-9\s()-]{8,15}$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'Numer telefonu musi być prawidłowy (8-15 znaków, może zawierać +48, cyfry, spacje, nawiasy i myślniki)'
+    }),
 
   isActive: Joi.boolean(),
 
@@ -393,4 +396,4 @@ module.exports = {
   applyJobSchema,
   JOB_CATEGORIES,
   VOIVODESHIPS
-}; 
+};

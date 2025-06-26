@@ -51,36 +51,36 @@ router.post('/stripe', parseRawBody, async (req, res) => {
   try {
     // Obsłuż różne typy zdarzeń
     switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object);
-        break;
+    case 'checkout.session.completed':
+      await handleCheckoutSessionCompleted(event.data.object);
+      break;
 
-      case 'customer.subscription.created':
-        await handleSubscriptionCreated(event.data.object);
-        break;
+    case 'customer.subscription.created':
+      await handleSubscriptionCreated(event.data.object);
+      break;
 
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object);
-        break;
+    case 'customer.subscription.updated':
+      await handleSubscriptionUpdated(event.data.object);
+      break;
 
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object);
-        break;
+    case 'customer.subscription.deleted':
+      await handleSubscriptionDeleted(event.data.object);
+      break;
 
-      case 'invoice.payment_succeeded':
-        await handleInvoicePaymentSucceeded(event.data.object);
-        break;
+    case 'invoice.payment_succeeded':
+      await handleInvoicePaymentSucceeded(event.data.object);
+      break;
 
-      case 'invoice.payment_failed':
-        await handleInvoicePaymentFailed(event.data.object);
-        break;
+    case 'invoice.payment_failed':
+      await handleInvoicePaymentFailed(event.data.object);
+      break;
 
-      case 'customer.subscription.trial_will_end':
-        await handleTrialWillEnd(event.data.object);
-        break;
+    case 'customer.subscription.trial_will_end':
+      await handleTrialWillEnd(event.data.object);
+      break;
 
-      default:
-        console.log(`Nieobsługiwany typ zdarzenia: ${event.type}`);
+    default:
+      console.log(`Nieobsługiwany typ zdarzenia: ${event.type}`);
     }
 
     res.json({ received: true });
@@ -93,7 +93,7 @@ router.post('/stripe', parseRawBody, async (req, res) => {
 // Obsługa zakończonej sesji checkout
 async function handleCheckoutSessionCompleted(session) {
   console.log('Checkout session completed:', session.id);
-  
+
   const userId = session.metadata.userId;
   const planId = session.metadata.planId;
 
@@ -116,9 +116,9 @@ async function handleCheckoutSessionCompleted(session) {
   const stripeSubscription = await stripe.subscriptions.retrieve(session.subscription);
 
   // Utwórz lub zaktualizuj subskrypcję w bazie danych
-  const trialEndDate = stripeSubscription.trial_end ? 
+  const trialEndDate = stripeSubscription.trial_end ?
     new Date(stripeSubscription.trial_end * 1000) : null;
-  const nextBillingDate = stripeSubscription.current_period_end ? 
+  const nextBillingDate = stripeSubscription.current_period_end ?
     new Date(stripeSubscription.current_period_end * 1000) : null;
 
   await prisma.subscription.upsert({
@@ -150,7 +150,7 @@ async function handleCheckoutSessionCompleted(session) {
 // Obsługa utworzenia subskrypcji
 async function handleSubscriptionCreated(subscription) {
   console.log('Subscription created:', subscription.id);
-  
+
   const userId = subscription.metadata.userId;
   const planId = subscription.metadata.planId;
 
@@ -159,9 +159,9 @@ async function handleSubscriptionCreated(subscription) {
     return;
   }
 
-  const trialEndDate = subscription.trial_end ? 
+  const trialEndDate = subscription.trial_end ?
     new Date(subscription.trial_end * 1000) : null;
-  const nextBillingDate = subscription.current_period_end ? 
+  const nextBillingDate = subscription.current_period_end ?
     new Date(subscription.current_period_end * 1000) : null;
 
   await prisma.subscription.upsert({
@@ -189,7 +189,7 @@ async function handleSubscriptionCreated(subscription) {
 // Obsługa aktualizacji subskrypcji
 async function handleSubscriptionUpdated(subscription) {
   console.log('Subscription updated:', subscription.id);
-  
+
   const dbSubscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: subscription.id }
   });
@@ -199,7 +199,7 @@ async function handleSubscriptionUpdated(subscription) {
     return;
   }
 
-  const nextBillingDate = subscription.current_period_end ? 
+  const nextBillingDate = subscription.current_period_end ?
     new Date(subscription.current_period_end * 1000) : null;
 
   await prisma.subscription.update({
@@ -215,7 +215,7 @@ async function handleSubscriptionUpdated(subscription) {
 // Obsługa usunięcia subskrypcji
 async function handleSubscriptionDeleted(subscription) {
   console.log('Subscription deleted:', subscription.id);
-  
+
   const dbSubscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: subscription.id }
   });
@@ -238,7 +238,7 @@ async function handleSubscriptionDeleted(subscription) {
 // Obsługa udanej płatności
 async function handleInvoicePaymentSucceeded(invoice) {
   console.log('Invoice payment succeeded:', invoice.id);
-  
+
   const subscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: invoice.subscription }
   });
@@ -277,7 +277,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
 // Obsługa nieudanej płatności
 async function handleInvoicePaymentFailed(invoice) {
   console.log('Invoice payment failed:', invoice.id);
-  
+
   const subscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: invoice.subscription }
   });
@@ -312,7 +312,7 @@ async function handleInvoicePaymentFailed(invoice) {
 // Obsługa końca okresu próbnego
 async function handleTrialWillEnd(subscription) {
   console.log('Trial will end:', subscription.id);
-  
+
   const dbSubscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: subscription.id },
     include: { user: true }
@@ -327,4 +327,4 @@ async function handleTrialWillEnd(subscription) {
   console.log(`Okres próbny kończy się dla użytkownika: ${dbSubscription.user.email}`);
 }
 
-module.exports = router; 
+module.exports = router;

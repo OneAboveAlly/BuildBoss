@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, requireRole } = require('../middleware/auth');
-const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { authenticateToken, _requireRole } = require('../middleware/auth');
+const { validate, validateParams, _validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
 const { sendEmail } = require('../utils/email');
-const { 
-  createCompanySchema, 
-  updateCompanySchema, 
-  inviteWorkerSchema, 
-  updateWorkerSchema,
-  searchUsersSchema 
+const {
+  createCompanySchema,
+  _updateCompanySchema,
+  _inviteWorkerSchema,
+  _updateWorkerSchema,
+  _searchUsersSchema
 } = require('../schemas/companySchemas');
-const { idSchema, paginationSchema } = require('../schemas/commonSchemas');
+const { idSchema, _paginationSchema } = require('../schemas/commonSchemas');
 
 const prisma = new PrismaClient();
 
@@ -20,13 +20,13 @@ const prisma = new PrismaClient();
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Pobierz firmy gdzie użytkownik jest twórcą lub pracownikiem
     const companies = await prisma.company.findMany({
       where: {
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -70,7 +70,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const companiesWithRole = companies.map(company => {
       const isOwner = company.createdById === userId;
       const workerProfile = company.workers.find(w => w.userId === userId);
-      
+
       return {
         ...company,
         userRole: isOwner ? 'OWNER' : 'WORKER',
@@ -113,7 +113,7 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
         id,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -200,9 +200,9 @@ router.post('/', authenticateToken, validate(createCompanySchema), async (req, r
         where: { nip }
       });
       if (existingCompany) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           success: false,
-          message: 'Firma z tym NIP już istnieje' 
+          message: 'Firma z tym NIP już istnieje'
         });
       }
     }
@@ -265,7 +265,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         id,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -808,4 +808,4 @@ router.post('/:id/workers/bulk-invite', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

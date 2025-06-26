@@ -32,11 +32,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'", "https:", "data:"],
+      fontSrc: ["'self'", 'https:', 'data:'],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"]
@@ -54,7 +54,7 @@ const limiter = rateLimit({
     success: false
   },
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: false
 });
 
 // Rate limiting dla uwierzytelniania (bardziej restrykcyjne)
@@ -66,7 +66,7 @@ const authLimiter = rateLimit({
     success: false
   },
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: false
 });
 
 // Zastosuj podstawowy rate limiting do wszystkich requestów
@@ -118,16 +118,8 @@ app.use(passport.session());
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'SiteBoss Server is running!',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    language: req.language || 'pl'
-  });
-});
+// Health check routes
+app.use('/api/health', require('./routes/health'));
 
 // API Routes
 app.use('/api/auth', authLimiter, require('./routes/auth'));
@@ -158,14 +150,14 @@ app.use('/api/tags', require('./routes/tags'));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: req.t ? req.t('errors:general.not_found') : 'Route not found',
     message: `Cannot ${req.method} ${req.originalUrl}`
   });
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error('Global error handler', {
     error: err.message,
     stack: err.stack,
@@ -175,7 +167,7 @@ app.use((err, req, res, next) => {
     userAgent: req.get('User-Agent'),
     userId: req.user?.id
   });
-  
+
   // Prisma errors
   if (err.code === 'P2002') {
     return res.status(400).json({
@@ -183,7 +175,7 @@ app.use((err, req, res, next) => {
       message: req.t ? req.t('errors:database.duplicate_entry') : 'This record already exists'
     });
   }
-  
+
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
@@ -191,7 +183,7 @@ app.use((err, req, res, next) => {
       message: req.t ? req.t('errors:auth.token_invalid') : 'Please login again'
     });
   }
-  
+
   // Default error
   res.status(err.status || 500).json({
     error: err.message || (req.t ? req.t('errors:general.internal_server_error') : 'Internal server error'),
@@ -215,4 +207,4 @@ server.listen(PORT, () => {
       logging: true
     }
   });
-}); 
+});

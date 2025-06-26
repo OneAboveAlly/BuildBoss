@@ -9,7 +9,7 @@ describe('Validation Middleware', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Test endpoint z walidacją
     app.post('/test', validate(registerSchema), (req, res) => {
       res.json({ success: true, data: req.body });
@@ -102,4 +102,4 @@ describe('Validation Middleware', () => {
       expect(response.body.success).toBe(false);
     });
   });
-}); 
+});

@@ -74,7 +74,7 @@ const emailSchema = Joi.string()
 
 // Schemat telefonu (opcjonalny format polski)
 const phoneSchema = Joi.string()
-  .pattern(/^(\+48)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{3}[\s\-]?[0-9]{3}$/)
+  .pattern(/^(\+48)?[\s-]?[0-9]{3}[\s-]?[0-9]{3}[\s-]?[0-9]{3}$/)
   .optional()
   .messages({
     'string.pattern.base': 'Podaj prawidłowy numer telefonu (format: +48 123 456 789)'
@@ -105,4 +105,4 @@ module.exports = {
   phoneSchema,
   urlSchema,
   nipSchema
-}; 
+};

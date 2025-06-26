@@ -22,7 +22,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
         where: {
           OR: [
             { createdById: userId },
-            { 
+            {
               workers: {
                 some: {
                   userId: userId,
@@ -33,12 +33,12 @@ router.get('/stats', authenticateToken, async (req, res) => {
           ]
         }
       }),
-      
+
       // Firmy gdzie jest właścicielem
       prisma.company.count({
         where: { createdById: userId }
       }),
-      
+
       // Firmy gdzie jest pracownikiem
       prisma.worker.count({
         where: {
@@ -46,7 +46,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
           status: 'ACTIVE'
         }
       }),
-      
+
       // Oczekujące zaproszenia
       prisma.worker.count({
         where: {
@@ -80,7 +80,7 @@ router.get('/recent-activity', authenticateToken, async (req, res) => {
       where: {
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -185,7 +185,7 @@ router.get('/company-stats/:id', authenticateToken, async (req, res) => {
         id,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -212,19 +212,19 @@ router.get('/company-stats/:id', authenticateToken, async (req, res) => {
         where: { companyId: id }
       }),
       prisma.worker.count({
-        where: { 
+        where: {
           companyId: id,
           status: 'ACTIVE'
         }
       }),
       prisma.worker.count({
-        where: { 
+        where: {
           companyId: id,
           status: 'INVITED'
         }
       }),
       prisma.worker.count({
-        where: { 
+        where: {
           companyId: id,
           status: { in: ['INACTIVE', 'LEFT'] }
         }
@@ -245,4 +245,4 @@ router.get('/company-stats/:id', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

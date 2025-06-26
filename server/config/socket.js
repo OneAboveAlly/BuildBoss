@@ -13,8 +13,8 @@ class SocketManager {
   initialize(server) {
     this.io = new Server(server, {
       cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:5173",
-        methods: ["GET", "POST"],
+        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        methods: ['GET', 'POST'],
         credentials: true
       }
     });
@@ -48,7 +48,7 @@ class SocketManager {
 
     this.io.on('connection', (socket) => {
       console.log(`User ${socket.user.email} connected (${socket.id})`);
-      
+
       // Zapisz połączenie użytkownika
       this.connectedUsers.set(socket.userId, socket.id);
 
@@ -143,7 +143,7 @@ class SocketManager {
       });
 
       // Wyślij powiadomienie do każdego pracownika
-      const promises = workers.map(worker => 
+      const promises = workers.map(worker =>
         this.sendNotificationToUser(worker.userId, notification)
       );
 
@@ -164,7 +164,7 @@ class SocketManager {
       });
 
       // Wyślij powiadomienie do każdego użytkownika
-      const promises = users.map(user => 
+      const promises = users.map(user =>
         this.sendNotificationToUser(user.id, notification)
       );
 
@@ -189,4 +189,4 @@ class SocketManager {
 // Singleton instance
 const socketManager = new SocketManager();
 
-module.exports = socketManager; 
+module.exports = socketManager;

@@ -15,8 +15,13 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "echo 'ESLint not configured yet'",
-    "build": "echo 'Build process for production'"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "echo 'Build process for production'",
+    "health": "node healthcheck.js",
+    "health:detailed": "node healthcheck.js detailed",
+    "health:database": "node healthcheck.js database",
+    "health:system": "node healthcheck.js system"
   },
   "keywords": [
     "construction",
@@ -61,7 +66,9 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "@types/jest": "^30.0.0",
+    "eslint": "^9.29.0",
     "jest": "^30.0.3",
     "nodemon": "^3.1.9",
     "supertest": "^7.1.1"

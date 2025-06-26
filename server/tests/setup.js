@@ -21,4 +21,4 @@ jest.setTimeout(30000);
 
 // Suppress console warnings in tests
 console.warn = jest.fn();
-console.error = jest.fn(); 
+console.error = jest.fn();

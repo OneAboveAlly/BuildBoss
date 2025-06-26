@@ -17,11 +17,11 @@ const readLegalDocument = async (type, lang) => {
   try {
     const validLang = validateLanguage(lang);
     const filePath = path.join(__dirname, '..', 'legal', type, `${type}-${validLang}.md`);
-    
+
     // Check if file exists
     await fs.access(filePath);
     const content = await fs.readFile(filePath, 'utf8');
-    
+
     return {
       success: true,
       content,
@@ -29,12 +29,12 @@ const readLegalDocument = async (type, lang) => {
       type,
       lastModified: (await fs.stat(filePath)).mtime
     };
-  } catch (error) {
+  } catch {
     // If specific language file doesn't exist, try default language
     if (lang !== DEFAULT_LANGUAGE) {
       return readLegalDocument(type, DEFAULT_LANGUAGE);
     }
-    
+
     throw new Error(`Legal document not found: ${type}-${lang}`);
   }
 };
@@ -44,17 +44,15 @@ router.get('/terms/:lang?', async (req, res) => {
   try {
     const lang = req.params.lang || DEFAULT_LANGUAGE;
     const document = await readLegalDocument('terms', lang);
-    
+
     res.json({
       success: true,
       data: document
     });
-  } catch (error) {
-    console.error('Error fetching terms:', error);
-    res.status(404).json({
+  } catch {
+    return res.status(404).json({
       success: false,
-      message: 'Terms of Service not found',
-      error: error.message
+      message: 'Dokument nie został znaleziony'
     });
   }
 });
@@ -64,17 +62,15 @@ router.get('/privacy/:lang?', async (req, res) => {
   try {
     const lang = req.params.lang || DEFAULT_LANGUAGE;
     const document = await readLegalDocument('privacy', lang);
-    
+
     res.json({
       success: true,
       data: document
     });
-  } catch (error) {
-    console.error('Error fetching privacy policy:', error);
-    res.status(404).json({
+  } catch {
+    return res.status(404).json({
       success: false,
-      message: 'Privacy Policy not found',
-      error: error.message
+      message: 'Dokument nie został znaleziony'
     });
   }
 });
@@ -84,17 +80,15 @@ router.get('/gdpr/:lang?', async (req, res) => {
   try {
     const lang = req.params.lang || DEFAULT_LANGUAGE;
     const document = await readLegalDocument('gdpr', lang);
-    
+
     res.json({
       success: true,
       data: document
     });
-  } catch (error) {
-    console.error('Error fetching GDPR information:', error);
-    res.status(404).json({
+  } catch {
+    return res.status(404).json({
       success: false,
-      message: 'GDPR Information not found',
-      error: error.message
+      message: 'Dokument nie został znaleziony'
     });
   }
 });
@@ -120,13 +114,13 @@ router.get('/languages', (req, res) => {
 router.get('/all/:lang?', async (req, res) => {
   try {
     const lang = req.params.lang || DEFAULT_LANGUAGE;
-    
+
     const [terms, privacy, gdpr] = await Promise.all([
       readLegalDocument('terms', lang),
       readLegalDocument('privacy', lang),
       readLegalDocument('gdpr', lang)
     ]);
-    
+
     res.json({
       success: true,
       data: {
@@ -138,13 +132,8 @@ router.get('/all/:lang?', async (req, res) => {
         }
       }
     });
-  } catch (error) {
-    console.error('Error fetching all legal documents:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching legal documents',
-      error: error.message
-    });
+  } catch {
+    throw new Error('Błąd podczas pobierania dokumentów prawnych');
   }
 });
 
@@ -152,10 +141,10 @@ router.get('/all/:lang?', async (req, res) => {
 router.get('/status', async (req, res) => {
   try {
     const status = {};
-    
+
     for (const lang of SUPPORTED_LANGUAGES) {
       status[lang] = {};
-      
+
       for (const type of ['terms', 'privacy', 'gdpr']) {
         try {
           const filePath = path.join(__dirname, '..', 'legal', type, `${type}-${lang}.md`);
@@ -165,7 +154,7 @@ router.get('/status', async (req, res) => {
             lastModified: stats.mtime,
             size: stats.size
           };
-        } catch (error) {
+        } catch {
           status[lang][type] = {
             exists: false,
             error: 'File not found'
@@ -173,19 +162,14 @@ router.get('/status', async (req, res) => {
         }
       }
     }
-    
+
     res.json({
       success: true,
       data: status
     });
-  } catch (error) {
-    console.error('Error checking legal documents status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error checking legal documents status',
-      error: error.message
-    });
+  } catch {
+    throw new Error('Błąd podczas pobierania statusu dokumentów prawnych');
   }
 });
 
-module.exports = router; 
+module.exports = router;

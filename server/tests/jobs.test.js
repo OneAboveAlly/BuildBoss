@@ -9,7 +9,7 @@ describe('Jobs API Validation', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mock endpoints z walidacją
     app.post('/api/jobs', validate(createJobSchema), (req, res) => {
       res.json({ success: true, data: req.body });
@@ -45,7 +45,7 @@ describe('Jobs API Validation', () => {
         requirements: ['React', 'TypeScript', 'Node.js'],
         benefits: ['Praca zdalna', 'Prywatna opieka medyczna'],
         contactEmail: 'hr@example.com',
-        contactPhone: '+48 123 456 789',
+        phone: '+48 123 456 789',
         companyId: '123e4567-e89b-12d3-a456-426614174000'
       };
 
@@ -358,4 +358,4 @@ describe('Jobs API Validation', () => {
       expect(response.body.success).toBe(false);
     });
   });
-}); 
+});

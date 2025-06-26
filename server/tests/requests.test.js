@@ -9,7 +9,7 @@ describe('Requests API Validation', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mock endpoints z walidacją
     app.post('/api/requests', validate(createRequestSchema), (req, res) => {
       res.json({ success: true, data: req.body });
@@ -342,4 +342,4 @@ describe('Requests API Validation', () => {
       expect(response.body.success).toBe(false);
     });
   });
-}); 
+});

@@ -7,14 +7,14 @@ const authenticateToken = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Token dostępu wymagany' 
+      return res.status(401).json({
+        success: false,
+        message: 'Token dostępu wymagany'
       });
     }
 
     const decoded = verifyToken(token);
-    
+
     // Sprawdź czy użytkownik nadal istnieje
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -30,9 +30,9 @@ const authenticateToken = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Użytkownik nie istnieje' 
+      return res.status(401).json({
+        success: false,
+        message: 'Użytkownik nie istnieje'
       });
     }
 
@@ -40,9 +40,9 @@ const authenticateToken = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(403).json({ 
-      success: false, 
-      message: 'Nieprawidłowy token' 
+    return res.status(403).json({
+      success: false,
+      message: 'Nieprawidłowy token'
     });
   }
 };
@@ -50,16 +50,16 @@ const authenticateToken = async (req, res, next) => {
 const requireRole = (roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Autoryzacja wymagana' 
+      return res.status(401).json({
+        success: false,
+        message: 'Autoryzacja wymagana'
       });
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Brak uprawnień' 
+      return res.status(403).json({
+        success: false,
+        message: 'Brak uprawnień'
       });
     }
 
@@ -69,16 +69,16 @@ const requireRole = (roles) => {
 
 const requireEmailConfirmed = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Autoryzacja wymagana' 
+    return res.status(401).json({
+      success: false,
+      message: 'Autoryzacja wymagana'
     });
   }
 
   if (!req.user.isEmailConfirmed) {
-    return res.status(403).json({ 
-      success: false, 
-      message: 'Email nie został potwierdzony' 
+    return res.status(403).json({
+      success: false,
+      message: 'Email nie został potwierdzony'
     });
   }
 
@@ -97,7 +97,7 @@ const optionalAuth = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
-    
+
     // Sprawdź czy użytkownik nadal istnieje
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -114,7 +114,7 @@ const optionalAuth = async (req, res, next) => {
 
     req.user = user || null;
     next();
-  } catch (error) {
+  } catch {
     // Błąd tokenu - kontynuuj bez użytkownika
     req.user = null;
     next();
@@ -126,4 +126,4 @@ module.exports = {
   requireRole,
   requireEmailConfirmed,
   optionalAuth
-}; 
+};

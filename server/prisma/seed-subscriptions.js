@@ -103,4 +103,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { seedSubscriptionPlans }; 
+module.exports = { seedSubscriptionPlans };

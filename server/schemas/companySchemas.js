@@ -176,4 +176,4 @@ module.exports = {
   inviteWorkerSchema,
   updateWorkerSchema,
   searchUsersSchema
-}; 
+};

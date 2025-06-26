@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { SUBSCRIPTION_PLANS } = require('../config/stripe');
+const { SUBSCRIPTION_PLANS: _SUBSCRIPTION_PLANS } = require('../config/stripe');
 
 const prisma = new PrismaClient();
 
@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const checkActiveSubscription = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    
+
     const subscription = await prisma.subscription.findUnique({
       where: { userId },
       include: { plan: true }
@@ -22,8 +22,8 @@ const checkActiveSubscription = async (req, res, next) => {
 
     // Sprawdź czy subskrypcja jest aktywna lub w okresie próbnym
     const now = new Date();
-    const isTrialActive = subscription.status === 'TRIAL' && 
-                         subscription.trialEndDate && 
+    const isTrialActive = subscription.status === 'TRIAL' &&
+                         subscription.trialEndDate &&
                          subscription.trialEndDate > now;
     const isSubscriptionActive = subscription.status === 'ACTIVE';
 
@@ -38,7 +38,7 @@ const checkActiveSubscription = async (req, res, next) => {
     // Dodaj informacje o subskrypcji do request
     req.subscription = subscription;
     req.planLimits = subscription.plan;
-    
+
     next();
   } catch (error) {
     console.error('Błąd sprawdzania subskrypcji:', error);
@@ -66,64 +66,69 @@ const checkResourceLimit = (resourceType) => {
       let resourceName = '';
 
       switch (resourceType) {
-        case 'companies':
-          currentCount = await prisma.company.count({
-            where: { createdById: userId }
-          });
-          maxAllowed = planLimits.maxCompanies;
-          resourceName = 'firm';
-          break;
+      case 'companies': {
+        currentCount = await prisma.company.count({
+          where: { createdById: userId }
+        });
+        maxAllowed = planLimits.maxCompanies;
+        resourceName = 'firm';
+        break;
+      }
 
-        case 'projects':
-          // Zlicz projekty we wszystkich firmach użytkownika
-          const userCompanies = await prisma.company.findMany({
-            where: { createdById: userId },
-            select: { id: true }
-          });
-          const companyIds = userCompanies.map(c => c.id);
-          
-          currentCount = await prisma.project.count({
-            where: { companyId: { in: companyIds } }
-          });
-          maxAllowed = planLimits.maxProjects;
-          resourceName = 'projektów';
-          break;
+      case 'projects': {
+        // Zlicz projekty we wszystkich firmach użytkownika
+        const userCompanies = await prisma.company.findMany({
+          where: { createdById: userId },
+          select: { id: true }
+        });
+        const companyIds = userCompanies.map(c => c.id);
 
-        case 'workers':
-          const companies = await prisma.company.findMany({
-            where: { createdById: userId },
-            select: { id: true }
-          });
-          const compIds = companies.map(c => c.id);
-          
-          currentCount = await prisma.worker.count({
-            where: { companyId: { in: compIds } }
-          });
-          maxAllowed = planLimits.maxWorkers;
-          resourceName = 'pracowników';
-          break;
+        currentCount = await prisma.project.count({
+          where: { companyId: { in: companyIds } }
+        });
+        maxAllowed = planLimits.maxProjects;
+        resourceName = 'projektów';
+        break;
+      }
 
-        case 'jobOffers':
-          currentCount = await prisma.jobOffer.count({
-            where: { createdById: userId, isActive: true }
-          });
-          maxAllowed = planLimits.maxJobOffers;
-          resourceName = 'ogłoszeń o pracę';
-          break;
+      case 'workers': {
+        const companies = await prisma.company.findMany({
+          where: { createdById: userId },
+          select: { id: true }
+        });
+        const compIds = companies.map(c => c.id);
 
-        case 'workRequests':
-          currentCount = await prisma.workRequest.count({
-            where: { createdById: userId, isActive: true }
-          });
-          maxAllowed = planLimits.maxWorkRequests;
-          resourceName = 'zleceń pracy';
-          break;
+        currentCount = await prisma.worker.count({
+          where: { companyId: { in: compIds } }
+        });
+        maxAllowed = planLimits.maxWorkers;
+        resourceName = 'pracowników';
+        break;
+      }
 
-        default:
-          return res.status(400).json({
-            error: 'Nieznany typ zasobu',
-            message: 'Nie można sprawdzić limitu dla tego typu zasobu.'
-          });
+      case 'jobOffers': {
+        currentCount = await prisma.jobOffer.count({
+          where: { createdById: userId, isActive: true }
+        });
+        maxAllowed = planLimits.maxJobOffers;
+        resourceName = 'ogłoszeń o pracę';
+        break;
+      }
+
+      case 'workRequests': {
+        currentCount = await prisma.workRequest.count({
+          where: { createdById: userId, isActive: true }
+        });
+        maxAllowed = planLimits.maxWorkRequests;
+        resourceName = 'zleceń pracy';
+        break;
+      }
+
+      default:
+        return res.status(400).json({
+          error: 'Nieznany typ zasobu',
+          message: 'Nie można sprawdzić limitu dla tego typu zasobu.'
+        });
       }
 
       // -1 oznacza unlimited (plan Enterprise)
@@ -221,4 +226,4 @@ module.exports = {
   checkResourceLimit,
   checkPremiumFeature,
   getUsageStats
-}; 
+};

@@ -37,7 +37,7 @@ async function createSuperAdmin() {
         firstName,
         lastName,
         role: 'SUPERADMIN',
-        isEmailConfirmed: true, // Automatycznie potwierdź email
+        isEmailConfirmed: true // Automatycznie potwierdź email
       },
       select: {
         id: true,
@@ -68,4 +68,4 @@ async function createSuperAdmin() {
 }
 
 // Uruchom skrypt
-createSuperAdmin(); 
+createSuperAdmin();

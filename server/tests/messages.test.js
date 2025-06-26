@@ -9,7 +9,7 @@ describe('Messages API Validation', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mock endpoint z walidacją
     app.post('/api/messages', validate(createMessageSchema), (req, res) => {
       res.json({ success: true, data: req.body });
@@ -161,4 +161,4 @@ describe('Messages API Validation', () => {
       expect(response.body.success).toBe(false);
     });
   });
-}); 
+});

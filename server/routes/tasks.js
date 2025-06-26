@@ -4,11 +4,11 @@ const { authenticateToken } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
 const { notifyTaskAssigned, notifyTaskCompleted } = require('./notifications');
-const { 
-  createTaskSchema, 
-  updateTaskSchema, 
+const {
+  createTaskSchema,
+  updateTaskSchema,
   updateTaskStatusSchema,
-  taskFiltersSchema 
+  taskFiltersSchema
 } = require('../schemas/taskSchemas');
 const { idSchema } = require('../schemas/commonSchemas');
 
@@ -26,7 +26,7 @@ router.get('/', authenticateToken, validateQuery(taskFiltersSchema), async (req,
 
     if (projectId) {
       where.projectId = projectId;
-      
+
       // Sprawdź dostęp do projektu
       const project = await prisma.project.findUnique({
         where: { id: projectId },
@@ -50,7 +50,7 @@ router.get('/', authenticateToken, validateQuery(taskFiltersSchema), async (req,
           id: project.company.id,
           OR: [
             { createdById: userId },
-            { 
+            {
               workers: {
                 some: {
                   userId: userId,
@@ -72,7 +72,7 @@ router.get('/', authenticateToken, validateQuery(taskFiltersSchema), async (req,
           id: companyId,
           OR: [
             { createdById: userId },
-            { 
+            {
               workers: {
                 some: {
                   userId: userId,
@@ -97,7 +97,7 @@ router.get('/', authenticateToken, validateQuery(taskFiltersSchema), async (req,
         where: {
           OR: [
             { createdById: userId },
-            { 
+            {
               workers: {
                 some: {
                   userId: userId,
@@ -246,7 +246,7 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
         id: task.project.company.id,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -283,7 +283,7 @@ router.post('/', authenticateToken, validate(createTaskSchema), async (req, res)
       userId: req.user.id,
       requestBody: req.body
     });
-    
+
     const {
       title,
       description,
@@ -324,7 +324,7 @@ router.post('/', authenticateToken, validate(createTaskSchema), async (req, res)
         id: project.company.id,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -343,23 +343,23 @@ router.post('/', authenticateToken, validate(createTaskSchema), async (req, res)
 
     // Process assignedToId
     let assignedToId = rawAssignedToId;
-    
+
     // Sprawdź czy assignedToId jest prawidłowy (jeśli podany)
     if (assignedToId) {
       logger.debug('Processing assignedToId for task creation', { assignedToId, userId });
-      
+
       // Handle special case for "current-user"
       if (assignedToId === 'current-user') {
         assignedToId = userId;
         logger.debug('Converted current-user to actual userId', { assignedToId });
       }
-      
+
       const assignedUserCompany = await prisma.company.findFirst({
         where: {
           id: project.company.id,
           OR: [
             { createdById: assignedToId },
-            { 
+            {
               workers: {
                 some: {
                   userId: assignedToId,
@@ -372,10 +372,10 @@ router.post('/', authenticateToken, validate(createTaskSchema), async (req, res)
       });
 
       if (!assignedUserCompany) {
-        logger.warn('User not found in company for task assignment', { 
-          assignedToId, 
+        logger.warn('User not found in company for task assignment', {
+          assignedToId,
           companyId: project.company.id,
-          userId 
+          userId
         });
         return res.status(400).json({ error: 'Wybrany użytkownik nie jest członkiem tej firmy' });
       }
@@ -467,7 +467,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateT
     const { id } = req.params;
     console.log('PUT /api/tasks/:id - Request body:', req.body);
     console.log('PUT /api/tasks/:id - User ID:', req.user.id);
-    
+
     const {
       title,
       description,
@@ -499,7 +499,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateT
         id: existingTask.project.companyId,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -531,7 +531,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateT
     const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
     const isCreator = existingTask.createdById === userId;
     const isAssigned = existingTask.assignedToId === userId;
-    
+
     const canEdit = isOwner || workerCanEdit || isCreator || isAssigned;
 
     if (!canEdit) {
@@ -540,23 +540,23 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateT
 
     // Process assignedToId
     let assignedToId = rawAssignedToId;
-    
+
     // Sprawdź czy assignedToId jest prawidłowy (jeśli podany)
     if (assignedToId) {
       console.log('Checking assignedToId for update:', assignedToId);
-      
+
       // Handle special case for "current-user"
       if (assignedToId === 'current-user') {
         assignedToId = userId;
         console.log('Converting current-user to actual userId:', assignedToId);
       }
-      
+
       const assignedUserCompany = await prisma.company.findFirst({
         where: {
           id: existingTask.project.companyId,
           OR: [
             { createdById: assignedToId },
-            { 
+            {
               workers: {
                 some: {
                   userId: assignedToId,
@@ -668,7 +668,7 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
         id: existingTask.project.companyId,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -743,7 +743,7 @@ router.patch('/:id/status', authenticateToken, validateParams(idSchema), validat
         id: existingTask.project.companyId,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -775,7 +775,7 @@ router.patch('/:id/status', authenticateToken, validateParams(idSchema), validat
     const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
     const isCreator = existingTask.createdById === userId;
     const isAssigned = existingTask.assignedToId === userId;
-    
+
     const canChangeStatus = isOwner || workerCanEdit || isCreator || isAssigned;
 
     if (!canChangeStatus) {
@@ -878,4 +878,4 @@ router.get('/my', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

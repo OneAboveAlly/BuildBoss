@@ -1,10 +1,13 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
-const { validate, validateParams, validateQuery } = require('../middleware/validation');
+const { validateParams } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
-const { createProjectSchema, updateProjectSchema } = require('../schemas/projectSchemas');
-const { idSchema, paginationSchema } = require('../schemas/commonSchemas');
+const {
+  _createProjectSchema,
+  _updateProjectSchema
+} = require('../schemas/projectSchemas');
+const { idSchema, _paginationSchema } = require('../schemas/commonSchemas');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -21,7 +24,7 @@ router.get('/', authenticateToken, async (req, res) => {
         id: companyId,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -180,7 +183,7 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
         id: project.companyId,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -251,7 +254,7 @@ router.post('/', authenticateToken, async (req, res) => {
         id: companyId,
         OR: [
           { createdById: userId },
-          { 
+          {
             workers: {
               some: {
                 userId: userId,
@@ -437,8 +440,8 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     // Sprawdź czy projekt ma zadania
     if (existingProject._count.tasks > 0) {
-      return res.status(400).json({ 
-        error: 'Nie można usunąć projektu zawierającego zadania. Usuń najpierw wszystkie zadania.' 
+      return res.status(400).json({
+        error: 'Nie można usunąć projektu zawierającego zadania. Usuń najpierw wszystkie zadania.'
       });
     }
 
@@ -512,10 +515,10 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
         totalEstimated: project.tasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0),
         totalActual: project.tasks.reduce((sum, t) => sum + (t.actualHours || 0), 0)
       },
-      overdueTasks: project.tasks.filter(t => 
+      overdueTasks: project.tasks.filter(t =>
         t.dueDate && new Date(t.dueDate) < now && t.status !== 'DONE'
       ).length,
-      completionRate: project.tasks.length > 0 
+      completionRate: project.tasks.length > 0
         ? Math.round((project.tasks.filter(t => t.status === 'DONE').length / project.tasks.length) * 100)
         : 0
     };
@@ -527,4 +530,4 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -3,11 +3,11 @@ const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
-const { 
-  createJobSchema, 
-  updateJobSchema, 
-  jobFiltersSchema, 
-  applyJobSchema 
+const {
+  createJobSchema,
+  updateJobSchema,
+  jobFiltersSchema,
+  _applyJobSchema
 } = require('../schemas/jobSchemas');
 const { idSchema } = require('../schemas/commonSchemas');
 
@@ -231,11 +231,11 @@ router.get('/:id', optionalAuth, validateParams(idSchema), async (req, res) => {
     }
 
     // Zwiększ licznik wyświetleń per IP (asynchronicznie, żeby nie blokować odpowiedzi)
-    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
                      (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
                      req.headers['x-forwarded-for']?.split(',')[0] || 'unknown';
     const userAgent = req.headers['user-agent'] || null;
-    
+
     // Sprawdź czy to IP już oglądało to ogłoszenie w ciągu ostatnich 24h
     const existingView = await prisma.jobView.findUnique({
       where: {
@@ -463,8 +463,8 @@ router.post('/', authenticateToken, validate(createJobSchema), async (req, res) 
 
     // Walidacja wymaganych pól
     if (!title || !description || !category || !voivodeship || !city || !companyId) {
-      return res.status(400).json({ 
-        error: 'Wymagane pola: title, description, category, voivodeship, city, companyId' 
+      return res.status(400).json({
+        error: 'Wymagane pola: title, description, category, voivodeship, city, companyId'
       });
     }
 
@@ -474,7 +474,7 @@ router.post('/', authenticateToken, validate(createJobSchema), async (req, res) 
         id: companyId,
         OR: [
           { createdById: req.user.id }, // właściciel firmy
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -572,7 +572,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateJ
     }
 
     const worker = existingJob.company.workers[0];
-    const canEdit = existingJob.createdById === req.user.id || 
+    const canEdit = existingJob.createdById === req.user.id ||
                    (worker && (worker.canEdit || req.user.role === 'BOSS'));
 
     if (!canEdit) {
@@ -685,7 +685,7 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
     }
 
     const worker = existingJob.company.workers[0];
-    const canDelete = existingJob.createdById === req.user.id || 
+    const canDelete = existingJob.createdById === req.user.id ||
                      (worker && (worker.canEdit || req.user.role === 'BOSS'));
 
     if (!canDelete) {
@@ -741,7 +741,7 @@ router.get('/:id/applications', authenticateToken, async (req, res) => {
     }
 
     const worker = job.company.workers[0];
-    const canView = job.createdById === req.user.id || 
+    const canView = job.createdById === req.user.id ||
                    (worker && (worker.canView || req.user.role === 'BOSS'));
 
     if (!canView) {
@@ -803,7 +803,7 @@ router.put('/:jobId/applications/:applicationId', authenticateToken, async (req,
     }
 
     const worker = job.company.workers[0];
-    const canEdit = job.createdById === req.user.id || 
+    const canEdit = job.createdById === req.user.id ||
                    (worker && (worker.canEdit || req.user.role === 'BOSS'));
 
     if (!canEdit) {
@@ -835,4 +835,4 @@ router.put('/:jobId/applications/:applicationId', authenticateToken, async (req,
   }
 });
 
-module.exports = router; 
+module.exports = router;

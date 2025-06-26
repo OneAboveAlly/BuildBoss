@@ -32,7 +32,7 @@ const notificationFiltersSchema = Joi.object({
 const testNotificationSchema = Joi.object({
   type: Joi.string()
     .valid(
-      'TASK_ASSIGNED', 'TASK_COMPLETED', 'MESSAGE_RECEIVED', 
+      'TASK_ASSIGNED', 'TASK_COMPLETED', 'MESSAGE_RECEIVED',
       'MATERIAL_LOW', 'SYSTEM_UPDATE', 'COMPANY_INVITE',
       'PROJECT_UPDATE', 'DEADLINE_REMINDER'
     )
@@ -94,4 +94,4 @@ module.exports = {
   notificationFiltersSchema,
   testNotificationSchema,
   markThreadAsReadSchema
-}; 
+};

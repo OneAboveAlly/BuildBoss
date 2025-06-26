@@ -1,6 +1,6 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { stripe, SUBSCRIPTION_PLANS, getAllPlans, getPlanByName } = require('../config/stripe');
+const { stripe, SUBSCRIPTION_PLANS: _SUBSCRIPTION_PLANS, getAllPlans: _getAllPlans, getPlanByName: _getPlanByName } = require('../config/stripe');
 
 // Middleware do sprawdzania czy Stripe jest skonfigurowany
 const checkStripeConfig = (req, res, next) => {
@@ -60,11 +60,11 @@ router.get('/plans', async (req, res) => {
 // GET /api/subscriptions/current - Pobierz aktualną subskrypcję użytkownika
 router.get('/current', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
-    
+    const _userId = req.user.id;
+
     const subscription = await prisma.subscription.findUnique({
-      where: { userId },
-      include: { 
+      where: { userId: _userId },
+      include: {
         plan: true,
         payments: {
           orderBy: { createdAt: 'desc' },
@@ -82,7 +82,7 @@ router.get('/current', authenticateToken, async (req, res) => {
     }
 
     // Pobierz statystyki użycia
-    const usage = await getUsageStats(userId);
+    const usage = await getUsageStats(_userId);
 
     res.json({
       success: true,
@@ -131,7 +131,7 @@ router.get('/current', authenticateToken, async (req, res) => {
 router.post('/create-checkout-session', authenticateToken, checkStripeConfig, async (req, res) => {
   try {
     const { planId } = req.body;
-    const userId = req.user.id;
+    const _userId = req.user.id;
     const userEmail = req.user.email;
 
     if (!planId) {
@@ -149,11 +149,11 @@ router.post('/create-checkout-session', authenticateToken, checkStripeConfig, as
 
     // Sprawdź czy użytkownik już ma subskrypcję
     const existingSubscription = await prisma.subscription.findUnique({
-      where: { userId }
+      where: { userId: _userId }
     });
 
     if (existingSubscription && existingSubscription.status === 'ACTIVE') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Masz już aktywną subskrypcję',
         message: 'Aby zmienić plan, najpierw anuluj obecną subskrypcję.'
       });
@@ -167,7 +167,7 @@ router.post('/create-checkout-session', authenticateToken, checkStripeConfig, as
       stripeCustomer = await stripe.customers.create({
         email: userEmail,
         metadata: {
-          userId: userId
+          userId: _userId
         }
       });
     }
@@ -196,12 +196,12 @@ router.post('/create-checkout-session', authenticateToken, checkStripeConfig, as
       success_url: `${process.env.CLIENT_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/subscription/cancel`,
       metadata: {
-        userId: userId,
+        userId: _userId,
         planId: planId
       },
       subscription_data: {
         metadata: {
-          userId: userId,
+          userId: _userId,
           planId: planId
         },
         trial_period_days: existingSubscription ? 0 : 14 // 14 dni trial dla nowych użytkowników
@@ -223,11 +223,11 @@ router.post('/create-checkout-session', authenticateToken, checkStripeConfig, as
 router.post('/cancel', authenticateToken, checkActiveSubscription, checkStripeConfig, async (req, res) => {
   try {
     const { reason } = req.body;
-    const userId = req.user.id;
+    const _userId = req.user.id;
     const subscription = req.subscription;
 
     if (!subscription.stripeSubscriptionId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Brak ID subskrypcji Stripe',
         message: 'Nie można anulować subskrypcji bez ID Stripe.'
       });
@@ -268,18 +268,18 @@ router.post('/cancel', authenticateToken, checkActiveSubscription, checkStripeCo
 // POST /api/subscriptions/reactivate - Reaktywuj anulowaną subskrypcję
 router.post('/reactivate', authenticateToken, checkActiveSubscription, checkStripeConfig, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const _userId = req.user.id;
     const subscription = req.subscription;
 
     if (!subscription.cancelAtPeriodEnd) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Subskrypcja nie jest anulowana',
         message: 'Subskrypcja nie wymaga reaktywacji.'
       });
     }
 
     if (!subscription.stripeSubscriptionId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Brak ID subskrypcji Stripe',
         message: 'Nie można reaktywować subskrypcji bez ID Stripe.'
       });
@@ -320,10 +320,10 @@ router.post('/reactivate', authenticateToken, checkActiveSubscription, checkStri
 // GET /api/subscriptions/usage - Pobierz statystyki użycia
 router.get('/usage', authenticateToken, checkActiveSubscription, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const _userId = req.user.id;
     const planLimits = req.planLimits;
-    
-    const usage = await getUsageStats(userId);
+
+    const usage = await getUsageStats(_userId);
 
     res.json({
       success: true,
@@ -350,4 +350,4 @@ router.get('/usage', authenticateToken, checkActiveSubscription, async (req, res
   }
 });
 
-module.exports = router; 
+module.exports = router;

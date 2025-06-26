@@ -8,14 +8,14 @@ const { sendConfirmationEmail } = require('../utils/email');
 const { authenticateToken } = require('../middleware/auth');
 const { validate, validateParams } = require('../middleware/validation');
 const { logger, securityLogger } = require('../config/logger');
-const { 
-  registerSchema, 
-  loginSchema, 
-  resetPasswordSchema, 
-  newPasswordSchema, 
-  confirmEmailSchema 
+const {
+  registerSchema,
+  loginSchema,
+  _resetPasswordSchema,
+  _newPasswordSchema,
+  _confirmEmailSchema
 } = require('../schemas/authSchemas');
-const { idSchema } = require('../schemas/commonSchemas');
+const { _idSchema } = require('../schemas/commonSchemas');
 const passport = require('../config/passport');
 
 // POST /api/auth/register
@@ -37,7 +37,7 @@ router.post('/register', validate(registerSchema), async (req, res) => {
 
     // Hashuj hasło
     const hashedPassword = await hashPassword(password);
-    
+
     // Generuj token potwierdzenia
     const confirmationToken = generateRandomToken();
 
@@ -64,7 +64,7 @@ router.post('/register', validate(registerSchema), async (req, res) => {
 
     // Wyślij email potwierdzający
     const emailResult = await sendConfirmationEmail(user.email, confirmationToken);
-    
+
     if (!emailResult.success) {
       logger.warn('Failed to send confirmation email', {
         email: user.email,
@@ -139,7 +139,7 @@ router.post('/login', validate(loginSchema), async (req, res) => {
 
     // Sprawdź hasło
     const isPasswordValid = await comparePassword(password, user.password);
-    
+
     if (!isPasswordValid) {
       // Log failed login attempt
       securityLogger.logAuthAttempt(email, false, req.ip, req.get('User-Agent'));
@@ -380,7 +380,7 @@ router.post('/verify-password', authenticateToken, async (req, res) => {
 
     // Sprawdź hasło
     const isPasswordValid = await comparePassword(password, user.password);
-    
+
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -404,23 +404,23 @@ router.post('/verify-password', authenticateToken, async (req, res) => {
 
 // Google OAuth Routes
 // GET /api/auth/google
-router.get('/google', 
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'] 
+router.get('/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
   })
 );
 
 // GET /api/auth/google/callback
-router.get('/google/callback', 
-  passport.authenticate('google', { 
+router.get('/google/callback',
+  passport.authenticate('google', {
     failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
-    session: false 
+    session: false
   }),
   async (req, res) => {
     try {
       // Generuj JWT token dla użytkownika
       const token = generateToken({ userId: req.user.id });
-      
+
       // Przekieruj do frontendu z tokenem
       const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${token}`;
       res.redirect(redirectUrl);
@@ -431,4 +431,4 @@ router.get('/google/callback',
   }
 );
 
-module.exports = router; 
+module.exports = router;

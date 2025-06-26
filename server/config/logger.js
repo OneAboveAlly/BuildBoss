@@ -8,17 +8,17 @@ const developmentFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.printf(({ level, message, timestamp, stack, ...meta }) => {
     let log = `${timestamp} [${level}]: ${message}`;
-    
+
     // Dodaj stack trace dla błędów
     if (stack) {
       log += `\n${stack}`;
     }
-    
+
     // Dodaj metadata jeśli istnieją
     if (Object.keys(meta).length > 0) {
       log += `\n${JSON.stringify(meta, null, 2)}`;
     }
-    
+
     return log;
   })
 );
@@ -51,7 +51,7 @@ if (process.env.NODE_ENV === 'production') {
       level: 'info'
     })
   );
-  
+
   // Log tylko błędów do osobnego pliku
   transports.push(
     new winston.transports.File({
@@ -76,12 +76,12 @@ const logger = winston.createLogger({
 // HTTP request logging middleware
 const httpLogger = (req, res, next) => {
   const start = Date.now();
-  
+
   // Override res.end aby zalogować response
   const originalEnd = res.end;
   res.end = function(...args) {
     const duration = Date.now() - start;
-    
+
     // Log request/response
     logger.info('HTTP Request', {
       method: req.method,
@@ -93,10 +93,10 @@ const httpLogger = (req, res, next) => {
       userId: req.user?.id,
       contentLength: res.get('Content-Length')
     });
-    
+
     originalEnd.apply(this, args);
   };
-  
+
   next();
 };
 
@@ -112,7 +112,7 @@ const securityLogger = {
       timestamp: new Date().toISOString()
     });
   },
-  
+
   logRateLimitHit: (ip, endpoint) => {
     logger.warn('Rate Limit Hit', {
       event: 'rate_limit_hit',
@@ -121,7 +121,7 @@ const securityLogger = {
       timestamp: new Date().toISOString()
     });
   },
-  
+
   logUnauthorizedAccess: (ip, endpoint, userId) => {
     logger.warn('Unauthorized Access Attempt', {
       event: 'unauthorized_access',
@@ -131,7 +131,7 @@ const securityLogger = {
       timestamp: new Date().toISOString()
     });
   },
-  
+
   logDataAccess: (userId, action, resource, resourceId) => {
     logger.info('Data Access', {
       event: 'data_access',
@@ -157,4 +157,4 @@ module.exports = {
   logger,
   httpLogger,
   securityLogger
-}; 
+};

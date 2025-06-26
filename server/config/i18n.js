@@ -9,24 +9,24 @@ i18next
   .init({
     fallbackLng: 'pl',
     preload: ['pl', 'de', 'en', 'ua'],
-    
+
     backend: {
-      loadPath: './locales/{{lng}}/{{ns}}.json',
+      loadPath: './locales/{{lng}}/{{ns}}.json'
     },
-    
+
     detection: {
       order: ['header', 'querystring'],
       lookupHeader: 'accept-language',
       lookupQuerystring: 'lng',
-      caches: false,
+      caches: false
     },
-    
+
     interpolation: {
-      escapeValue: false,
+      escapeValue: false
     },
-    
+
     defaultNS: 'common',
-    ns: ['common', 'errors', 'notifications', 'emails'],
+    ns: ['common', 'errors', 'notifications', 'emails']
   });
 
-module.exports = { i18next, middleware }; 
+module.exports = { i18next, middleware };

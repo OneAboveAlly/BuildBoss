@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { dateSchema, emailSchema, phoneSchema } = require('./commonSchemas');
+const { dateSchema, phoneSchema, _emailSchema } = require('./commonSchemas');
 
 // Schemat tworzenia projektu
 const createProjectSchema = Joi.object({
@@ -120,4 +120,4 @@ const updateProjectSchema = Joi.object({
 module.exports = {
   createProjectSchema,
   updateProjectSchema
-}; 
+};

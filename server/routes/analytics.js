@@ -38,25 +38,25 @@ router.get('/dashboard', checkActiveSubscription, async (req, res) => {
     let startDate, endDate;
 
     switch (period) {
-      case 'week':
-        startDate = startOfWeek(now);
-        endDate = endOfWeek(now);
-        break;
-      case 'month':
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
-        break;
-      case 'quarter':
-        startDate = startOfMonth(subMonths(now, 2));
-        endDate = endOfMonth(now);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate = new Date(now.getFullYear(), 11, 31);
-        break;
-      default:
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
+    case 'week':
+      startDate = startOfWeek(now);
+      endDate = endOfWeek(now);
+      break;
+    case 'month':
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
+      break;
+    case 'quarter':
+      startDate = startOfMonth(subMonths(now, 2));
+      endDate = endOfMonth(now);
+      break;
+    case 'year':
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear(), 11, 31);
+      break;
+    default:
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
     }
 
     // Pobierz podstawowe statystyki
@@ -121,7 +121,7 @@ router.get('/dashboard', checkActiveSubscription, async (req, res) => {
     const projectTrends = [];
     for (let i = 6; i >= 0; i--) {
       let periodStart, periodEnd, label;
-      
+
       if (period === 'week') {
         periodStart = startOfWeek(subWeeks(now, i));
         periodEnd = endOfWeek(subWeeks(now, i));
@@ -156,7 +156,7 @@ router.get('/dashboard', checkActiveSubscription, async (req, res) => {
     const taskTrends = [];
     for (let i = 6; i >= 0; i--) {
       let periodStart, periodEnd, label;
-      
+
       if (period === 'week') {
         periodStart = startOfWeek(subWeeks(now, i));
         periodEnd = endOfWeek(subWeeks(now, i));
@@ -330,7 +330,7 @@ router.get('/projects/:id/metrics', checkActiveSubscription, async (req, res) =>
     const totalTasks = project.tasks.length;
     const completedTasks = project.tasks.filter(task => task.status === 'DONE').length;
     const inProgressTasks = project.tasks.filter(task => task.status === 'IN_PROGRESS').length;
-    const overdueTasks = project.tasks.filter(task => 
+    const overdueTasks = project.tasks.filter(task =>
       task.dueDate && task.dueDate < new Date() && task.status !== 'DONE'
     ).length;
 
@@ -347,10 +347,10 @@ router.get('/projects/:id/metrics', checkActiveSubscription, async (req, res) =>
 
     for (let i = 0; i <= daysDiff; i += interval) {
       const checkDate = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
-      const completedByDate = project.tasks.filter(task => 
+      const completedByDate = project.tasks.filter(task =>
         task.status === 'DONE' && task.updatedAt <= checkDate
       ).length;
-      
+
       progressOverTime.push({
         date: format(checkDate, 'dd.MM'),
         completed: completedByDate,
@@ -383,7 +383,7 @@ router.get('/projects/:id/metrics', checkActiveSubscription, async (req, res) =>
     });
 
     // Analiza materiałów
-    const materialsCost = project.materials.reduce((sum, material) => 
+    const materialsCost = project.materials.reduce((sum, material) =>
       sum + (material.quantity * (material.price || 0)), 0
     );
 
@@ -461,21 +461,21 @@ router.get('/team-performance', checkActiveSubscription, checkPremiumFeature('ha
     let startDate, endDate;
 
     switch (period) {
-      case 'week':
-        startDate = startOfWeek(now);
-        endDate = endOfWeek(now);
-        break;
-      case 'month':
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
-        break;
-      case 'quarter':
-        startDate = startOfMonth(subMonths(now, 2));
-        endDate = endOfMonth(now);
-        break;
-      default:
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
+    case 'week':
+      startDate = startOfWeek(now);
+      endDate = endOfWeek(now);
+      break;
+    case 'month':
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
+      break;
+    case 'quarter':
+      startDate = startOfMonth(subMonths(now, 2));
+      endDate = endOfMonth(now);
+      break;
+    default:
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
     }
 
     // Pobierz wszystkich pracowników firmy
@@ -543,8 +543,8 @@ router.get('/team-performance', checkActiveSubscription, checkPremiumFeature('ha
         ]);
 
         const completionRate = assignedTasks > 0 ? (completedTasks / assignedTasks * 100) : 0;
-        const efficiency = totalEstimatedHours._sum?.estimatedHours && totalActualHours._sum?.actualHours 
-          ? (totalEstimatedHours._sum.estimatedHours / totalActualHours._sum.actualHours * 100) 
+        const efficiency = totalEstimatedHours._sum?.estimatedHours && totalActualHours._sum?.actualHours
+          ? (totalEstimatedHours._sum.estimatedHours / totalActualHours._sum.actualHours * 100)
           : 0;
 
         return {
@@ -630,11 +630,11 @@ router.get('/cost-analysis', checkActiveSubscription, checkPremiumFeature('hasAd
 
     // Analiza kosztów projektów
     const projectCosts = projects.map(project => {
-      const materialsCost = project.materials.reduce((sum, material) => 
+      const materialsCost = project.materials.reduce((sum, material) =>
         sum + (material.quantity * (material.price || 0)), 0
       );
-      
-      const laborCost = project.tasks.reduce((sum, task) => 
+
+      const laborCost = project.tasks.reduce((sum, task) =>
         sum + ((task.actualHours || 0) * 50), 0 // założenie: 50 PLN/h
       );
 
@@ -684,8 +684,8 @@ router.get('/cost-analysis', checkActiveSubscription, checkPremiumFeature('hasAd
         const materials = await prisma.material.findMany({
           where: { companyId, category: category.category }
         });
-        
-        const totalValue = materials.reduce((sum, material) => 
+
+        const totalValue = materials.reduce((sum, material) =>
           sum + (material.quantity * (material.price || 0)), 0
         );
 
@@ -762,4 +762,4 @@ router.post('/save', checkActiveSubscription, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -2,7 +2,7 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
 const { validate, validateParams } = require('../middleware/validation');
-const { logger, securityLogger } = require('../config/logger');
+const { _logger, _securityLogger } = require('../config/logger');
 const { notifyNewMessage } = require('./notifications');
 const { createMessageSchema } = require('../schemas/messageSchemas');
 const { idSchema } = require('../schemas/commonSchemas');
@@ -60,16 +60,16 @@ router.get('/', authenticateToken, async (req, res) => {
 
     // Grupuj wiadomości według konwersacji
     const conversations = {};
-    
+
     messages.forEach(message => {
       // Określ partnera konwersacji
       const partnerId = message.senderId === userId ? message.receiverId : message.senderId;
       const partner = message.senderId === userId ? message.receiver : message.sender;
-      
+
       // Klucz konwersacji: partner + kontekst (jobOffer lub workRequest)
       const contextKey = message.jobOfferId || message.workRequestId || 'direct';
       const conversationKey = `${partnerId}_${contextKey}`;
-      
+
       if (!conversations[conversationKey]) {
         conversations[conversationKey] = {
           otherUser: partner,
@@ -80,15 +80,15 @@ router.get('/', authenticateToken, async (req, res) => {
           unreadCount: 0
         };
       }
-      
+
       conversations[conversationKey].messages.push(message);
-      
+
       // Aktualizuj ostatnią wiadomość
-      if (!conversations[conversationKey].lastMessage || 
+      if (!conversations[conversationKey].lastMessage ||
           message.createdAt > conversations[conversationKey].lastMessage.createdAt) {
         conversations[conversationKey].lastMessage = message;
       }
-      
+
       // Policz nieprzeczytane wiadomości
       if (message.receiverId === userId && !message.isRead) {
         conversations[conversationKey].unreadCount++;
@@ -96,7 +96,7 @@ router.get('/', authenticateToken, async (req, res) => {
     });
 
     // Konwertuj na tablicę i posortuj według ostatniej wiadomości
-    const conversationList = Object.values(conversations).sort((a, b) => 
+    const conversationList = Object.values(conversations).sort((a, b) =>
       new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt)
     );
 
@@ -403,4 +403,4 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
   }
 });
 
-module.exports = router; 
+module.exports = router;

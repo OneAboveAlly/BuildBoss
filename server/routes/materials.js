@@ -1,14 +1,14 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, _requireRole } = require('../middleware/auth');
 const { validate, validateParams, validateQuery } = require('../middleware/validation');
-const { logger, securityLogger } = require('../config/logger');
+const { logger, _securityLogger } = require('../config/logger');
 const { notifyLowMaterial } = require('./notifications');
-const { 
-  createMaterialSchema, 
-  updateMaterialSchema, 
+const {
+  createMaterialSchema,
+  updateMaterialSchema,
   updateStockSchema,
-  materialFiltersSchema 
+  materialFiltersSchema
 } = require('../schemas/materialSchemas');
 const { idSchema } = require('../schemas/commonSchemas');
 
@@ -19,7 +19,7 @@ const prisma = new PrismaClient();
 router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (req, res) => {
   try {
     const { companyId, projectId, category, lowStock, search, sortBy = 'name', sortOrder = 'asc' } = req.query;
-    
+
     // Sprawdź czy użytkownik ma dostęp do firmy (jako właściciel lub aktywny pracownik)
     if (companyId) {
       const company = await prisma.company.findFirst({
@@ -27,7 +27,7 @@ router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (
           id: companyId,
           OR: [
             { createdById: req.user.id },
-            { 
+            {
               workers: {
                 some: {
                   userId: req.user.id,
@@ -38,7 +38,7 @@ router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (
           ]
         }
       });
-      
+
       if (!company) {
         return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
       }
@@ -113,7 +113,7 @@ router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (
 router.get('/alerts', authenticateToken, async (req, res) => {
   try {
     const { companyId } = req.query;
-    
+
     if (!companyId) {
       return res.status(400).json({ error: 'companyId jest wymagane' });
     }
@@ -124,7 +124,7 @@ router.get('/alerts', authenticateToken, async (req, res) => {
         id: companyId,
         OR: [
           { createdById: req.user.id },
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -135,7 +135,7 @@ router.get('/alerts', authenticateToken, async (req, res) => {
         ]
       }
     });
-    
+
     if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
     }
@@ -156,7 +156,7 @@ router.get('/alerts', authenticateToken, async (req, res) => {
     });
 
     // Filtruj materiały z niskim stanem
-    const lowStockMaterials = allMaterials.filter(material => 
+    const lowStockMaterials = allMaterials.filter(material =>
       material.minQuantity && material.quantity <= material.minQuantity
     );
 
@@ -166,7 +166,7 @@ router.get('/alerts', authenticateToken, async (req, res) => {
       error: error.message,
       stack: error.stack,
       userId: req.user?.id,
-      companyId
+      companyId: req.query.companyId
     });
     res.status(500).json({ error: 'Błąd podczas pobierania alertów' });
   }
@@ -176,7 +176,7 @@ router.get('/alerts', authenticateToken, async (req, res) => {
 router.get('/categories', authenticateToken, async (req, res) => {
   try {
     const { companyId } = req.query;
-    
+
     if (!companyId) {
       return res.status(400).json({ error: 'companyId jest wymagane' });
     }
@@ -199,7 +199,7 @@ router.get('/categories', authenticateToken, async (req, res) => {
       error: error.message,
       stack: error.stack,
       userId: req.user?.id,
-      companyId
+      companyId: req.query.companyId
     });
     res.status(500).json({ error: 'Błąd podczas pobierania kategorii' });
   }
@@ -235,7 +235,7 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
         id: material.companyId,
         OR: [
           { createdById: req.user.id },
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -246,7 +246,7 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
         ]
       }
     });
-    
+
     if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tego materiału' });
     }
@@ -294,7 +294,7 @@ router.post('/', authenticateToken, validate(createMaterialSchema), async (req, 
         id: companyId,
         OR: [
           { createdById: req.user.id },
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -306,7 +306,7 @@ router.post('/', authenticateToken, validate(createMaterialSchema), async (req, 
         ]
       }
     });
-    
+
     if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do tworzenia materiałów' });
     }
@@ -319,7 +319,7 @@ router.post('/', authenticateToken, validate(createMaterialSchema), async (req, 
           companyId: companyId
         }
       });
-      
+
       if (!project) {
         return res.status(400).json({ error: 'Projekt nie należy do tej firmy' });
       }
@@ -396,7 +396,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateM
         id: existingMaterial.companyId,
         OR: [
           { createdById: req.user.id },
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -418,7 +418,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateM
         }
       }
     });
-    
+
     if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
     }
@@ -426,7 +426,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateM
     const isOwner = company.createdById === req.user.id;
     const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
     const isCreator = existingMaterial.createdById === req.user.id;
-    
+
     if (!isOwner && !workerCanEdit && !isCreator) {
       return res.status(403).json({ error: 'Brak uprawnień do edycji tego materiału' });
     }
@@ -439,7 +439,7 @@ router.put('/:id', authenticateToken, validateParams(idSchema), validate(updateM
           companyId: existingMaterial.companyId
         }
       });
-      
+
       if (!project) {
         return res.status(400).json({ error: 'Projekt nie należy do tej firmy' });
       }
@@ -515,7 +515,7 @@ router.patch('/:id/quantity', authenticateToken, validateParams(idSchema), valid
         id: existingMaterial.companyId,
         OR: [
           { createdById: req.user.id },
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -527,7 +527,7 @@ router.patch('/:id/quantity', authenticateToken, validateParams(idSchema), valid
         ]
       }
     });
-    
+
     if (!company) {
       return res.status(403).json({ error: 'Brak uprawnień do modyfikacji ilości' });
     }
@@ -536,14 +536,14 @@ router.patch('/:id/quantity', authenticateToken, validateParams(idSchema), valid
     const qty = parseFloat(quantity);
 
     switch (operation) {
-      case 'add':
-        newQuantity = existingMaterial.quantity + qty;
-        break;
-      case 'subtract':
-        newQuantity = Math.max(0, existingMaterial.quantity - qty);
-        break;
-      default:
-        newQuantity = qty;
+    case 'add':
+      newQuantity = existingMaterial.quantity + qty;
+      break;
+    case 'subtract':
+      newQuantity = Math.max(0, existingMaterial.quantity - qty);
+      break;
+    default:
+      newQuantity = qty;
     }
 
     const material = await prisma.material.update({
@@ -595,7 +595,7 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
         id: existingMaterial.companyId,
         OR: [
           { createdById: req.user.id },
-          { 
+          {
             workers: {
               some: {
                 userId: req.user.id,
@@ -617,7 +617,7 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
         }
       }
     });
-    
+
     if (!company) {
       return res.status(403).json({ error: 'Brak dostępu do tej firmy' });
     }
@@ -625,7 +625,7 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
     const isOwner = company.createdById === req.user.id;
     const workerCanEdit = company.workers.length > 0 && company.workers[0].canEdit;
     const isCreator = existingMaterial.createdById === req.user.id;
-    
+
     if (!isOwner && !workerCanEdit && !isCreator) {
       return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego materiału' });
     }
@@ -641,4 +641,4 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
   }
 });
 
-module.exports = router; 
+module.exports = router;

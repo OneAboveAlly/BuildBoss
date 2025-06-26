@@ -11,8 +11,8 @@ const createTransporter = () => {
       secure: process.env.SMTP_SECURE === 'true',
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+        pass: process.env.SMTP_PASS
+      }
     });
   } else {
     // Development - użyj Ethereal Email (testowy)
@@ -21,8 +21,8 @@ const createTransporter = () => {
       port: 587,
       auth: {
         user: 'ethereal.user@ethereal.email',
-        pass: 'ethereal.pass',
-      },
+        pass: 'ethereal.pass'
+      }
     });
   }
 };
@@ -30,14 +30,14 @@ const createTransporter = () => {
 const sendConfirmationEmail = async (email, confirmationToken) => {
   try {
     const transporter = createTransporter();
-    
+
     const confirmationUrl = `${process.env.FRONTEND_URL}/confirm-email/${confirmationToken}`;
-    
+
     const mailOptions = {
-          from: process.env.FROM_EMAIL || 'noreply@siteboss.com',
-    to: email,
-    subject: 'Potwierdź swój adres email - SiteBoss',
-    html: `
+      from: process.env.FROM_EMAIL || 'noreply@siteboss.com',
+      to: email,
+      subject: 'Potwierdź swój adres email - SiteBoss',
+      html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">Witaj w SiteBoss! 🏗️</h2>
           <p>Dziękujemy za rejestrację. Aby aktywować swoje konto, kliknij poniższy link:</p>
@@ -55,11 +55,11 @@ const sendConfirmationEmail = async (email, confirmationToken) => {
             Link wygaśnie za 24 godziny.
           </p>
         </div>
-      `,
+      `
     };
 
-        const info = await transporter.sendMail(mailOptions);
-    
+    const info = await transporter.sendMail(mailOptions);
+
     if (process.env.NODE_ENV !== 'production') {
       logger.debug('Email confirmation sent', {
         to: email,
@@ -88,9 +88,9 @@ const sendConfirmationEmail = async (email, confirmationToken) => {
 const sendPasswordResetEmail = async (email, resetToken) => {
   try {
     const transporter = createTransporter();
-    
+
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    
+
     const mailOptions = {
       from: process.env.FROM_EMAIL || 'noreply@siteboss.com',
       to: email,
@@ -113,11 +113,11 @@ const sendPasswordResetEmail = async (email, resetToken) => {
             Link wygaśnie za 1 godzinę.
           </p>
         </div>
-      `,
+      `
     };
 
-        const info = await transporter.sendMail(mailOptions);
-    
+    const info = await transporter.sendMail(mailOptions);
+
     if (process.env.NODE_ENV !== 'production') {
       logger.debug('Password reset email sent', {
         to: email,
@@ -146,4 +146,4 @@ const sendPasswordResetEmail = async (email, resetToken) => {
 module.exports = {
   sendConfirmationEmail,
   sendPasswordResetEmail
-}; 
+};

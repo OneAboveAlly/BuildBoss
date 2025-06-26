@@ -166,4 +166,4 @@ module.exports = {
   updateMaterialSchema,
   updateStockSchema,
   materialFiltersSchema
-}; 
+};

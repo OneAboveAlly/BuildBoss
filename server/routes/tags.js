@@ -66,8 +66,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     if (!name || !companyId) {
-      return res.status(400).json({ 
-        error: 'Nazwa tagu i ID firmy są wymagane' 
+      return res.status(400).json({
+        error: 'Nazwa tagu i ID firmy są wymagane'
       });
     }
 
@@ -81,8 +81,8 @@ router.post('/', authenticateToken, async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(403).json({ 
-        error: 'Brak uprawnień do tworzenia tagów w tej firmie' 
+      return res.status(403).json({
+        error: 'Brak uprawnień do tworzenia tagów w tej firmie'
       });
     }
 
@@ -95,8 +95,8 @@ router.post('/', authenticateToken, async (req, res) => {
     });
 
     if (existingTag) {
-      return res.status(400).json({ 
-        error: 'Tag o tej nazwie już istnieje w firmie' 
+      return res.status(400).json({
+        error: 'Tag o tej nazwie już istnieje w firmie'
       });
     }
 
@@ -148,8 +148,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(403).json({ 
-        error: 'Brak uprawnień do edycji tagów w tej firmie' 
+      return res.status(403).json({
+        error: 'Brak uprawnień do edycji tagów w tej firmie'
       });
     }
 
@@ -164,8 +164,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
       });
 
       if (nameConflict) {
-        return res.status(400).json({ 
-          error: 'Tag o tej nazwie już istnieje w firmie' 
+        return res.status(400).json({
+          error: 'Tag o tej nazwie już istnieje w firmie'
         });
       }
     }
@@ -221,15 +221,15 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(403).json({ 
-        error: 'Brak uprawnień do usuwania tagów w tej firmie' 
+      return res.status(403).json({
+        error: 'Brak uprawnień do usuwania tagów w tej firmie'
       });
     }
 
     const totalUsage = existingTag._count.projects + existingTag._count.tasks + existingTag._count.materials;
 
     if (totalUsage > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: `Nie można usunąć tagu używanego w ${totalUsage} elementach. Najpierw usuń tag z projektów, zadań i materiałów.`,
         usage: {
           projects: existingTag._count.projects,
@@ -258,15 +258,15 @@ router.post('/assign', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     if (!tagIds || !Array.isArray(tagIds) || !objectType || !objectId || !companyId) {
-      return res.status(400).json({ 
-        error: 'Wymagane: tagIds (array), objectType, objectId, companyId' 
+      return res.status(400).json({
+        error: 'Wymagane: tagIds (array), objectType, objectId, companyId'
       });
     }
 
     const validObjectTypes = ['project', 'task', 'material'];
     if (!validObjectTypes.includes(objectType)) {
-      return res.status(400).json({ 
-        error: 'Nieprawidłowy typ obiektu. Dozwolone: project, task, material' 
+      return res.status(400).json({
+        error: 'Nieprawidłowy typ obiektu. Dozwolone: project, task, material'
       });
     }
 
@@ -280,8 +280,8 @@ router.post('/assign', authenticateToken, async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(403).json({ 
-        error: 'Brak uprawnień do przypisywania tagów w tej firmie' 
+      return res.status(403).json({
+        error: 'Brak uprawnień do przypisywania tagów w tej firmie'
       });
     }
 
@@ -294,56 +294,59 @@ router.post('/assign', authenticateToken, async (req, res) => {
     });
 
     if (tags.length !== tagIds.length) {
-      return res.status(400).json({ 
-        error: 'Niektóre tagi nie istnieją lub nie należą do tej firmy' 
+      return res.status(400).json({
+        error: 'Niektóre tagi nie istnieją lub nie należą do tej firmy'
       });
     }
 
     // Sprawdź czy obiekt istnieje i należy do firmy
     let objectExists = false;
-    let currentTags = [];
+    let _currentTags = [];
 
     switch (objectType) {
-      case 'project':
-        const project = await prisma.project.findFirst({
-          where: { id: objectId, companyId },
-          include: { tags: true }
-        });
-        objectExists = !!project;
-        currentTags = project?.tags || [];
-        break;
+    case 'project': {
+      const project = await prisma.project.findFirst({
+        where: { id: objectId, companyId },
+        include: { tags: true }
+      });
+      objectExists = !!project;
+      _currentTags = project?.tags || [];
+      break;
+    }
 
-      case 'task':
-        const task = await prisma.task.findFirst({
-          where: { 
-            id: objectId,
-            project: { companyId }
-          },
-          include: { tags: true }
-        });
-        objectExists = !!task;
-        currentTags = task?.tags || [];
-        break;
+    case 'task': {
+      const task = await prisma.task.findFirst({
+        where: {
+          id: objectId,
+          project: { companyId }
+        },
+        include: { tags: true }
+      });
+      objectExists = !!task;
+      _currentTags = task?.tags || [];
+      break;
+    }
 
-      case 'material':
-        const material = await prisma.material.findFirst({
-          where: { id: objectId, companyId },
-          include: { tags: true }
-        });
-        objectExists = !!material;
-        currentTags = material?.tags || [];
-        break;
+    case 'material': {
+      const material = await prisma.material.findFirst({
+        where: { id: objectId, companyId },
+        include: { tags: true }
+      });
+      objectExists = !!material;
+      _currentTags = material?.tags || [];
+      break;
+    }
     }
 
     if (!objectExists) {
-      return res.status(404).json({ 
-        error: `${objectType} nie został znaleziony lub nie należy do tej firmy` 
+      return res.status(404).json({
+        error: `${objectType} nie został znaleziony lub nie należy do tej firmy`
       });
     }
 
     // Aktualizuj tagi obiektu
     const modelName = objectType === 'material' ? 'material' : objectType;
-    
+
     await prisma[modelName].update({
       where: { id: objectId },
       data: {
@@ -359,7 +362,7 @@ router.post('/assign', authenticateToken, async (req, res) => {
       include: { tags: true }
     });
 
-    res.json({ 
+    res.json({
       message: 'Tagi zostały przypisane',
       object: updatedObject
     });
@@ -377,15 +380,15 @@ router.delete('/assign', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     if (!tagIds || !Array.isArray(tagIds) || !objectType || !objectId || !companyId) {
-      return res.status(400).json({ 
-        error: 'Wymagane: tagIds (array), objectType, objectId, companyId' 
+      return res.status(400).json({
+        error: 'Wymagane: tagIds (array), objectType, objectId, companyId'
       });
     }
 
     const validObjectTypes = ['project', 'task', 'material'];
     if (!validObjectTypes.includes(objectType)) {
-      return res.status(400).json({ 
-        error: 'Nieprawidłowy typ obiektu. Dozwolone: project, task, material' 
+      return res.status(400).json({
+        error: 'Nieprawidłowy typ obiektu. Dozwolone: project, task, material'
       });
     }
 
@@ -399,16 +402,16 @@ router.delete('/assign', authenticateToken, async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(403).json({ 
-        error: 'Brak uprawnień do usuwania tagów w tej firmie' 
+      return res.status(403).json({
+        error: 'Brak uprawnień do usuwania tagów w tej firmie'
       });
     }
 
     // Pobierz obecne tagi obiektu
     const modelName = objectType === 'material' ? 'material' : objectType;
-    
+
     const currentObject = await prisma[modelName].findFirst({
-      where: { 
+      where: {
         id: objectId,
         ...(objectType === 'task' ? { project: { companyId } } : { companyId })
       },
@@ -416,8 +419,8 @@ router.delete('/assign', authenticateToken, async (req, res) => {
     });
 
     if (!currentObject) {
-      return res.status(404).json({ 
-        error: `${objectType} nie został znaleziony lub nie należy do tej firmy` 
+      return res.status(404).json({
+        error: `${objectType} nie został znaleziony lub nie należy do tej firmy`
       });
     }
 
@@ -441,7 +444,7 @@ router.delete('/assign', authenticateToken, async (req, res) => {
       include: { tags: true }
     });
 
-    res.json({ 
+    res.json({
       message: 'Tagi zostały usunięte',
       object: updatedObject
     });
@@ -478,8 +481,8 @@ router.get('/:id/objects', authenticateToken, async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(403).json({ 
-        error: 'Brak dostępu do tego tagu' 
+      return res.status(403).json({
+        error: 'Brak dostępu do tego tagu'
       });
     }
 
@@ -608,4 +611,4 @@ router.get('/:id/objects', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

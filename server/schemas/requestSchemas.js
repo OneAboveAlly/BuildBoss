@@ -3,7 +3,7 @@ const Joi = require('joi');
 // Lista kategorii pracy
 const WORK_CATEGORIES = [
   'CONSTRUCTION', 'RENOVATION', 'REPAIR', 'INSTALLATION', 'MAINTENANCE',
-  'DEMOLITION', 'LANDSCAPING', 'CLEANING', 'PAINTING', 'ELECTRICAL', 
+  'DEMOLITION', 'LANDSCAPING', 'CLEANING', 'PAINTING', 'ELECTRICAL',
   'PLUMBING', 'ROOFING', 'FLOORING', 'WINDOWS_DOORS', 'OTHER'
 ];
 
@@ -169,7 +169,7 @@ const createRequestSchema = Joi.object({
     }),
 
   contactPhone: Joi.string()
-    .pattern(/^[\+]?[0-9\s\-\(\)]{9,20}$/)
+    .pattern(/^[+]?[0-9\s-()]{9,20}$/)
     .allow('')
     .messages({
       'string.pattern.base': 'Nieprawidłowy format numeru telefonu'
@@ -294,7 +294,7 @@ const updateRequestSchema = Joi.object({
     .allow(''),
 
   contactPhone: Joi.string()
-    .pattern(/^[\+]?[0-9\s\-\(\)]{9,20}$/)
+    .pattern(/^[+]?[0-9\s-()]{9,20}$/)
     .allow(''),
 
   isActive: Joi.boolean(),
@@ -376,4 +376,4 @@ module.exports = {
   myRequestFiltersSchema,
   WORK_CATEGORIES,
   VOIVODESHIPS
-}; 
+};

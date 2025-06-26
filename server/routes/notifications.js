@@ -105,9 +105,9 @@ router.put('/mark-all-read', authenticateToken, async (req, res) => {
       data: { isRead: true }
     });
 
-    res.json({ 
+    res.json({
       message: 'All notifications marked as read',
-      count: result.count 
+      count: result.count
     });
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
@@ -170,9 +170,9 @@ router.delete('/clear-all', authenticateToken, async (req, res) => {
 
     securityLogger.logDataAccess(req.user.userId, 'DELETE', 'notification', 'ALL');
 
-    res.json({ 
+    res.json({
       message: 'All notifications cleared',
-      count: result.count 
+      count: result.count
     });
   } catch (error) {
     logger.error('Error clearing all notifications', {
@@ -203,9 +203,9 @@ router.post('/test', authenticateToken, validate(testNotificationSchema), async 
       }
     );
 
-    res.json({ 
+    res.json({
       message: 'Test notification sent',
-      notification 
+      notification
     });
   } catch (error) {
     console.error('Error sending test notification:', error);
@@ -290,11 +290,11 @@ async function notifyNewMessage(messageId, receiverId, senderId) {
 
     if (!message || receiverId === senderId) return;
 
-    const context = message.jobOffer 
+    const context = message.jobOffer
       ? `w sprawie oferty pracy "${message.jobOffer.title}"`
-      : message.workRequest 
-      ? `w sprawie zlecenia "${message.workRequest.title}"`
-      : '';
+      : message.workRequest
+        ? `w sprawie zlecenia "${message.workRequest.title}"`
+        : '';
 
     await socketManager.sendNotificationToUser(receiverId, {
       type: 'MESSAGE_RECEIVED',
@@ -351,4 +351,4 @@ module.exports = {
   notifyTaskCompleted,
   notifyNewMessage,
   notifyLowMaterial
-}; 
+};
