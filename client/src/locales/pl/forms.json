@@ -127,5 +127,25 @@
     "permission_denied": "Brak uprawnień",
     "not_found": "Nie znaleziono",
     "already_exists": "Już istnieje"
+  },
+  "placeholders": {
+    "enter_email": "Wprowadź swój adres email",
+    "enter_password": "Wprowadź swoje hasło",
+    "enter_name": "Wprowadź swoje imię",
+    "enter_phone": "Wprowadź swój numer telefonu",
+    "enter_address": "Wprowadź swój adres",
+    "select_option": "Wybierz opcję",
+    "search": "Szukaj...",
+    "type_here": "Wpisz tutaj...",
+    "optional": "Opcjonalne"
+  },
+  "file_upload": {
+    "drag_drop": "Przeciągnij i upuść pliki tutaj lub kliknij aby wybrać",
+    "select_files": "Wybierz pliki",
+    "max_size": "Maksymalny rozmiar pliku: {{size}}",
+    "allowed_types": "Dozwolone typy: {{types}}",
+    "uploading": "Przesyłanie...",
+    "upload_success": "Plik przesłany pomyślnie",
+    "upload_error": "Przesyłanie nie powiodło się"
   }
 } 

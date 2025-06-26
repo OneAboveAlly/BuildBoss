@@ -12,6 +12,8 @@
     "i18n:scan": "i18next-scanner --config i18next-scanner.config.js",
     "i18n:validate": "node scripts/validate-translations.cjs",
     "i18n:sync": "node scripts/sync-translations.cjs",
+    "i18n:quality": "node scripts/translation-quality-check.cjs",
+    "i18n:monitor": "node scripts/translation-monitor.cjs",
     "i18n:stats": "node scripts/translation-stats.js"
   },
   "dependencies": {
