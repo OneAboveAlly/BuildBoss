@@ -79,5 +79,48 @@
     "de": "Deutsch",
     "en": "English",
     "ua": "Українська"
+  },
+  "network": {
+    "error": "Wystąpił błąd sieci",
+    "retry": "Ponów",
+    "offline": "Jesteś obecnie offline"
+  },
+  "pwa": {
+    "install_title": "Zainstaluj BuildBoss",
+    "install_description": "Dodaj BuildBoss do ekranu głównego dla szybkiego dostępu i funkcjonalności offline",
+    "install_button": "Zainstaluj",
+    "install_dismiss": "Później",
+    "update_title": "Dostępna aktualizacja",
+    "update_description": "Nowa wersja BuildBoss jest dostępna. Zaktualizuj teraz, aby otrzymać najnowsze funkcje i ulepszenia",
+    "update_button": "Zaktualizuj teraz",
+    "update_dismiss": "Później",
+    "offline_mode": "Tryb offline",
+    "offline_description": "Ograniczona funkcjonalność dostępna",
+    "offline": "Offline",
+    "online": "Online",
+    "installing": "Instalowanie...",
+    "install_success": "BuildBoss zainstalowany pomyślnie!",
+    "install_failed": "Instalacja nie powiodła się. Spróbuj ponownie.",
+    "update_success": "BuildBoss zaktualizowany pomyślnie!",
+    "update_failed": "Aktualizacja nie powiodła się. Spróbuj ponownie.",
+    "offline_title": "Jesteś offline",
+    "offline_page_description": "Ta strona nie jest dostępna offline. Sprawdź połączenie internetowe i spróbuj ponownie.",
+    "retry": "Spróbuj ponownie",
+    "check_connection": "Sprawdź połączenie",
+    "go_home": "Przejdź do strony głównej",
+    "offline_tips_title": "Wskazówki offline",
+    "offline_tip_1": "Niektóre strony mogą być dostępne offline, jeśli odwiedziłeś je wcześniej",
+    "offline_tip_2": "Twoja praca jest zapisywana lokalnie i zsynchronizuje się, gdy wrócisz online",
+    "offline_tip_3": "Sprawdź połączenie WiFi lub dane mobilne",
+    "still_offline": "Nadal jesteś offline. Sprawdź połączenie internetowe."
+  },
+  "autoRefresh": {
+    "update_available": "Dostępna aktualizacja",
+    "update_description": "Nowa wersja aplikacji jest dostępna. Odśwież stronę, aby otrzymać najnowsze zmiany.",
+    "refresh_now": "Odśwież teraz",
+    "later": "Później",
+    "checking_updates": "Sprawdzanie aktualizacji...",
+    "update_found": "Znaleziono aktualizację",
+    "auto_refresh_in": "Automatyczne odświeżenie za"
   }
 } 

@@ -83,7 +83,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         }),
         {
           headers: {
-            'User-Agent': 'SiteBoss Construction App'
+            'User-Agent': 'BuildBoss Construction App'
           }
         }
       );

@@ -38,6 +38,7 @@ export const JobOfferForm: React.FC<JobOfferFormProps> = ({
     description: jobOffer?.description || '',
     category: jobOffer?.category || JobCategory.CONSTRUCTION_WORKER,
     type: jobOffer?.type || JobType.FULL_TIME,
+    country: jobOffer?.country || 'Polska',
     voivodeship: jobOffer?.voivodeship || '',
     city: jobOffer?.city || '',
     address: jobOffer?.address || '',
@@ -111,6 +112,7 @@ export const JobOfferForm: React.FC<JobOfferFormProps> = ({
       ...prev,
       address: newAddressData.address,
       city: newAddressData.city,
+      country: newAddressData.country,
       voivodeship: newAddressData.voivodeship,
       latitude: newAddressData.latitude,
       longitude: newAddressData.longitude
@@ -139,6 +141,14 @@ export const JobOfferForm: React.FC<JobOfferFormProps> = ({
 
     if (!formData.companyId) {
       newErrors.companyId = 'Wybór firmy jest wymagany';
+    }
+
+    if (!formData.category) {
+      newErrors.category = 'Kategoria jest wymagana';
+    }
+
+    if (!formData.experience) {
+      newErrors.experience = 'Poziom doświadczenia jest wymagany';
     }
 
     if (!formData.voivodeship) {
@@ -246,12 +256,17 @@ export const JobOfferForm: React.FC<JobOfferFormProps> = ({
             <select
               value={formData.category}
               onChange={(e) => handleInputChange('category', e.target.value as JobCategory)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.category ? 'border-red-300' : 'border-gray-300'
+              }`}
             >
               {Object.entries(JOB_CATEGORIES).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+            {errors.category && (
+              <p className="text-red-600 text-sm mt-1">{errors.category}</p>
+            )}
           </div>
 
           {/* Typ pracy */}
@@ -278,12 +293,17 @@ export const JobOfferForm: React.FC<JobOfferFormProps> = ({
             <select
               value={formData.experience}
               onChange={(e) => handleInputChange('experience', e.target.value as ExperienceLevel)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                errors.experience ? 'border-red-300' : 'border-gray-300'
+              }`}
             >
               {Object.entries(EXPERIENCE_LEVELS).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+            {errors.experience && (
+              <p className="text-red-600 text-sm mt-1">{errors.experience}</p>
+            )}
           </div>
         </CardContent>
       </Card>

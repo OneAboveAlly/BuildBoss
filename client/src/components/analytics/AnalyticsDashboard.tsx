@@ -16,9 +16,13 @@ import {
   UsersIcon,
   CurrencyDollarIcon,
   CalendarIcon,
+  BuildingOffice2Icon as BuildingOfficeIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import { analyticsService } from '../../services/analyticsService';
+import { analyticsService, type DashboardData } from '../../services/analyticsService';
 import toast from 'react-hot-toast';
 
 // Rejestracja komponentów Chart.js
@@ -375,7 +379,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ companyId }) =>
               🏆 Top Wykonawcy
             </h3>
             <div className="space-y-4">
-              {team.topPerformers.slice(0, 5).map((performer, index) => (
+              {team.topPerformers.slice(0, 5).map((performer: any, index: number) => (
                 <div key={performer.user.id} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">

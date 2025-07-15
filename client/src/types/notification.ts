@@ -25,9 +25,13 @@ export enum NotificationType {
   MATERIAL_LOW = 'MATERIAL_LOW',
   SUBSCRIPTION_TRIAL_ENDING = 'SUBSCRIPTION_TRIAL_ENDING',
   SUBSCRIPTION_EXPIRED = 'SUBSCRIPTION_EXPIRED',
+  SUBSCRIPTION_EXPIRING = 'SUBSCRIPTION_EXPIRING',
   PAYMENT_SUCCESS = 'PAYMENT_SUCCESS',
   PAYMENT_FAILED = 'PAYMENT_FAILED',
-  SYSTEM_UPDATE = 'SYSTEM_UPDATE'
+  PAYMENT_DUE = 'PAYMENT_DUE',
+  SYSTEM_UPDATE = 'SYSTEM_UPDATE',
+  ADMIN_MESSAGE = 'ADMIN_MESSAGE',
+  ADMIN_MESSAGE_REPLY = 'ADMIN_MESSAGE_REPLY',
 }
 
 export interface NotificationPagination {
@@ -74,12 +78,20 @@ export const getNotificationIcon = (type: NotificationType): string => {
       return '⏳';
     case NotificationType.SUBSCRIPTION_EXPIRED:
       return '❌';
+    case NotificationType.SUBSCRIPTION_EXPIRING:
+      return '⚠️';
     case NotificationType.PAYMENT_SUCCESS:
       return '💳';
     case NotificationType.PAYMENT_FAILED:
-      return '⚠️';
+      return '🚫';
+    case NotificationType.PAYMENT_DUE:
+      return '💰';
     case NotificationType.SYSTEM_UPDATE:
       return '🔄';
+    case NotificationType.ADMIN_MESSAGE:
+      return '🛡️';
+    case NotificationType.ADMIN_MESSAGE_REPLY:
+      return '✉️';
     default:
       return '🔔';
   }
@@ -106,14 +118,21 @@ export const getNotificationColor = (type: NotificationType): string => {
     case NotificationType.MATERIAL_LOW:
       return 'text-yellow-600';
     case NotificationType.SUBSCRIPTION_TRIAL_ENDING:
+    case NotificationType.SUBSCRIPTION_EXPIRING:
+      return 'text-orange-600';
     case NotificationType.SUBSCRIPTION_EXPIRED:
       return 'text-red-600';
     case NotificationType.PAYMENT_SUCCESS:
       return 'text-green-600';
     case NotificationType.PAYMENT_FAILED:
+    case NotificationType.PAYMENT_DUE:
       return 'text-red-600';
     case NotificationType.SYSTEM_UPDATE:
       return 'text-gray-600';
+    case NotificationType.ADMIN_MESSAGE:
+      return 'text-pink-600';
+    case NotificationType.ADMIN_MESSAGE_REPLY:
+      return 'text-pink-800';
     default:
       return 'text-gray-600';
   }
@@ -140,14 +159,21 @@ export const getNotificationBgColor = (type: NotificationType): string => {
     case NotificationType.MATERIAL_LOW:
       return 'bg-yellow-50';
     case NotificationType.SUBSCRIPTION_TRIAL_ENDING:
+    case NotificationType.SUBSCRIPTION_EXPIRING:
+      return 'bg-orange-50';
     case NotificationType.SUBSCRIPTION_EXPIRED:
       return 'bg-red-50';
     case NotificationType.PAYMENT_SUCCESS:
       return 'bg-green-50';
     case NotificationType.PAYMENT_FAILED:
+    case NotificationType.PAYMENT_DUE:
       return 'bg-red-50';
     case NotificationType.SYSTEM_UPDATE:
       return 'bg-gray-50';
+    case NotificationType.ADMIN_MESSAGE:
+      return 'bg-pink-50';
+    case NotificationType.ADMIN_MESSAGE_REPLY:
+      return 'bg-pink-100';
     default:
       return 'bg-gray-50';
   }

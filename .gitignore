@@ -8,6 +8,10 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+server/.env*
+client/.env*
+!server/env.example
+!client/env.example
 
 # Build outputs
 dist/
@@ -21,6 +25,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+pnpm-debug.log*
 
 # Runtime data
 pids
@@ -30,6 +35,7 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+*/coverage/
 *.lcov
 
 # nyc test coverage
@@ -97,35 +103,70 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Prisma
-# server/prisma/migrations/ - USUNIĘTE: migracje powinny być w repo
-
-# Uploads
+# Uploads and user generated content
 server/uploads/
+uploads/
 
 # Logs
 server/logs/
+logs/
 
-# Database
+# Database files
 *.db
 *.sqlite
 *.sqlite3
 
-# Development and business strategy files
+# Generated files
+server/generated/
+generated/
+
+# Test files
+*.test.local
+test-*.ps1
+
+# Development documentation and strategy files
 ETAP*.md
 STRIPE_SETUP_INSTRUCTIONS.md
 agent_config.md
 copilot_instructions.md
+TODO*.md
+toooo.md
 
-# Additional environment files
-server/.env*
-client/.env*
-!server/env.example
+# Admin panel and feature documentation
+ADMIN_*.md
+*_FIX.md
+*_FEATURE.md
+*_COMPLETE.md
+*_CONTROL.md
+*_GUIDE.md
+PLANS_MANAGEMENT_GUIDE.md
+PWA_OPTIMIZATION_CONTROL.md
+AUTO_REFRESH_GUIDE.md
+PRODUCTION_DEPLOYMENT.md
+QUICK_START.md
+
+# Package-lock files (można odkomentować jeśli chcesz je śledzić)
+# package-lock.json
+# */package-lock.json
+
+# Backup files
+*.backup
+*.bak
+docker-compose.backup.yml
 
 # Stripe keys and secrets (extra safety)
 *stripe*key*
 *webhook*secret*
 
-# Package-lock files (optional - some prefer to include them)
-package-lock.json
-*/package-lock.json 
+# Bundle analysis files
+bundle-analysis.html
+bundle-analysis.json
+
+# History folders (IDE related)
+.history/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Sentry files
+.sentryclirc 

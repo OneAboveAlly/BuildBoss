@@ -5,6 +5,41 @@ const prisma = new PrismaClient();
 async function seedSubscriptionPlans() {
   console.log('🌱 Seedowanie planów subskrypcji...');
 
+  // Sprawdź czy plany już istnieją
+  const existingPlans = await prisma.subscriptionPlan.findMany();
+  if (existingPlans.length > 0) {
+    console.log('📋 Plany już istnieją w bazie danych:');
+    existingPlans.forEach(plan => {
+      console.log(`   - ${plan.displayName} (${plan.name}) - ${(plan.price / 100).toFixed(2)} ${plan.currency}`);
+    });
+    return;
+  }
+
+  // Plan Darmowy
+  const freePlan = await prisma.subscriptionPlan.upsert({
+    where: { name: 'free' },
+    update: {},
+    create: {
+      name: 'free',
+      displayName: 'Plan Darmowy',
+      description: 'Podstawowe funkcje dla małych firm',
+      price: 0, // 0.00 PLN
+      currency: 'PLN',
+      maxCompanies: 1,
+      maxProjects: 3,
+      maxWorkers: 5,
+      maxJobOffers: 1,
+      maxWorkRequests: 2,
+      maxStorageGB: 0.5,
+      hasAdvancedReports: false,
+      hasApiAccess: false,
+      hasPrioritySupport: false,
+      hasCustomBranding: false,
+      hasTeamManagement: false,
+      isActive: true
+    }
+  });
+
   // Plan Podstawowy
   const basicPlan = await prisma.subscriptionPlan.upsert({
     where: { name: 'basic' },
@@ -81,6 +116,7 @@ async function seedSubscriptionPlans() {
   });
 
   console.log('✅ Plany subskrypcji zostały utworzone:');
+  console.log(`   🆓 ${freePlan.displayName} - ${(freePlan.price / 100).toFixed(2)} ${freePlan.currency}`);
   console.log(`   📦 ${basicPlan.displayName} - ${(basicPlan.price / 100).toFixed(2)} ${basicPlan.currency}`);
   console.log(`   🚀 ${proPlan.displayName} - ${(proPlan.price / 100).toFixed(2)} ${proPlan.currency}`);
   console.log(`   🏢 ${enterprisePlan.displayName} - ${(enterprisePlan.price / 100).toFixed(2)} ${enterprisePlan.currency}`);

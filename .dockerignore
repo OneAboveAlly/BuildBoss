@@ -3,6 +3,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Production builds
 client/dist/
@@ -27,6 +28,7 @@ coverage/
 .idea/
 *.swp
 *.swo
+.history/
 
 # OS
 .DS_Store
@@ -35,6 +37,7 @@ Thumbs.db
 # Testing
 coverage/
 *.test.js.snap
+*.test.local
 
 # Temporary files
 tmp/
@@ -45,10 +48,27 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
-# Documentation
+# Documentation and development files
 README.md
-ISSUES_TO_FIX.md
 docs/
+ETAP*.md
+TODO*.md
+toooo.md
+ADMIN_*.md
+*_FIX.md
+*_FEATURE.md
+*_COMPLETE.md
+*_CONTROL.md
+*_GUIDE.md
+STRIPE_SETUP_INSTRUCTIONS.md
+agent_config.md
+copilot_instructions.md
+PLANS_MANAGEMENT_GUIDE.md
+PWA_OPTIMIZATION_CONTROL.md
+AUTO_REFRESH_GUIDE.md
+PRODUCTION_DEPLOYMENT.md
+QUICK_START.md
+DOCKER.md
 
 # CI/CD
 .github/
@@ -57,5 +77,27 @@ docs/
 server/uploads/*
 !server/uploads/.gitkeep
 
-# Prisma
-server/prisma/dev.db* 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+server/prisma/dev.db*
+
+# Generated files
+server/generated/
+generated/
+
+# Backup files
+*.backup
+*.bak
+docker-compose.backup.yml
+
+# Bundle analysis
+bundle-analysis.html
+bundle-analysis.json
+
+# TypeScript
+*.tsbuildinfo
+
+# Test scripts
+test-*.ps1 

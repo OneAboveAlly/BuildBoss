@@ -15,6 +15,13 @@
     "cta_secondary": "Zobacz demo",
     "features_short": "✓ Bez zobowiązań ✓ Pełny dostęp ✓ Anuluj w każdej chwili"
   },
+  "rotating_texts": {
+    "professional": "jak profesjonalista",
+    "precision": "z precyzją",
+    "passion": "z pasją",
+    "experience": "z doświadczeniem",
+    "innovation": "z innowacją"
+  },
   "features": {
     "title": "Wszystko czego potrzebujesz do zarządzania projektami",
     "subtitle": "Kompleksowe narzędzia dla firm budowlanych",

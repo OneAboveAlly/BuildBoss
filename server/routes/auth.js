@@ -1,3 +1,71 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     LoginRequest:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User email address
+ *           example: user@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: User password
+ *           example: SecurePassword123!
+ *
+ *     RegisterRequest:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *         - firstName
+ *         - lastName
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User email address
+ *           example: newuser@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: User password (minimum 8 characters)
+ *           example: SecurePassword123!
+ *         firstName:
+ *           type: string
+ *           description: User first name
+ *           example: John
+ *         lastName:
+ *           type: string
+ *           description: User last name
+ *           example: Doe
+ *
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: Operation success status
+ *         message:
+ *           type: string
+ *           description: Response message
+ *         data:
+ *           type: object
+ *           properties:
+ *             user:
+ *               $ref: '#/components/schemas/User'
+ *             token:
+ *               type: string
+ *               description: JWT authentication token
+ *               example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ */
+
 const express = require('express');
 const router = express.Router();
 const Joi = require('joi');
@@ -18,6 +86,39 @@ const {
 const { _idSchema } = require('../schemas/commonSchemas');
 const passport = require('../config/passport');
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: Create a new user account with email confirmation
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       201:
+ *         description: User successfully registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: User already exists or validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/ValidationError'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/ServerError'
+ */
 // POST /api/auth/register
 router.post('/register', validate(registerSchema), async (req, res) => {
   try {
@@ -107,6 +208,39 @@ router.post('/register', validate(registerSchema), async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: User login
+ *     description: Authenticate user with email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/ServerError'
+ */
 // POST /api/auth/login
 router.post('/login', validate(loginSchema), async (req, res) => {
   try {
@@ -269,6 +403,39 @@ router.get('/me', authenticateToken, async (req, res) => {
             logo: true,
             createdAt: true
           }
+        },
+        subscription: {
+          select: {
+            id: true,
+            status: true,
+            startDate: true,
+            endDate: true,
+            trialEndDate: true,
+            nextBillingDate: true,
+            cancelAtPeriodEnd: true,
+            canceledAt: true,
+            plan: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+                description: true,
+                price: true,
+                currency: true,
+                maxCompanies: true,
+                maxProjects: true,
+                maxWorkers: true,
+                maxJobOffers: true,
+                maxWorkRequests: true,
+                maxStorageGB: true,
+                hasAdvancedReports: true,
+                hasApiAccess: true,
+                hasPrioritySupport: true,
+                hasCustomBranding: true,
+                hasTeamManagement: true
+              }
+            }
+          }
         }
       }
     });
@@ -280,13 +447,84 @@ router.get('/me', authenticateToken, async (req, res) => {
       });
     }
 
+    // Jeśli użytkownik nie ma subskrypcji, spróbuj utworzyć darmową (tylko raz)
+    if (!user.subscription) {
+      try {
+        const existingSubscription = await prisma.subscription.findFirst({
+          where: { userId: user.id }
+        });
+
+        if (!existingSubscription) {
+          const freePlan = await prisma.subscriptionPlan.findUnique({
+            where: { name: 'free' }
+          });
+
+          if (freePlan) {
+            const freeSubscription = await prisma.subscription.create({
+              data: {
+                userId: user.id,
+                planId: freePlan.id,
+                status: 'ACTIVE',
+                startDate: new Date(),
+                endDate: null,
+                trialEndDate: null,
+                nextBillingDate: null,
+                cancelAtPeriodEnd: false
+              },
+              include: {
+                plan: {
+                  select: {
+                    id: true,
+                    name: true,
+                    displayName: true,
+                    description: true,
+                    price: true,
+                    currency: true,
+                    maxCompanies: true,
+                    maxProjects: true,
+                    maxWorkers: true,
+                    maxJobOffers: true,
+                    maxWorkRequests: true,
+                    maxStorageGB: true,
+                    hasAdvancedReports: true,
+                    hasApiAccess: true,
+                    hasPrioritySupport: true,
+                    hasCustomBranding: true,
+                    hasTeamManagement: true
+                  }
+                }
+              }
+            });
+
+            user.subscription = freeSubscription;
+          }
+        }
+      } catch (subscriptionError) {
+        // Loguj błąd ale nie przerywaj odpowiedzi
+        logger.warn('Error creating free subscription', {
+          userId: user.id,
+          error: subscriptionError.message
+        });
+      }
+    }
+
+    // Policz liczbę firm, których użytkownik jest właścicielem
+    const ownedCompaniesCount = await prisma.company.count({
+      where: { createdById: user.id }
+    });
+
     res.json({
       success: true,
-      data: { user }
+      data: { user, ownedCompaniesCount }
     });
 
   } catch (error) {
-    console.error('Get user profile error:', error);
+    logger.error('Get user profile error', {
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+
     res.status(500).json({
       success: false,
       message: 'Błąd serwera podczas pobierania profilu'

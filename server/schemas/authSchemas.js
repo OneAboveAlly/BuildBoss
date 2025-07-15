@@ -11,28 +11,28 @@ const registerSchema = Joi.object({
     }),
   password: Joi.string()
     .min(8)
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)'))
     .required()
     .messages({
       'string.min': 'Hasło musi mieć co najmniej 8 znaków',
-      'string.pattern.base': 'Hasło musi zawierać co najmniej jedną małą literę, jedną wielką literę i jedną cyfrę',
       'any.required': 'Hasło jest wymagane'
     }),
   firstName: Joi.string()
     .min(2)
     .max(50)
-    .optional()
+    .required()
     .messages({
       'string.min': 'Imię musi mieć co najmniej 2 znaki',
-      'string.max': 'Imię nie może być dłuższe niż 50 znaków'
+      'string.max': 'Imię nie może być dłuższe niż 50 znaków',
+      'any.required': 'Imię jest wymagane'
     }),
   lastName: Joi.string()
     .min(2)
     .max(50)
-    .optional()
+    .required()
     .messages({
       'string.min': 'Nazwisko musi mieć co najmniej 2 znaki',
-      'string.max': 'Nazwisko nie może być dłuższe niż 50 znaków'
+      'string.max': 'Nazwisko nie może być dłuższe niż 50 znaków',
+      'any.required': 'Nazwisko jest wymagane'
     })
 });
 
@@ -72,11 +72,9 @@ const newPasswordSchema = Joi.object({
     }),
   password: Joi.string()
     .min(8)
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)'))
     .required()
     .messages({
       'string.min': 'Hasło musi mieć co najmniej 8 znaków',
-      'string.pattern.base': 'Hasło musi zawierać co najmniej jedną małą literę, jedną wielką literę i jedną cyfrę',
       'any.required': 'Hasło jest wymagane'
     })
 });

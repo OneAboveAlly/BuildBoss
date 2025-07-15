@@ -7,18 +7,28 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Konfiguracja axios z tokenem
-const getAuthHeaders = () => {
+// Konfiguracja axios
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor do dodawania tokenu
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const notificationService = {
   // Pobierz powiadomienia użytkownika
   async getNotifications(page = 1, limit = 20, unreadOnly = false): Promise<NotificationsResponse> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/notifications`, {
-        headers: getAuthHeaders(),
+      const response = await api.get('/notifications', {
         params: { page, limit, unreadOnly }
       });
       return response.data;
@@ -31,10 +41,8 @@ export const notificationService = {
   // Pobierz liczbę nieprzeczytanych powiadomień
   async getUnreadCount(): Promise<number> {
     try {
-      const response = await axios.get<UnreadCountResponse>(`${API_BASE_URL}/notifications/unread-count`, {
-        headers: getAuthHeaders()
-      });
-      return response.data.count;
+      const response = await api.get<number>('/notifications/unread-count');
+      return response.data;
     } catch (error) {
       console.error('Error fetching unread count:', error);
       throw error;
@@ -44,9 +52,7 @@ export const notificationService = {
   // Oznacz powiadomienie jako przeczytane
   async markAsRead(notificationId: string): Promise<Notification> {
     try {
-      const response = await axios.put(`${API_BASE_URL}/notifications/${notificationId}/read`, {}, {
-        headers: getAuthHeaders()
-      });
+      const response = await api.put(`/notifications/${notificationId}/read`);
       return response.data;
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -57,9 +63,7 @@ export const notificationService = {
   // Oznacz wszystkie powiadomienia jako przeczytane
   async markAllAsRead(): Promise<{ message: string; count: number }> {
     try {
-      const response = await axios.put(`${API_BASE_URL}/notifications/mark-all-read`, {}, {
-        headers: getAuthHeaders()
-      });
+      const response = await api.put('/notifications/mark-all-read');
       return response.data;
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -70,9 +74,7 @@ export const notificationService = {
   // Usuń powiadomienie
   async deleteNotification(notificationId: string): Promise<{ message: string }> {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/notifications/${notificationId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await api.delete(`/notifications/${notificationId}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -83,9 +85,7 @@ export const notificationService = {
   // Usuń wszystkie powiadomienia
   async clearAllNotifications(): Promise<{ message: string; count: number }> {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/notifications/clear-all`, {
-        headers: getAuthHeaders()
-      });
+      const response = await api.delete('/notifications/clear-all');
       return response.data;
     } catch (error) {
       console.error('Error clearing all notifications:', error);
@@ -96,11 +96,9 @@ export const notificationService = {
   // Wyślij testowe powiadomienie (tylko development)
   async sendTestNotification(title?: string, message?: string): Promise<{ message: string; notification: Notification }> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/notifications/test`, {
+      const response = await api.post('/notifications/test', {
         title,
         message
-      }, {
-        headers: getAuthHeaders()
       });
       return response.data;
     } catch (error) {

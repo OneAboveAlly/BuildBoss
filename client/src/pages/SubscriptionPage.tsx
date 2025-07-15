@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   CreditCardIcon, 
   CalendarIcon, 
@@ -8,6 +9,7 @@ import {
   XCircleIcon
 } from '@heroicons/react/24/outline';
 import { subscriptionService } from '../services/subscriptionService';
+import { UsageLimits } from '../components/common/UsageLimits';
 import type { Subscription, UsageResponse } from '../types/subscription';
 import { 
   getStatusColor, 
@@ -18,7 +20,25 @@ import {
 } from '../types/subscription';
 
 const SubscriptionPage: React.FC = () => {
+  const { t, i18n } = useTranslation('subscription');
+  const { t: tCommon } = useTranslation('common');
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+
+  // Force re-render when language changes
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      setCurrentLanguage(i18n.language);
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+    window.addEventListener('languagechange', handleLanguageChange);
+
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+      window.removeEventListener('languagechange', handleLanguageChange);
+    };
+  }, [i18n]);
   const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +61,7 @@ const SubscriptionPage: React.FC = () => {
       setSubscription(subscriptionData);
       setUsage(usageData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Błąd ładowania danych');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setLoading(false);
     }
@@ -55,7 +75,7 @@ const SubscriptionPage: React.FC = () => {
       setShowCancelModal(false);
       setCancelReason('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Błąd anulowania subskrypcji');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setActionLoading(null);
     }
@@ -67,7 +87,7 @@ const SubscriptionPage: React.FC = () => {
       await subscriptionService.reactivateSubscription();
       await loadSubscriptionData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Błąd reaktywacji subskrypcji');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setActionLoading(null);
     }
@@ -84,7 +104,7 @@ const SubscriptionPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Ładowanie subskrypcji...</p>
+          <p className="mt-4 text-gray-600">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -101,7 +121,7 @@ const SubscriptionPage: React.FC = () => {
             onClick={loadSubscriptionData}
             className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
           >
-            Spróbuj ponownie
+            {tCommon('retry')}
           </button>
         </div>
       </div>
@@ -115,7 +135,7 @@ const SubscriptionPage: React.FC = () => {
           <ExclamationTriangleIcon className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Brak aktywnej subskrypcji</h2>
           <p className="text-gray-600 mb-6">
-            Aby korzystać z SiteBoss, musisz wybrać plan subskrypcji.
+            Aby korzystać z BuildBoss, musisz wybrać plan subskrypcji.
           </p>
           <a
             href="/pricing"
@@ -140,7 +160,7 @@ const SubscriptionPage: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Zarządzanie subskrypcją</h1>
           <p className="mt-2 text-gray-600">
-            Przeglądaj i zarządzaj swoją subskrypcją SiteBoss
+                          Przeglądaj i zarządzaj swoją subskrypcją BuildBoss
           </p>
         </div>
 
@@ -154,7 +174,7 @@ const SubscriptionPage: React.FC = () => {
                   Okres próbny kończy się za {trialDaysLeft} {trialDaysLeft === 1 ? 'dzień' : 'dni'}
                 </h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Aby kontynuować korzystanie z SiteBoss, wybierz plan płatny.
+                  Aby kontynuować korzystanie z BuildBoss, wybierz plan płatny.
                 </p>
               </div>
             </div>
@@ -200,11 +220,11 @@ const SubscriptionPage: React.FC = () => {
                       </span>
                     </div>
                   )}
-                  {subscription.trialEndDate && subscription.status === 'TRIAL' && (
+                  {subscription.endDate && (
                     <div className="flex items-center text-sm">
-                      <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
+                      <CheckCircleIcon className="h-4 w-4 text-green-400 mr-2" />
                       <span className="text-gray-600">
-                        Koniec trial: {subscriptionService.formatDate(subscription.trialEndDate)}
+                        Plan aktywny do: {subscriptionService.formatDate(subscription.endDate)}
                       </span>
                     </div>
                   )}
@@ -248,108 +268,17 @@ const SubscriptionPage: React.FC = () => {
               )}
             </div>
 
-            {/* Usage Statistics */}
+            {/* Usage Stats */}
             {usage && (
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center mb-4">
-                  <ChartBarIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <h2 className="text-xl font-semibold text-gray-900">Wykorzystanie zasobów</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Companies */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Firmy</span>
-                      <span className="text-sm text-gray-500">
-                        {usage.usage.companies} / {formatLimit(usage.limits.maxCompanies)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${getUsageColor(usage.percentages.companies)}`}
-                        style={{ width: `${usage.percentages.companies}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Projects */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Projekty</span>
-                      <span className="text-sm text-gray-500">
-                        {usage.usage.projects} / {formatLimit(usage.limits.maxProjects)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${getUsageColor(usage.percentages.projects)}`}
-                        style={{ width: `${usage.percentages.projects}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Workers */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Pracownicy</span>
-                      <span className="text-sm text-gray-500">
-                        {usage.usage.workers} / {formatLimit(usage.limits.maxWorkers)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${getUsageColor(usage.percentages.workers)}`}
-                        style={{ width: `${usage.percentages.workers}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Job Offers */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Ogłoszenia o pracę</span>
-                      <span className="text-sm text-gray-500">
-                        {usage.usage.jobOffers} / {formatLimit(usage.limits.maxJobOffers)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${getUsageColor(usage.percentages.jobOffers)}`}
-                        style={{ width: `${usage.percentages.jobOffers}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Work Requests */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Zlecenia</span>
-                      <span className="text-sm text-gray-500">
-                        {usage.usage.workRequests} / {formatLimit(usage.limits.maxWorkRequests)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${getUsageColor(usage.percentages.workRequests)}`}
-                        style={{ width: `${usage.percentages.workRequests}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Storage */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Przestrzeń dyskowa</span>
-                      <span className="text-sm text-gray-500">
-                        0 GB / {usage.limits.maxStorageGB} GB
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="h-2 rounded-full bg-green-500" style={{ width: '0%' }}></div>
-                    </div>
-                  </div>
-                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <ChartBarIcon className="h-5 w-5 mr-2" />
+                  Użycie zasobów
+                </h2>
+                <UsageLimits 
+                  currentUsage={usage.usage}
+                  showUpgradeButton={false}
+                />
               </div>
             )}
 
@@ -398,52 +327,52 @@ const SubscriptionPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Funkcje planu</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
-                  {subscription.plan.features.hasAdvancedReports ? (
+                  {subscription.plan.hasAdvancedReports ? (
                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
                   ) : (
                     <XCircleIcon className="h-5 w-5 text-gray-400 mr-3" />
                   )}
-                  <span className={subscription.plan.features.hasAdvancedReports ? 'text-gray-700' : 'text-gray-400'}>
+                  <span className={subscription.plan.hasAdvancedReports ? 'text-gray-700' : 'text-gray-400'}>
                     Zaawansowane raporty
                   </span>
                 </div>
                 <div className="flex items-center">
-                  {subscription.plan.features.hasPrioritySupport ? (
+                  {subscription.plan.hasPrioritySupport ? (
                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
                   ) : (
                     <XCircleIcon className="h-5 w-5 text-gray-400 mr-3" />
                   )}
-                  <span className={subscription.plan.features.hasPrioritySupport ? 'text-gray-700' : 'text-gray-400'}>
+                  <span className={subscription.plan.hasPrioritySupport ? 'text-gray-700' : 'text-gray-400'}>
                     Priorytetowe wsparcie
                   </span>
                 </div>
                 <div className="flex items-center">
-                  {subscription.plan.features.hasTeamManagement ? (
+                  {subscription.plan.hasTeamManagement ? (
                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
                   ) : (
                     <XCircleIcon className="h-5 w-5 text-gray-400 mr-3" />
                   )}
-                  <span className={subscription.plan.features.hasTeamManagement ? 'text-gray-700' : 'text-gray-400'}>
+                  <span className={subscription.plan.hasTeamManagement ? 'text-gray-700' : 'text-gray-400'}>
                     Zarządzanie zespołem
                   </span>
                 </div>
                 <div className="flex items-center">
-                  {subscription.plan.features.hasApiAccess ? (
+                  {subscription.plan.hasApiAccess ? (
                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
                   ) : (
                     <XCircleIcon className="h-5 w-5 text-gray-400 mr-3" />
                   )}
-                  <span className={subscription.plan.features.hasApiAccess ? 'text-gray-700' : 'text-gray-400'}>
+                  <span className={subscription.plan.hasApiAccess ? 'text-gray-700' : 'text-gray-400'}>
                     Dostęp do API
                   </span>
                 </div>
                 <div className="flex items-center">
-                  {subscription.plan.features.hasCustomBranding ? (
+                  {subscription.plan.hasCustomBranding ? (
                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
                   ) : (
                     <XCircleIcon className="h-5 w-5 text-gray-400 mr-3" />
                   )}
-                  <span className={subscription.plan.features.hasCustomBranding ? 'text-gray-700' : 'text-gray-400'}>
+                  <span className={subscription.plan.hasCustomBranding ? 'text-gray-700' : 'text-gray-400'}>
                     Własny branding
                   </span>
                 </div>
@@ -457,7 +386,7 @@ const SubscriptionPage: React.FC = () => {
                 Nasz zespół wsparcia jest gotowy, aby Ci pomóc.
               </p>
               <a
-                href="mailto:support@siteboss.pl"
+                href="mailto:support@buildboss.pl"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium block text-center"
               >
                 Skontaktuj się z nami

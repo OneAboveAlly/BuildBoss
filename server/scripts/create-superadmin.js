@@ -1,51 +1,48 @@
 const { PrismaClient } = require('@prisma/client');
-const { hashPassword } = require('../utils/password');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const prisma = new PrismaClient();
 
 async function createSuperAdmin() {
   try {
-    console.log('🚀 Tworzenie superadministratora...');
+    console.log('🚀 Tworzenie superadministratora (plansAdmin)...');
 
     // Dane superadmina
-    const email = 'admin@siteboss.com';
-    const password = 'admin123'; // ZMIEŃ TO W PRODUKCJI!
-    const firstName = 'Super';
-    const lastName = 'Admin';
+    const email = 'admin@buildboss.pl';
+    const password = 'AdminBuildBoss2024!'; // ZMIEŃ TO W PRODUKCJI!
+    const firstName = 'Admin';
+    const lastName = 'BuildBoss';
 
     // Sprawdź czy superadmin już istnieje
-    const existingAdmin = await prisma.user.findUnique({
+    const existingAdmin = await prisma.plansAdmin.findUnique({
       where: { email }
     });
 
     if (existingAdmin) {
       console.log('❌ Superadmin już istnieje!');
       console.log(`📧 Email: ${existingAdmin.email}`);
-      console.log(`👤 Rola: ${existingAdmin.role}`);
       return;
     }
 
     // Hashuj hasło
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Utwórz superadmina
-    const superAdmin = await prisma.user.create({
+    const superAdmin = await prisma.plansAdmin.create({
       data: {
         email,
         password: hashedPassword,
         firstName,
         lastName,
-        role: 'SUPERADMIN',
-        isEmailConfirmed: true // Automatycznie potwierdź email
+        isActive: true
       },
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
-        role: true,
-        isEmailConfirmed: true,
+        isActive: true,
         createdAt: true
       }
     });
@@ -54,12 +51,9 @@ async function createSuperAdmin() {
     console.log('📋 Dane logowania:');
     console.log(`📧 Email: ${email}`);
     console.log(`🔑 Hasło: ${password}`);
-    console.log(`👤 Rola: ${superAdmin.role}`);
     console.log(`🆔 ID: ${superAdmin.id}`);
-    console.log('');
     console.log('⚠️  WAŻNE: Zmień hasło po pierwszym logowaniu!');
     console.log('🌐 Zaloguj się na: http://localhost:3000/login');
-
   } catch (error) {
     console.error('❌ Błąd podczas tworzenia superadmina:', error);
   } finally {
@@ -68,4 +62,4 @@ async function createSuperAdmin() {
 }
 
 // Uruchom skrypt
-createSuperAdmin();
+typeof require !== 'undefined' && require.main === module && createSuperAdmin();

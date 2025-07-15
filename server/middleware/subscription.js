@@ -1,7 +1,66 @@
 const { prisma } = require('../config/database');
 const { SUBSCRIPTION_PLANS: _SUBSCRIPTION_PLANS } = require('../config/stripe');
 
-// Sprawdza czy użytkownik ma aktywną subskrypcję
+// Sprawdza czy użytkownik ma aktywną subskrypcję lub może korzystać z planu darmowego
+const checkSubscriptionOrFree = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId },
+      include: { plan: true }
+    });
+
+    if (!subscription) {
+      // Użytkownik bez subskrypcji - używa planu darmowego
+      const freePlan = await prisma.subscriptionPlan.findUnique({
+        where: { name: 'free' }
+      });
+
+      if (!freePlan) {
+        return res.status(500).json({
+          error: 'Błąd konfiguracji',
+          message: 'Plan darmowy nie jest skonfigurowany.'
+        });
+      }
+
+      // Dodaj informacje o planie darmowym do request
+      req.subscription = null;
+      req.planLimits = freePlan;
+      req.isFreePlan = true;
+
+      next();
+      return;
+    }
+
+    // Sprawdź czy subskrypcja jest aktywna lub w okresie próbnym
+    const now = new Date();
+    const isTrialActive = subscription.status === 'TRIAL' &&
+                         subscription.trialEndDate &&
+                         subscription.trialEndDate > now;
+    const isSubscriptionActive = subscription.status === 'ACTIVE';
+
+    if (!isTrialActive && !isSubscriptionActive) {
+      return res.status(403).json({
+        error: 'Nieaktywna subskrypcja',
+        message: 'Twoja subskrypcja wygasła. Odnów ją, aby kontynuować korzystanie z platformy.',
+        subscriptionStatus: subscription.status
+      });
+    }
+
+    // Dodaj informacje o subskrypcji do request
+    req.subscription = subscription;
+    req.planLimits = subscription.plan;
+    req.isFreePlan = false;
+
+    next();
+  } catch (error) {
+    console.error('Błąd sprawdzania subskrypcji:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas sprawdzania subskrypcji' });
+  }
+};
+
+// Sprawdza czy użytkownik ma aktywną subskrypcję (tylko dla funkcji premium)
 const checkActiveSubscription = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -220,6 +279,7 @@ const getUsageStats = async (userId) => {
 };
 
 module.exports = {
+  checkSubscriptionOrFree,
   checkActiveSubscription,
   checkResourceLimit,
   checkPremiumFeature,

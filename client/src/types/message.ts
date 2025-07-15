@@ -8,13 +8,13 @@ export interface Message {
 
   // Relations
   sender: {
-    id: number;
+    id: string;
     firstName?: string;
     lastName?: string;
     avatar?: string;
   };
   receiver: {
-    id: number;
+    id: string;
     firstName?: string;
     lastName?: string;
     avatar?: string;
@@ -33,10 +33,11 @@ export interface Message {
 
 export interface Conversation {
   otherUser: {
-    id: number;
+    id: string;
     firstName?: string;
     lastName?: string;
     avatar?: string;
+    email?: string;
   };
   jobOffer?: {
     id: number;
@@ -48,17 +49,18 @@ export interface Conversation {
   };
   lastMessage: Message;
   unreadCount: number;
+  isAdminConversation?: boolean;
 }
 
 export interface CreateMessageData {
-  receiverId: number;
+  receiverId: string;
   content: string;
   jobOfferId?: number;
   workRequestId?: number;
 }
 
 export interface MessageThread {
-  otherUserId: number;
+  otherUserId: string;
   jobOfferId?: number;
   workRequestId?: number;
 }

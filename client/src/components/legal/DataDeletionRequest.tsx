@@ -66,10 +66,7 @@ export const DataDeletionRequest: React.FC<DataDeletionRequestProps> = ({
     setError(null);
 
     try {
-      await legalService.requestDataDeletion({
-        reason: reason.trim(),
-        confirmationText: confirmationText,
-      });
+      await legalService.requestAccountDeletion(confirmationText);
       
       onSuccess();
     } catch (err) {

@@ -12,6 +12,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Konfiguracja axios
 const api = axios.create({
   baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // Interceptor do dodawania tokenu
@@ -23,14 +26,61 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export const messageService = {
+export interface AdminMessage {
+  id: string;
+  subject: string;
+  content: string;
+  priority: 'LOW' | 'NORMAL' | 'HIGH';
+  status: 'UNREAD' | 'READ' | 'SENT' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt: string;
+  sender: {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  recipient: {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  replies?: AdminMessageReply[];
+}
+
+export interface AdminMessageReply {
+  id: string;
+  content: string;
+  createdAt: string;
+  sender: {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
+export interface AdminMessagesResponse {
+  messages: AdminMessage[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+class MessageService {
+  private baseUrl = '/messages';
+
   // ===== KONWERSACJE =====
 
   // Pobieranie listy konwersacji użytkownika
   async getConversations() {
     const response = await api.get('/messages');
     return response.data as Conversation[];
-  },
+  }
 
   // Pobieranie wiadomości w konkretnej konwersacji
   async getMessageThread(thread: MessageThread) {
@@ -46,15 +96,56 @@ export const messageService = {
 
     const response = await api.get(`/messages/thread?${params.toString()}`);
     return response.data as Message[];
-  },
+  }
 
   // ===== WYSYŁANIE WIADOMOŚCI =====
 
   // Wysyłanie nowej wiadomości
-  async sendMessage(data: CreateMessageData) {
-    const response = await api.post('/messages', data);
-    return response.data as Message;
-  },
+  async sendMessage(data: CreateMessageData, file?: File) {
+    if (file) {
+      const formData = new FormData();
+      formData.append('content', data.content);
+      formData.append('receiverId', data.receiverId.toString());
+      if (data.jobOfferId) formData.append('jobOfferId', data.jobOfferId.toString());
+      if (data.workRequestId) formData.append('workRequestId', data.workRequestId.toString());
+      formData.append('cv', file);
+      const response = await api.post('/messages', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response.data as Message;
+    } else {
+      const response = await api.post('/messages', data);
+      return response.data as Message;
+    }
+  }
+
+  // Wiadomości od admina
+  async getAdminMessages(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    priority?: string;
+  }): Promise<AdminMessagesResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.priority) queryParams.append('priority', params.priority);
+
+    const url = `${this.baseUrl}/admin?${queryParams.toString()}`;
+    const response = await api.get(url);
+    return response.data;
+  }
+
+  async getAdminMessage(id: string): Promise<AdminMessage> {
+    const response = await api.get(`${this.baseUrl}/admin/${id}`);
+    return response.data;
+  }
+
+  async getAdminUnreadCount(): Promise<number> {
+    const response = await api.get(`${this.baseUrl}/admin/unread-count`);
+    return response.data.total;
+  }
 
   // ===== OZNACZANIE JAKO PRZECZYTANE =====
 
@@ -62,7 +153,7 @@ export const messageService = {
   async markAsRead(messageId: number) {
     const response = await api.put(`/messages/${messageId}/read`);
     return response.data as Message;
-  },
+  }
 
   // Oznaczanie całej konwersacji jako przeczytanej
   async markThreadAsRead(thread: MessageThread) {
@@ -74,7 +165,7 @@ export const messageService = {
 
     const response = await api.put('/messages/thread/read', data);
     return response.data;
-  },
+  }
 
   // ===== STATYSTYKI =====
 
@@ -82,7 +173,7 @@ export const messageService = {
   async getUnreadCount() {
     const response = await api.get('/messages/unread-count');
     return response.data as UnreadCount;
-  },
+  }
 
   // ===== USUWANIE =====
 
@@ -90,7 +181,7 @@ export const messageService = {
   async deleteMessage(messageId: number) {
     const response = await api.delete(`/messages/${messageId}`);
     return response.data;
-  },
+  }
 
   // ===== POMOCNICZE FUNKCJE =====
 
@@ -119,7 +210,7 @@ export const messageService = {
         month: 'short'
       }).format(messageDate);
     }
-  },
+  }
 
   // Formatowanie pełnej daty i czasu
   formatFullDateTime(createdAt: string) {
@@ -130,7 +221,7 @@ export const messageService = {
       hour: '2-digit',
       minute: '2-digit'
     }).format(new Date(createdAt));
-  },
+  }
 
   // Generowanie nazwy konwersacji
   getConversationTitle(conversation: Conversation) {
@@ -145,7 +236,7 @@ export const messageService = {
     } else {
       return partnerName;
     }
-  },
+  }
 
   // Generowanie opisu kontekstu
   getContextDescription(conversation: Conversation) {
@@ -156,12 +247,12 @@ export const messageService = {
     } else {
       return 'Wiadomość bezpośrednia';
     }
-  },
+  }
 
   // Sprawdzanie czy użytkownik jest nadawcą wiadomości
-  isMessageFromUser(message: Message, userId: number) {
+  isMessageFromUser(message: Message, userId: string) {
     return message.sender.id === userId;
-  },
+  }
 
   // Generowanie inicjałów użytkownika (dla awatara)
   getUserInitials(firstName?: string, lastName?: string) {
@@ -173,4 +264,6 @@ export const messageService = {
       return 'U';
     }
   }
-}; 
+};
+
+export const messageService = new MessageService(); 

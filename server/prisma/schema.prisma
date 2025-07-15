@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,102 +8,118 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  email             String   @unique
-  password          String?  // Nullable for Google OAuth users
-  role              Role     @default(WORKER)
-  isEmailConfirmed  Boolean  @default(false)
-  confirmationToken String?  @unique
-  googleId          String?  @unique
-  firstName         String?
-  lastName          String?
-  avatar            String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Relations
-  createdCompanies Company[] @relation("CompanyCreator")
-  workerProfiles   Worker[]
-  createdProjects  Project[] @relation("ProjectCreator")
-  assignedTasks    Task[]    @relation("TaskAssignee")
-  createdTasks     Task[]    @relation("TaskCreator")
-  createdMaterials Material[] @relation("MaterialCreator")
-  
-  // ETAP 8 - Jobs & Requests Relations
-  createdJobOffers    JobOffer[]     @relation("JobOfferCreator")
-  jobApplications     JobApplication[]
-  createdWorkRequests WorkRequest[]  @relation("WorkRequestCreator")
-  sentMessages        Message[]      @relation("MessageSender")
-  receivedMessages    Message[]      @relation("MessageReceiver")
-  
-  // ETAP 10 - Subscription relation
-  subscription        Subscription?
-  
-  // ETAP 11 - Notifications relation
-  notifications       Notification[]
-  
-  // ETAP 15 - Analytics relations
-  analytics           Analytics[]
-  reports             Report[]
-  searchHistory       SearchHistory[]
-  savedSearches       SavedSearch[]
-  jobViews            JobView[]
+  id                                            String              @id @default(cuid())
+  email                                         String              @unique
+  password                                      String?
+  role                                          Role                @default(WORKER)
+  isEmailConfirmed                              Boolean             @default(false)
+  confirmationToken                             String?             @unique
+  googleId                                      String?             @unique
+  firstName                                     String?
+  lastName                                      String?
+  avatar                                        String?
+  createdAt                                     DateTime            @default(now())
+  updatedAt                                     DateTime            @updatedAt
+  receivedAdminMessages                         AdminMessage[]      @relation("AdminMessageRecipient")
+  sentAdminMessages                             AdminMessage[]      @relation("AdminMessageSender") // DODANE: wiadomości wysłane przez użytkownika
+  sentAdminMessageReplies                       AdminMessageReply[] @relation("AdminMessageReplySender") // DODANE: odpowiedzi wysłane przez użytkownika
+  analytics                                     Analytics[]
+  createdCompanies                              Company[]           @relation("CompanyCreator")
+  jobApplications                               JobApplication[]
+  createdJobOffers                              JobOffer[]          @relation("JobOfferCreator")
+  jobViews                                      JobView[]
+  createdMaterials                              Material[]          @relation("MaterialCreator")
+  receivedMessages                              Message[]           @relation("MessageReceiver")
+  sentMessages                                  Message[]           @relation("MessageSender")
+  notifications                                 Notification[]
+  createdProjects                               Project[]           @relation("ProjectCreator")
+  reports                                       Report[]
+  savedSearches                                 SavedSearch[]
+  searchHistory                                 SearchHistory[]
+  subscription                                  Subscription?
+  assignedTasks                                 Task[]              @relation("TaskAssignee")
+  createdTasks                                  Task[]              @relation("TaskCreator")
+  createdWorkRequests                           WorkRequest[]       @relation("WorkRequestCreator")
+  workerProfiles                                Worker[]
 
   @@map("users")
 }
 
-model Company {
-  id          String   @id @default(cuid())
-  name        String
-  nip         String?  @unique
-  address     String?
-  latitude    Float?   // współrzędne GPS
-  longitude   Float?
-  phone       String?
-  email       String?
-  website     String?
-  logo        String?
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model PlansAdmin {
+  id                String       @id @default(cuid())
+  email             String       @unique
+  password          String
+  firstName         String?
+  lastName          String?
+  isActive          Boolean      @default(true)
+  lastLoginAt       DateTime?
+  passwordChangedAt DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  planChanges       PlanChange[]
+  admin_messages    AdminMessage[]
+  admin_message_replies AdminMessageReply[] // DODANE: relacja zwrotna do odpowiedzi admina
 
-  // Relations
-  createdBy   User      @relation("CompanyCreator", fields: [createdById], references: [id])
-  createdById String
-  workers     Worker[]
-  projects    Project[]
-  materials   Material[]
-  
-  // ETAP 8 - Jobs & Requests Relations
-  jobOffers    JobOffer[]
-  workRequests WorkRequest[]
-  
-  // ETAP 15 - Analytics relations
+  @@map("plans_admins")
+}
+
+model PlanChange {
+  id          String     @id @default(cuid())
+  planId      String
+  planName    String
+  changeType  String
+  oldValues   Json?
+  newValues   Json?
+  description String?
+  createdAt   DateTime   @default(now())
+  adminId     String
+  admin       PlansAdmin @relation(fields: [adminId], references: [id])
+
+  @@map("plan_changes")
+}
+
+model Company {
+  id           String        @id @default(cuid())
+  name         String
+  nip          String?       @unique
+  address      String?
+  phone        String?
+  email        String?
+  website      String?
+  logo         String?
+  description  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  createdById  String
+  latitude     Float?
+  longitude    Float?
   analytics    Analytics[]
+  createdBy    User          @relation("CompanyCreator", fields: [createdById], references: [id])
+  jobOffers    JobOffer[]
+  materials    Material[]
+  projects     Project[]
   reports      Report[]
   tags         Tag[]
+  workRequests WorkRequest[]
+  workers      Worker[]
 
   @@map("companies")
 }
 
 model Worker {
-  id        String       @id @default(cuid())
-  status    WorkerStatus @default(INVITED)
-  invitedAt DateTime     @default(now())
-  joinedAt  DateTime?
-  leftAt    DateTime?
-  position  String?
-  
-  // Permissions
-  canEdit          Boolean @default(false)
-  canView          Boolean @default(true)
-  canManageFinance Boolean @default(false)
-
-  // Relations
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
+  id               String       @id @default(cuid())
+  status           WorkerStatus @default(INVITED)
+  invitedAt        DateTime     @default(now())
+  joinedAt         DateTime?
+  leftAt           DateTime?
+  position         String?
+  canEdit          Boolean      @default(false)
+  canView          Boolean      @default(true)
+  canManageFinance Boolean      @default(false)
+  userId           String
+  companyId        String
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
   @@map("workers")
@@ -131,44 +141,36 @@ model Project {
   clientPhone String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-
-  // Relations
-  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId   String
-  createdBy   User    @relation("ProjectCreator", fields: [createdById], references: [id])
   createdById String
-  tasks       Task[]
   materials   Material[]
-  
-  // ETAP 15 - Tags relation
-  tags        Tag[]
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy   User          @relation("ProjectCreator", fields: [createdById], references: [id])
+  tasks       Task[]
+  tags        Tag[]         @relation("ProjectToTag")
 
   @@map("projects")
 }
 
 model Task {
-  id          String     @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus @default(TODO)
-  priority    Priority   @default(MEDIUM)
-  startDate   DateTime?
-  dueDate     DateTime?
+  id             String     @id @default(cuid())
+  title          String
+  description    String?
+  status         TaskStatus @default(TODO)
+  priority       Priority   @default(MEDIUM)
+  startDate      DateTime?
+  dueDate        DateTime?
   estimatedHours Float?
   actualHours    Float?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  // Relations
-  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
-  assignedTo  User?   @relation("TaskAssignee", fields: [assignedToId], references: [id])
-  assignedToId String?
-  createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id])
-  createdById String
-  
-  // ETAP 15 - Tags relation
-  tags        Tag[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  projectId      String
+  assignedToId   String?
+  createdById    String
+  assignedTo     User?      @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy      User       @relation("TaskCreator", fields: [createdById], references: [id])
+  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tags           Tag[]      @relation("TagToTask")
 
   @@map("tasks")
 }
@@ -177,287 +179,353 @@ model Material {
   id          String   @id @default(cuid())
   name        String
   description String?
-  category    String?  // np. "Cement", "Drewno", "Narzędzia"
-  unit        String   @default("szt") // jednostka miary: szt, kg, m, m2, m3, l
+  category    String?
+  unit        String   @default("szt")
   quantity    Float    @default(0)
-  minQuantity Float?   // próg alertu o niskim stanie
-  price       Float?   // cena za jednostkę
-  supplier    String?  // dostawca
-  location    String?  // lokalizacja w magazynie
-  barcode     String?  // kod kreskowy
-  notes       String?  // dodatkowe notatki
+  minQuantity Float?
+  price       Float?
+  supplier    String?
+  location    String?
+  barcode     String?
+  notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Relations
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId   String
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  projectId   String?  // opcjonalne przypisanie do projektu
-  createdBy   User     @relation("MaterialCreator", fields: [createdById], references: [id])
+  projectId   String?
   createdById String
-  
-  // ETAP 15 - Tags relation
-  tags        Tag[]
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("MaterialCreator", fields: [createdById], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
+  tags        Tag[]    @relation("MaterialToTag")
 
   @@map("materials")
 }
 
-// ETAP 8 - JOBS & WORK REQUESTS MODELS
-
 model JobOffer {
-  id          String      @id @default(cuid())
-  title       String
-  description String
-  category    JobCategory
-  type        JobType     @default(FULL_TIME)
-  
-  // Location
-  country     String      @default("Polska")
-  voivodeship String      // województwo
-  city        String
-  address     String?     // dokładny adres (opcjonalny)
-  latitude    Float?      // współrzędne do mapy
-  longitude   Float?
-  
-  // Job details
-  salaryMin   Float?      // minimalne wynagrodzenie
-  salaryMax   Float?      // maksymalne wynagrodzenie
-  currency    String      @default("PLN")
-  experience  ExperienceLevel @default(JUNIOR)
-  
-  // Requirements
-  requirements String?    // wymagania (markdown)
-  benefits     String?    // benefity (markdown)
-  
-  // Contact & Status
+  id           String           @id @default(cuid())
+  title        String
+  description  String
+  category     JobCategory
+  type         JobType          @default(FULL_TIME)
+  country      String           @default("Polska")
+  voivodeship  String
+  city         String
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  salaryMin    Float?
+  salaryMax    Float?
+  currency     String           @default("PLN")
+  experience   ExperienceLevel  @default(JUNIOR)
+  requirements String?
+  benefits     String?
   contactEmail String?
   contactPhone String?
-  isActive     Boolean    @default(true)
-  isPublic     Boolean    @default(true) // czy widoczne publicznie
-  expiresAt    DateTime?  // data wygaśnięcia
-  
-  // Analytics
-  viewCount    Int        @default(0) // liczba wyświetleń ogłoszenia
-  
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  // Relations
-  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isActive     Boolean          @default(true)
+  isPublic     Boolean          @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   companyId    String
-  createdBy    User            @relation("JobOfferCreator", fields: [createdById], references: [id])
   createdById  String
+  viewCount    Int              @default(0)
   applications JobApplication[]
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy    User             @relation("JobOfferCreator", fields: [createdById], references: [id])
+  views        JobView[]
   messages     Message[]
-  views        JobView[]       // views tracking
 
   @@map("job_offers")
 }
 
-// Model do śledzenia unikalnych wyświetleń ogłoszeń
 model JobView {
-  id        String   @id @default(cuid())
-  ipAddress String   // adres IP użytkownika
-  userAgent String?  // user agent przeglądarki
-  sessionId String?  // ID sesji (jeśli dostępne)
-  userId    String?  // ID użytkownika (jeśli zalogowany)
-  viewedAt  DateTime @default(now())
-
-  // Relations
-  jobOffer   JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  ipAddress  String
+  userAgent  String?
+  sessionId  String?
+  userId     String?
+  viewedAt   DateTime @default(now())
   jobOfferId String
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  jobOffer   JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id])
 
-  // Unikalność: jedno IP może być liczone raz na 24h dla danego ogłoszenia
   @@unique([jobOfferId, ipAddress])
   @@map("job_views")
 }
 
 model JobApplication {
-  id          String              @id @default(cuid())
-  message     String?             // wiadomość od kandydata
-  cvUrl       String?             // link do CV
-  status      ApplicationStatus   @default(PENDING)
-  appliedAt   DateTime            @default(now())
+  id          String            @id @default(cuid())
+  message     String?
+  cvUrl       String?
+  status      ApplicationStatus @default(PENDING)
+  appliedAt   DateTime          @default(now())
   reviewedAt  DateTime?
-  notes       String?             // notatki rekrutera
-
-  // Relations
-  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  notes       String?
   jobOfferId  String
-  applicant   User     @relation(fields: [applicantId], references: [id], onDelete: Cascade)
   applicantId String
+  applicant   User              @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  jobOffer    JobOffer          @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
 
-  @@unique([jobOfferId, applicantId]) // jeden user może aplikować tylko raz na jedno ogłoszenie
+  @@unique([jobOfferId, applicantId])
   @@map("job_applications")
 }
 
 model WorkRequest {
-  id          String         @id @default(cuid())
-  title       String
-  description String
-  category    WorkCategory
-  type        RequestType    @default(ONE_TIME)
-  
-  // Location
-  country     String         @default("Polska")
-  voivodeship String         // województwo
-  city        String
-  address     String?        // dokładny adres (opcjonalny)
-  latitude    Float?         // współrzędne do mapy
-  longitude   Float?
-  
-  // Budget & Timeline
-  budgetMin   Float?         // minimalny budżet
-  budgetMax   Float?         // maksymalny budżet
-  currency    String         @default("PLN")
-  deadline    DateTime?      // termin wykonania
-  
-  // Requirements
-  requirements String?       // wymagania (markdown)
-  materials    String?       // materiały (markdown)
-  
-  // Contact & Status
+  id           String       @id @default(cuid())
+  title        String
+  description  String
+  category     WorkCategory
+  type         RequestType  @default(ONE_TIME)
+  country      String       @default("Polska")
+  voivodeship  String
+  city         String
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  budgetMin    Float?
+  budgetMax    Float?
+  currency     String       @default("PLN")
+  deadline     DateTime?
+  requirements String?
+  materials    String?
   contactEmail String?
   contactPhone String?
-  isActive     Boolean       @default(true)
-  isPublic     Boolean       @default(true) // czy widoczne publicznie
-  expiresAt    DateTime?     // data wygaśnięcia
-  
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  // Relations
-  company      Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  companyId    String?       // opcjonalne - może być prywatne zlecenie
-  createdBy    User          @relation("WorkRequestCreator", fields: [createdById], references: [id])
+  isActive     Boolean      @default(true)
+  isPublic     Boolean      @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  companyId    String?
   createdById  String
   messages     Message[]
+  company      Company?     @relation(fields: [companyId], references: [id])
+  createdBy    User         @relation("WorkRequestCreator", fields: [createdById], references: [id])
 
   @@map("work_requests")
 }
 
 model Message {
-  id        String      @id @default(cuid())
-  content   String
-  isRead    Boolean     @default(false)
-  createdAt DateTime    @default(now())
-
-  // Relations
-  sender      User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  senderId    String
-  receiver    User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  receiverId  String
-  
-  // Context - wiadomość może być związana z ogłoszeniem lub zleceniem
-  jobOffer    JobOffer?    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
-  jobOfferId  String?
-  workRequest WorkRequest? @relation(fields: [workRequestId], references: [id], onDelete: Cascade)
+  id            String       @id @default(cuid())
+  content       String
+  isRead        Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  senderId      String
+  receiverId    String
+  jobOfferId    String?
   workRequestId String?
+  jobOffer      JobOffer?    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  receiver      User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender        User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  workRequest   WorkRequest? @relation(fields: [workRequestId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
 
-// ETAP 10 - SUBSCRIPTION & PAYMENT MODELS
-
 model SubscriptionPlan {
-  id          String   @id @default(cuid())
-  name        String   @unique // "Basic", "Pro", "Enterprise"
-  displayName String   // "Plan Podstawowy", "Plan Pro", "Plan Enterprise"
-  description String?  // opis planu
-  price       Float    // cena miesięczna w groszach (np. 2900 = 29.00 PLN)
-  currency    String   @default("PLN")
-  
-  // Limity funkcjonalności
-  maxCompanies      Int     @default(1)     // maksymalna liczba firm
-  maxProjects       Int     @default(5)     // maksymalna liczba projektów
-  maxWorkers        Int     @default(10)    // maksymalna liczba pracowników
-  maxJobOffers      Int     @default(3)     // maksymalna liczba ogłoszeń o pracę
-  maxWorkRequests   Int     @default(5)     // maksymalna liczba zleceń
-  maxStorageGB      Float   @default(1.0)   // maksymalna przestrzeń dyskowa w GB
-  
-  // Funkcjonalności premium
-  hasAdvancedReports Boolean @default(false) // zaawansowane raporty
-  hasApiAccess      Boolean @default(false)  // dostęp do API
-  hasPrioritySupport Boolean @default(false) // priorytetowe wsparcie
-  hasCustomBranding Boolean @default(false)  // własny branding
-  hasTeamManagement Boolean @default(false)  // zarządzanie zespołem
-  
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  subscriptions Subscription[]
+  id                 String         @id @default(cuid())
+  name               String         @unique
+  displayName        String
+  description        String?
+  price              Float
+  currency           String         @default("PLN")
+  maxCompanies       Int            @default(1)
+  maxProjects        Int            @default(5)
+  maxWorkers         Int            @default(10)
+  maxJobOffers       Int            @default(3)
+  maxWorkRequests    Int            @default(5)
+  maxStorageGB       Float          @default(1.0)
+  hasAdvancedReports Boolean        @default(false)
+  hasApiAccess       Boolean        @default(false)
+  hasPrioritySupport Boolean        @default(false)
+  hasCustomBranding  Boolean        @default(false)
+  hasTeamManagement  Boolean        @default(false)
+  isActive           Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  subscriptions      Subscription[]
 
   @@map("subscription_plans")
 }
 
 model Subscription {
-  id                String             @id @default(cuid())
-  status            SubscriptionStatus @default(TRIAL)
-  
-  // Daty subskrypcji
-  startDate         DateTime           @default(now())
-  endDate           DateTime?          // null dla aktywnych subskrypcji
-  trialEndDate      DateTime?          // koniec okresu próbnego
-  nextBillingDate   DateTime?          // następna data płatności
-  
-  // Płatności
-  stripeCustomerId      String?        // ID klienta w Stripe
-  stripeSubscriptionId  String?        // ID subskrypcji w Stripe
-  stripePriceId         String?        // ID ceny w Stripe
-  
-  // Anulowanie
-  cancelAtPeriodEnd Boolean            @default(false)
-  canceledAt        DateTime?
-  cancelReason      String?
-  
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-
-  // Relations
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            String             @unique // jeden user = jedna subskrypcja
-  plan              SubscriptionPlan   @relation(fields: [planId], references: [id])
-  planId            String
-  payments          Payment[]
+  id                   String             @id @default(cuid())
+  status               SubscriptionStatus @default(TRIAL)
+  startDate            DateTime           @default(now())
+  endDate              DateTime?
+  trialEndDate         DateTime?
+  nextBillingDate      DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  cancelReason         String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  userId               String             @unique
+  planId               String
+  payments             Payment[]
+  plan                 SubscriptionPlan   @relation(fields: [planId], references: [id])
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  amount          Float         // kwota w groszach
-  currency        String        @default("PLN")
-  status          PaymentStatus @default(PENDING)
-  
-  // Stripe
-  stripePaymentIntentId String?  // ID płatności w Stripe
-  stripeInvoiceId       String?  // ID faktury w Stripe
-  
-  // Metadane
-  description     String?       // opis płatności
-  receiptUrl      String?       // link do paragonu
-  invoiceUrl      String?       // link do faktury
-  
-  // Daty
-  paidAt          DateTime?     // kiedy zapłacono
-  failedAt        DateTime?     // kiedy płatność się nie powiodła
-  refundedAt      DateTime?     // kiedy zwrócono pieniądze
-  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  // Relations
-  subscription    Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  subscriptionId  String
+  id                    String        @id @default(cuid())
+  amount                Float
+  currency              String        @default("PLN")
+  status                PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?
+  stripeInvoiceId       String?
+  description           String?
+  receiptUrl            String?
+  invoiceUrl            String?
+  paidAt                DateTime?
+  failedAt              DateTime?
+  refundedAt            DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  subscriptionId        String
+  subscription          Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
 
-// EXISTING ENUMS
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Analytics {
+  id        String        @id @default(cuid())
+  type      AnalyticsType
+  data      Json
+  period    String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  userId    String
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("analytics")
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  name        String
+  type        ReportType
+  config      Json
+  data        Json?
+  status      ReportStatus @default(PENDING)
+  isScheduled Boolean      @default(false)
+  schedule    String?
+  filePath    String?
+  fileFormat  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  generatedAt DateTime?
+  userId      String
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model Tag {
+  id          String     @id @default(cuid())
+  name        String
+  color       String     @default("#3B82F6")
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  companyId   String
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  materials   Material[] @relation("MaterialToTag")
+  projects    Project[]  @relation("ProjectToTag")
+  tasks       Task[]     @relation("TagToTask")
+
+  @@unique([name, companyId])
+  @@map("tags")
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  query     String
+  filters   Json?
+  results   Int      @default(0)
+  category  String?
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("search_history")
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  name      String
+  query     String
+  filters   Json?
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@map("saved_searches")
+}
+
+model AdminMessage {
+  id                                   String              @id @default(cuid())
+  subject                              String
+  content                              String
+  priority                             MessagePriority     @default(NORMAL)
+  status                               MessageStatus       @default(UNREAD)
+  createdAt                            DateTime            @default(now())
+  updatedAt                            DateTime            @updatedAt
+  senderId                             String?             // Opcjonalne - może być null dla adminów
+  senderType                           SenderType          // Enum zamiast String
+  senderAdminId                        String?             // ID admina z plansAdmin
+  senderAdmin                          PlansAdmin?         @relation(fields: [senderAdminId], references: [id])
+  recipientId                          String
+  replies                              AdminMessageReply[]
+  recipient                            User                @relation("AdminMessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  senderUser                           User?               @relation("AdminMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("admin_messages")
+}
+
+model AdminMessageReply {
+  id        String       @id @default(cuid())
+  content   String
+  createdAt DateTime     @default(now())
+  messageId String
+  senderId  String?      // Opcjonalne - może być null dla adminów
+  senderType SenderType  // Enum zamiast String
+  senderAdminId String?  // ID admina z plansAdmin
+  message   AdminMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  senderAdmin PlansAdmin? @relation(fields: [senderAdminId], references: [id])
+  senderUser User?       @relation("AdminMessageReplySender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("admin_message_replies")
+}
+
 enum Role {
   SUPERADMIN
   BOSS
@@ -494,258 +562,160 @@ enum Priority {
   URGENT
 }
 
-// ETAP 8 - NEW ENUMS
-
 enum JobCategory {
-  CONSTRUCTION_WORKER    // Robotnik budowlany
-  ELECTRICIAN           // Elektryk
-  PLUMBER              // Hydraulik
-  PAINTER              // Malarz
-  CARPENTER            // Stolarz
-  MASON                // Murarz
-  ROOFER               // Dekarz
-  TILER                // Glazurnik
-  FOREMAN              // Kierownik budowy
-  ARCHITECT            // Architekt
-  ENGINEER             // Inżynier
-  HEAVY_EQUIPMENT      // Operator sprzętu
-  LANDSCAPING          // Ogrodnictwo
-  DEMOLITION           // Rozbiórki
-  OTHER                // Inne
+  CONSTRUCTION_WORKER
+  ELECTRICIAN
+  PLUMBER
+  PAINTER
+  CARPENTER
+  MASON
+  ROOFER
+  TILER
+  FOREMAN
+  ARCHITECT
+  ENGINEER
+  HEAVY_EQUIPMENT
+  LANDSCAPING
+  DEMOLITION
+  OTHER
 }
 
 enum JobType {
-  FULL_TIME            // Pełny etat
-  PART_TIME            // Część etatu
-  CONTRACT             // Kontrakt
-  TEMPORARY            // Tymczasowa
-  INTERNSHIP           // Staż
-  FREELANCE            // Freelance
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  TEMPORARY
+  INTERNSHIP
+  FREELANCE
 }
 
 enum ExperienceLevel {
-  JUNIOR               // Początkujący (0-2 lata)
-  MID                  // Średniozaawansowany (2-5 lat)
-  SENIOR               // Doświadczony (5+ lat)
-  EXPERT               // Ekspert (10+ lat)
+  JUNIOR
+  MID
+  SENIOR
+  EXPERT
 }
 
 enum ApplicationStatus {
-  PENDING              // Oczekująca
-  REVIEWED             // Przejrzana
-  ACCEPTED             // Zaakceptowana
-  REJECTED             // Odrzucona
-  WITHDRAWN            // Wycofana przez kandydata
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
 }
 
 enum WorkCategory {
-  CONSTRUCTION         // Budowa
-  RENOVATION           // Remont
-  REPAIR               // Naprawa
-  INSTALLATION         // Instalacja
-  MAINTENANCE          // Konserwacja
-  DEMOLITION           // Rozbiórka
-  LANDSCAPING          // Ogrodnictwo
-  CLEANING             // Sprzątanie
-  PAINTING             // Malowanie
-  ELECTRICAL           // Elektryka
-  PLUMBING             // Hydraulika
-  ROOFING              // Dekarstwo
-  FLOORING             // Podłogi
-  WINDOWS_DOORS        // Okna i drzwi
-  OTHER                // Inne
+  CONSTRUCTION
+  RENOVATION
+  REPAIR
+  INSTALLATION
+  MAINTENANCE
+  DEMOLITION
+  LANDSCAPING
+  CLEANING
+  PAINTING
+  ELECTRICAL
+  PLUMBING
+  ROOFING
+  FLOORING
+  WINDOWS_DOORS
+  OTHER
 }
 
 enum RequestType {
-  ONE_TIME             // Jednorazowe
-  RECURRING            // Cykliczne
-  PROJECT              // Projekt
-  URGENT               // Pilne
+  ONE_TIME
+  RECURRING
+  PROJECT
+  URGENT
 }
 
-// ETAP 10 - SUBSCRIPTION & PAYMENT ENUMS
-
 enum SubscriptionStatus {
-  TRIAL                // Okres próbny
-  ACTIVE               // Aktywna
-  PAST_DUE             // Zaległa płatność
-  CANCELED             // Anulowana
-  UNPAID               // Nieopłacona
-  INCOMPLETE           // Niekompletna
-  INCOMPLETE_EXPIRED   // Wygasła niekompletna
-  PAUSED               // Wstrzymana
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAUSED
 }
 
 enum PaymentStatus {
-  PENDING              // Oczekująca
-  PROCESSING           // Przetwarzana
-  SUCCEEDED            // Udana
-  FAILED               // Nieudana
-  CANCELED             // Anulowana
-  REFUNDED             // Zwrócona
-  PARTIALLY_REFUNDED   // Częściowo zwrócona
-}
-
-// ETAP 11 - NOTIFICATIONS MODEL
-model Notification {
-  id        String           @id @default(cuid())
-  type      NotificationType
-  title     String
-  message   String
-  isRead    Boolean          @default(false)
-  data      Json?            // dodatkowe dane (np. ID zadania, projektu)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-
-  // Relations
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-
-  @@map("notifications")
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum NotificationType {
-  TASK_ASSIGNED      // Przypisano zadanie
-  TASK_COMPLETED     // Zadanie ukończone
-  TASK_OVERDUE       // Zadanie przeterminowane
-  PROJECT_CREATED    // Nowy projekt
-  PROJECT_UPDATED    // Projekt zaktualizowany
-  MESSAGE_RECEIVED   // Nowa wiadomość
-  WORKER_INVITED     // Zaproszenie do firmy
-  WORKER_JOINED      // Pracownik dołączył
-  JOB_APPLICATION    // Nowa aplikacja o pracę
-  MATERIAL_LOW       // Niski stan materiału
-  SUBSCRIPTION_TRIAL_ENDING  // Koniec okresu próbnego
-  SUBSCRIPTION_EXPIRED       // Subskrypcja wygasła
-  PAYMENT_SUCCESS    // Płatność udana
-  PAYMENT_FAILED     // Płatność nieudana
-  SYSTEM_UPDATE      // Aktualizacja systemu
+  TASK_ASSIGNED
+  TASK_COMPLETED
+  TASK_OVERDUE
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  MESSAGE_RECEIVED
+  WORKER_INVITED
+  WORKER_JOINED
+  JOB_APPLICATION
+  MATERIAL_LOW
+  SUBSCRIPTION_TRIAL_ENDING
+  SUBSCRIPTION_EXPIRED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  SYSTEM_UPDATE
+  ADMIN_MESSAGE
+  ADMIN_MESSAGE_REPLY
+  SUBSCRIPTION_EXPIRING
+  PAYMENT_DUE
 }
-
-// ETAP 15 - ANALYTICS & REPORTING MODELS
-
-model Analytics {
-  id          String        @id @default(cuid())
-  type        AnalyticsType
-  data        Json          // dane analityczne w formacie JSON
-  period      String        // daily, weekly, monthly, yearly
-  startDate   DateTime      // początek okresu
-  endDate     DateTime      // koniec okresu
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  // Relations
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId   String
-
-  @@map("analytics")
-}
-
-model Report {
-  id          String     @id @default(cuid())
-  name        String
-  type        ReportType
-  config      Json       // konfiguracja raportu (filtry, parametry)
-  data        Json?      // wygenerowane dane raportu
-  status      ReportStatus @default(PENDING)
-  isScheduled Boolean    @default(false)
-  schedule    String?    // cron expression dla automatycznych raportów
-  filePath    String?    // ścieżka do wygenerowanego pliku
-  fileFormat  String?    // PDF, EXCEL, CSV
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  generatedAt DateTime?  // kiedy raport został wygenerowany
-
-  // Relations
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId   String
-
-  @@map("reports")
-}
-
-model Tag {
-  id          String   @id @default(cuid())
-  name        String
-  color       String   @default("#3B82F6") // domyślny niebieski
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId   String
-  projects    Project[]
-  tasks       Task[]
-  materials   Material[]
-
-  @@unique([name, companyId]) // unikalna nazwa tagu w firmie
-  @@map("tags")
-}
-
-model SearchHistory {
-  id        String   @id @default(cuid())
-  query     String   // zapytanie wyszukiwania
-  filters   Json?    // zastosowane filtry
-  results   Int      @default(0) // liczba wyników
-  category  String?  // kategoria wyszukiwania (projects, tasks, materials, etc.)
-  createdAt DateTime @default(now())
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-
-  @@map("search_history")
-}
-
-model SavedSearch {
-  id        String   @id @default(cuid())
-  name      String   // nazwa zapisanego wyszukiwania
-  query     String   // zapytanie wyszukiwania
-  filters   Json?    // zastosowane filtry
-  category  String?  // kategoria wyszukiwania
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-
-  @@unique([userId, name]) // unikalna nazwa dla użytkownika
-  @@map("saved_searches")
-}
-
-// ETAP 15 - NEW ENUMS
 
 enum AnalyticsType {
-  PROJECT_PROGRESS     // Postęp projektów
-  COST_ANALYSIS       // Analiza kosztów
-  TIME_TRACKING       // Śledzenie czasu
-  TEAM_PERFORMANCE    // Wydajność zespołu
-  TASK_METRICS        // Metryki zadań
-  MATERIAL_USAGE      // Wykorzystanie materiałów
-  FINANCIAL_OVERVIEW  // Przegląd finansowy
-  PRODUCTIVITY_TRENDS // Trendy produktywności
+  PROJECT_PROGRESS
+  COST_ANALYSIS
+  TIME_TRACKING
+  TEAM_PERFORMANCE
+  TASK_METRICS
+  MATERIAL_USAGE
+  FINANCIAL_OVERVIEW
+  PRODUCTIVITY_TRENDS
 }
 
 enum ReportType {
-  PROJECT_SUMMARY     // Podsumowanie projektu
-  FINANCIAL_REPORT    // Raport finansowy
-  TEAM_PRODUCTIVITY   // Produktywność zespołu
-  TASK_COMPLETION     // Ukończenie zadań
-  MATERIAL_INVENTORY  // Inwentarz materiałów
-  TIME_TRACKING       // Śledzenie czasu
-  COST_BREAKDOWN      // Podział kosztów
-  CUSTOM_REPORT       // Raport niestandardowy
+  PROJECT_SUMMARY
+  FINANCIAL_REPORT
+  TEAM_PRODUCTIVITY
+  TASK_COMPLETION
+  MATERIAL_INVENTORY
+  TIME_TRACKING
+  COST_BREAKDOWN
+  CUSTOM_REPORT
 }
 
 enum ReportStatus {
-  PENDING             // Oczekujący
-  GENERATING          // Generowanie
-  COMPLETED           // Ukończony
-  FAILED              // Nieudany
-  SCHEDULED           // Zaplanowany
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  SCHEDULED
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  SENT
+  ARCHIVED
+}
+
+enum SenderType {
+  USER
+  ADMIN
 }

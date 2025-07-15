@@ -67,7 +67,7 @@ const SubscriptionSuccessPage: React.FC = () => {
           </h1>
           
           <p className="text-gray-600 mb-6">
-            Twoja subskrypcja została aktywowana. Możesz teraz korzystać ze wszystkich funkcji SiteBoss.
+                          Twoja subskrypcja została aktywowana. Możesz teraz korzystać ze wszystkich funkcji BuildBoss.
           </p>
 
           {/* Session Info */}
@@ -124,7 +124,7 @@ const SubscriptionSuccessPage: React.FC = () => {
             <p className="text-xs text-gray-500">
               Potrzebujesz pomocy?{' '}
               <a 
-                href="mailto:support@siteboss.pl" 
+                href="mailto:support@buildboss.pl" 
                 className="text-blue-600 hover:text-blue-800"
               >
                 Skontaktuj się z nami

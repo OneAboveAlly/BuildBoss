@@ -12,8 +12,10 @@
     "MATERIAL_LOW_STOCK": "Niski stan magazynowy",
     "SUBSCRIPTION_TRIAL_ENDING": "Koniec okresu próbnego",
     "SUBSCRIPTION_EXPIRED": "Subskrypcja wygasła",
+    "SUBSCRIPTION_EXPIRING": "Subskrypcja kończy się wkrótce",
     "PAYMENT_SUCCESS": "Płatność pomyślna",
     "PAYMENT_FAILED": "Płatność nieudana",
+    "PAYMENT_DUE": "Płatność zaległa",
     "SYSTEM_UPDATE": "Aktualizacja systemu"
   },
   "messages": {
@@ -29,8 +31,10 @@
     "material_low_stock": "Niski stan magazynowy: {{materialName}} ({{quantity}} szt.)",
     "subscription_trial_ending": "Twój okres próbny kończy się za {{days}} dni",
     "subscription_expired": "Twoja subskrypcja wygasła",
+    "subscription_expiring": "Twoja subskrypcja kończy się za {{days}} dni",
     "payment_success": "Płatność została zrealizowana pomyślnie",
     "payment_failed": "Płatność nie powiodła się",
+    "payment_due": "Masz zaległą płatność za subskrypcję",
     "system_update": "System został zaktualizowany do wersji {{version}}"
   }
 } 

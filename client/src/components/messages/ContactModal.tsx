@@ -34,7 +34,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
       setSending(true);
       
       await messageService.sendMessage({
-        receiverId: recipientId,
+        receiverId: recipientId.toString(),
         content: message.trim(),
         jobOfferId: jobOffer?.id ? parseInt(jobOffer.id) : undefined,
         workRequestId: workRequest?.id ? parseInt(workRequest.id) : undefined

@@ -157,7 +157,7 @@ export const subscriptionService = {
   },
 
   // Sprawdź czy użytkownik ma dostęp do funkcji premium
-  async hasPremiumFeature(featureName: keyof Subscription['plan']['features']): Promise<boolean> {
+  async hasPremiumFeature(featureName: keyof Pick<SubscriptionPlan, 'hasAdvancedReports' | 'hasApiAccess' | 'hasPrioritySupport' | 'hasCustomBranding' | 'hasTeamManagement'>): Promise<boolean> {
     try {
       const subscription = await this.getCurrentSubscription();
       if (!subscription) return false;
@@ -165,7 +165,7 @@ export const subscriptionService = {
       const hasActiveSubscription = await this.hasActiveSubscription();
       if (!hasActiveSubscription) return false;
 
-      return subscription.plan.features[featureName] === true;
+      return subscription.plan[featureName] === true;
     } catch (error) {
       console.error('Błąd sprawdzania funkcji premium:', error);
       return false;

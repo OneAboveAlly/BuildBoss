@@ -81,7 +81,7 @@ const CompanyDetailPage: React.FC = () => {
 
   const tabs = [
     { id: 'overview', label: 'Przegląd', icon: '📊' },
-    { id: 'workers', label: `Pracownicy (${company._count.workers})`, icon: '👥' },
+    { id: 'workers', label: `Pracownicy (${company._count?.workers || 0})`, icon: '👥' },
     { id: 'settings', label: 'Ustawienia', icon: '⚙️' }
   ] as const;
 
@@ -229,7 +229,7 @@ const CompanyDetailPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-secondary-50 p-6 rounded-lg">
                       <div className="text-2xl font-bold text-secondary-900">
-                        {company._count.workers}
+                        {company._count?.workers || 0}
                       </div>
                       <div className="text-sm text-secondary-600">Pracowników</div>
                     </div>

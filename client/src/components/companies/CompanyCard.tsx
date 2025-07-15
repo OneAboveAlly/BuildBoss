@@ -82,7 +82,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="font-medium text-gray-700">Pracownicy:</span>
-            <span className="ml-2">{company._count.workers}</span>
+            <span className="ml-2">{company._count?.workers || 0}</span>
           </div>
           
           {company.nip && (

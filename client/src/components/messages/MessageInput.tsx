@@ -2,16 +2,19 @@ import React, { useState, useRef } from 'react';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 
 interface MessageInputProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, file?: File) => void;
   disabled?: boolean;
+  defaultValue?: string;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ 
   onSendMessage, 
-  disabled = false 
+  disabled = false, 
+  defaultValue = ''
 }) => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(defaultValue);
   const [sending, setSending] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,9 +24,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
     try {
       setSending(true);
-      await onSendMessage(message.trim());
+      await onSendMessage(message.trim(), file || undefined);
       setMessage('');
-      
+      setFile(null);
       // Reset wysokości textarea
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -49,6 +52,24 @@ const MessageInput: React.FC<MessageInputProps> = ({
     const textarea = e.target;
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowed.includes(selected.type)) {
+        alert('Dozwolone są tylko pliki PDF, DOC, DOCX');
+        return;
+      }
+      if (selected.size > 5 * 1024 * 1024) {
+        alert('Maksymalny rozmiar pliku to 5MB');
+        return;
+      }
+      setFile(selected);
+    } else {
+      setFile(null);
+    }
   };
 
   return (
@@ -80,7 +101,20 @@ const MessageInput: React.FC<MessageInputProps> = ({
           )}
         </button>
       </div>
-      
+      <div className="mt-2">
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={handleFileChange}
+          disabled={disabled || sending}
+        />
+        {file && (
+          <div className="text-xs text-gray-700 mt-1">
+            Załączono: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+            <button type="button" className="ml-2 text-red-500" onClick={() => setFile(null)}>Usuń</button>
+          </div>
+        )}
+      </div>
       <div className="mt-2 text-xs text-gray-500">
         Naciśnij Enter aby wysłać, Shift+Enter dla nowej linii
       </div>

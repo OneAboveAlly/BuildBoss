@@ -10,6 +10,7 @@ import {
   PlusIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import PublicLayout from '../components/layout/PublicLayout';
 import Layout from '../components/layout/Layout';
@@ -32,20 +33,22 @@ interface JobCardProps {
 
 const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation('jobs');
+  
   const salaryText = job.salaryMin || job.salaryMax 
     ? `${job.salaryMin || 'od'} - ${job.salaryMax || 'do'} ${job.currency || 'PLN'}`
-    : 'Wynagrodzenie do uzgodnienia';
+    : t('salary_negotiable');
 
   const timeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
-    if (diffInHours < 1) return 'przed chwilą';
-    if (diffInHours < 24) return `${diffInHours}h temu`;
+    if (diffInHours < 1) return t('time_ago.just_now');
+    if (diffInHours < 24) return t('time_ago.hours_ago', { count: diffInHours });
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} dni temu`;
-    return date.toLocaleDateString('pl-PL');
+    if (diffInDays < 7) return t('time_ago.days_ago', { count: diffInDays });
+    return date.toLocaleDateString();
   };
 
   return (
@@ -117,6 +120,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
 export const JobsPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation('jobs');
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,13 +206,13 @@ export const JobsPage: React.FC = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Oferty pracy w budownictwie
+                {t('title')}
               </h1>
               <p className="text-gray-600 mt-2">
-                Znajdź swoją wymarzoną pracę w branży budowlanej
+                {t('subtitle')}
               </p>
               <div className="mt-4 text-sm text-gray-500">
-                Znaleziono {totalJobs} ofert pracy
+                {t('found_jobs', { count: totalJobs })}
               </div>
             </div>
             
@@ -217,7 +221,7 @@ export const JobsPage: React.FC = () => {
                 <Link to="/jobs/create">
                   <Button className="bg-primary-600 hover:bg-primary-700">
                     <PlusIcon className="w-4 h-4 mr-2" />
-                    Dodaj ogłoszenie
+                    {t('add_job')}
                   </Button>
                 </Link>
               </div>
@@ -230,7 +234,7 @@ export const JobsPage: React.FC = () => {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Szukaj stanowiska, firmy, słów kluczowych..."
+                placeholder={t('search_placeholder')}
                 value={filters.search || ''}
                 onChange={(e) => updateFilters({ search: e.target.value })}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -243,7 +247,7 @@ export const JobsPage: React.FC = () => {
               className="sm:w-auto"
             >
               <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
-              Filtry
+              {t('filters')}
             </Button>
           </div>
 
@@ -254,16 +258,16 @@ export const JobsPage: React.FC = () => {
                 {/* Kategoria */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Kategoria
+                    {t('filters_form.category')}
                   </label>
                   <select
                     value={filters.category || ''}
                     onChange={(e) => updateFilters({ category: e.target.value as any || undefined })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="">Wszystkie kategorie</option>
+                    <option value="">{t('filters_form.all_categories')}</option>
                     {Object.entries(JOB_CATEGORIES).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
+                      <option key={key} value={key}>{t(`categories.${key}`) || label}</option>
                     ))}
                   </select>
                 </div>
@@ -271,14 +275,14 @@ export const JobsPage: React.FC = () => {
                 {/* Województwo */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Województwo
+                    {t('filters_form.voivodeship')}
                   </label>
                   <select
                     value={filters.voivodeship || ''}
                     onChange={(e) => updateFilters({ voivodeship: e.target.value || undefined })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="">Wszystkie województwa</option>
+                    <option value="">{t('filters_form.all_voivodeships')}</option>
                     {VOIVODESHIPS.map(voivodeship => (
                       <option key={voivodeship} value={voivodeship}>
                         {voivodeship}
@@ -290,16 +294,16 @@ export const JobsPage: React.FC = () => {
                 {/* Typ pracy */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Typ pracy
+                    {t('filters_form.job_type')}
                   </label>
                   <select
                     value={filters.type || ''}
                     onChange={(e) => updateFilters({ type: e.target.value as any || undefined })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="">Wszystkie typy</option>
+                    <option value="">{t('filters_form.all_types')}</option>
                     {Object.entries(JOB_TYPES).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
+                      <option key={key} value={key}>{t(`types.${key}`) || label}</option>
                     ))}
                   </select>
                 </div>
@@ -307,7 +311,7 @@ export const JobsPage: React.FC = () => {
                 {/* Minimalne wynagrodzenie */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Min. wynagrodzenie (PLN)
+                    {t('filters_form.min_salary')}
                   </label>
                   <input
                     type="number"
@@ -321,11 +325,11 @@ export const JobsPage: React.FC = () => {
 
               <div className="mt-4 flex justify-between">
                 <Button variant="outline" onClick={clearFilters}>
-                  Wyczyść filtry
+                  {t('clear_filters')}
                 </Button>
                 
                 <div className="flex items-center space-x-2">
-                  <label className="text-sm text-gray-700">Sortuj:</label>
+                  <label className="text-sm text-gray-700">{t('sort_by')}</label>
                   <select
                     value={`${filters.sortBy}_${filters.sortOrder}`}
                     onChange={(e) => {
@@ -334,12 +338,12 @@ export const JobsPage: React.FC = () => {
                     }}
                     className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="createdAt_desc">Najnowsze</option>
-                    <option value="createdAt_asc">Najstarsze</option>
-                    <option value="title_asc">Nazwa A-Z</option>
-                    <option value="title_desc">Nazwa Z-A</option>
-                    <option value="salaryMin_desc">Najwyższe wynagrodzenie</option>
-                    <option value="salaryMin_asc">Najniższe wynagrodzenie</option>
+                    <option value="createdAt_desc">{t('sort_newest')}</option>
+                    <option value="createdAt_asc">{t('sort_oldest')}</option>
+                    <option value="title_asc">{t('sort_name_asc')}</option>
+                    <option value="title_desc">{t('sort_name_desc')}</option>
+                    <option value="salaryMin_desc">{t('sort_salary_desc')}</option>
+                    <option value="salaryMin_asc">{t('sort_salary_asc')}</option>
                   </select>
                 </div>
               </div>
@@ -357,13 +361,13 @@ export const JobsPage: React.FC = () => {
         ) : jobs.length === 0 ? (
           <div className="text-center py-12">
             <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Brak ogłoszeń</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('no_jobs')}</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Nie znaleziono ogłoszeń spełniających kryteria wyszukiwania.
+              {t('no_jobs_description')}
             </p>
             <div className="mt-6">
               <Button variant="outline" onClick={clearFilters}>
-                Wyczyść filtry
+                {t('clear_filters')}
               </Button>
             </div>
           </div>
@@ -384,7 +388,7 @@ export const JobsPage: React.FC = () => {
                     disabled={currentPage === 1}
                     className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Poprzednia
+                    {t('previous')}
                   </button>
                   
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -409,7 +413,7 @@ export const JobsPage: React.FC = () => {
                     disabled={currentPage === totalPages}
                     className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Następna
+                    {t('next')}
                   </button>
                 </nav>
               </div>
@@ -423,20 +427,20 @@ export const JobsPage: React.FC = () => {
         <div className="bg-primary-50 border-t border-primary-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Szukasz pracowników?
+              {t('looking_for_employees')}
             </h2>
             <p className="text-gray-600 mb-6">
-              Dołącz do SiteBoss i dodawaj ogłoszenia o pracę za darmo!
+              {t('looking_for_employees_description')}
             </p>
             <div className="space-x-4">
               <Link to="/login">
                 <Button variant="outline">
-                  Zaloguj się
+                  {t('login')}
                 </Button>
               </Link>
               <Link to="/register">
                 <Button className="bg-primary-600 hover:bg-primary-700">
-                  Zarejestruj firmę
+                  {t('register_company')}
                 </Button>
               </Link>
             </div>
@@ -445,4 +449,6 @@ export const JobsPage: React.FC = () => {
       )}
     </LayoutComponent>
   );
-}; 
+};
+
+export default JobsPage; 

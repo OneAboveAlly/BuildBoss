@@ -15,6 +15,7 @@ import tasksPL from './locales/pl/tasks.json';
 import materialsPL from './locales/pl/materials.json';
 import messagesPL from './locales/pl/messages.json';
 import formsPL from './locales/pl/forms.json';
+import jobsPL from './locales/pl/jobs.json';
 
 const resources = {
   pl: {
@@ -29,6 +30,7 @@ const resources = {
     materials: materialsPL,
     messages: messagesPL,
     forms: formsPL,
+    jobs: jobsPL,
   },
   // Inne języki będą ładowane dynamicznie
 };
@@ -41,9 +43,9 @@ i18n
     resources,
     fallbackLng: 'pl',
     defaultNS: 'common',
-    ns: ['common', 'navigation', 'auth', 'dashboard', 'notifications', 'projects', 'tasks', 'materials', 'messages', 'forms', 'homepage'],
+    ns: ['common', 'navigation', 'auth', 'dashboard', 'notifications', 'projects', 'tasks', 'materials', 'messages', 'forms', 'homepage', 'subscription', 'jobs'],
     
-    debug: true, // Enable debug to see what's happening
+    debug: false, // Disable debug in production
     
     // Set explicit language on init
     lng: 'pl', // Default to Polish
@@ -96,10 +98,14 @@ i18n.on('languageChanged', (lng) => {
   localStorage.setItem('preferred-language', lng);
 });
 
-// Initialize with Polish if no language is stored
-if (!localStorage.getItem('preferred-language')) {
-  localStorage.setItem('preferred-language', 'pl');
-  i18n.changeLanguage('pl');
-}
+// Wait for i18n to be initialized before using it
+i18n.on('initialized', () => {
+  console.log('i18n initialized');
+  // Initialize with Polish if no language is stored
+  if (!localStorage.getItem('preferred-language')) {
+    localStorage.setItem('preferred-language', 'pl');
+    i18n.changeLanguage('pl');
+  }
+});
 
 export default i18n; 

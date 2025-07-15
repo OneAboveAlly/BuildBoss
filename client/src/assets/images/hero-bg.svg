@@ -1,0 +1,30 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.1" />
+      <stop offset="50%" style="stop-color:#A855F7;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#2563EB;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A855F7;stop-opacity:0.05" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#gradient1)"/>
+  
+  <!-- Geometric shapes -->
+  <circle cx="200" cy="150" r="80" fill="url(#gradient2)" opacity="0.3"/>
+  <circle cx="1000" cy="600" r="120" fill="url(#gradient2)" opacity="0.2"/>
+  <circle cx="800" cy="200" r="60" fill="url(#gradient2)" opacity="0.4"/>
+  
+  <!-- Polygons -->
+  <polygon points="100,400 200,350 250,450 150,500" fill="url(#gradient2)" opacity="0.2"/>
+  <polygon points="900,100 1000,80 1050,180 950,200" fill="url(#gradient2)" opacity="0.3"/>
+  
+  <!-- Lines -->
+  <line x1="0" y1="300" x2="400" y2="100" stroke="#3B82F6" stroke-width="2" opacity="0.1"/>
+  <line x1="800" y1="700" x2="1200" y2="500" stroke="#A855F7" stroke-width="2" opacity="0.1"/>
+  <line x1="600" y1="0" x2="800" y2="400" stroke="#2563EB" stroke-width="2" opacity="0.1"/>
+</svg> 

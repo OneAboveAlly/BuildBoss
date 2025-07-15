@@ -18,6 +18,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 const RegisterPage: React.FC = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const { t } = useTranslation('auth');
   const { t: tForms } = useTranslation('forms');
   const [formData, setFormData] = useState({
@@ -26,7 +28,6 @@ const RegisterPage: React.FC = () => {
     confirmPassword: '',
     firstName: '',
     lastName: '',
-    companyName: '',
     acceptTerms: false,
     acceptMarketing: false,
   });
@@ -34,9 +35,6 @@ const RegisterPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { register } = useAuth();
-  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -85,10 +83,32 @@ const RegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
+      console.log('Attempting registration with data:', {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        hasPassword: !!formData.password
+      });
+      
       await register(formData.email, formData.password, formData.firstName, formData.lastName);
       navigate('/login?message=registration_success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.registration_failed'));
+      console.error('Registration failed:', err);
+      const errorMessage = err instanceof Error ? err.message : t('errors.registration_failed');
+      
+      // Add specific error guidance
+      let friendlyMessage = errorMessage;
+      if (errorMessage.includes('już istnieje')) {
+        friendlyMessage = 'Ten adres email jest już używany. Spróbuj się zalogować lub użyj innego adresu email.';
+      } else if (errorMessage.includes('429') || errorMessage.includes('Too Many Requests')) {
+        friendlyMessage = 'Zbyt wiele prób rejestracji. Poczekaj kilka minut i spróbuj ponownie.';
+      } else if (errorMessage.includes('validation') || errorMessage.includes('walidacji')) {
+        friendlyMessage = 'Dane formularza są nieprawidłowe. Sprawdź wszystkie pola i spróbuj ponownie.';
+      } else if (errorMessage.includes('network') || errorMessage.includes('połączenia')) {
+        friendlyMessage = 'Brak połączenia z serwerem. Sprawdź połączenie internetowe i spróbuj ponownie.';
+      }
+      
+      setError(friendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -196,10 +216,49 @@ const RegisterPage: React.FC = () => {
 
           {/* Alert Messages */}
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
-              <div className="flex items-center">
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mr-3" />
-                <p className="text-red-700 text-sm">{error}</p>
+            <div className={`border-l-4 p-4 rounded-lg ${
+              error.includes('już istnieje') ? 'bg-yellow-50 border-yellow-400' :
+              error.includes('429') || error.includes('Too Many Requests') ? 'bg-orange-50 border-orange-400' :
+              error.includes('network') || error.includes('połączenia') ? 'bg-blue-50 border-blue-400' :
+              'bg-red-50 border-red-400'
+            }`}>
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  {error.includes('już istnieje') ? (
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                  ) : error.includes('429') || error.includes('Too Many Requests') ? (
+                    <ClockIcon className="h-5 w-5 text-orange-400" />
+                  ) : error.includes('network') || error.includes('połączenia') ? (
+                    <ExclamationTriangleIcon className="h-5 w-5 text-blue-400" />
+                  ) : (
+                    <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p className={`text-sm ${
+                    error.includes('już istnieje') ? 'text-yellow-700' :
+                    error.includes('429') || error.includes('Too Many Requests') ? 'text-orange-700' :
+                    error.includes('network') || error.includes('połączenia') ? 'text-blue-700' :
+                    'text-red-700'
+                  }`}>
+                    {error}
+                  </p>
+                  {error.includes('już istnieje') && (
+                    <p className="mt-2 text-sm text-yellow-600">
+                      💡 <Link to="/login" className="underline font-medium">Przejdź do logowania</Link> lub użyj innego adresu email.
+                    </p>
+                  )}
+                  {(error.includes('429') || error.includes('Too Many Requests')) && (
+                    <p className="mt-2 text-sm text-orange-600">
+                      ⏱️ Poczekaj kilka minut i spróbuj ponownie. To zabezpieczenie przed atakami.
+                    </p>
+                  )}
+                  {(error.includes('network') || error.includes('połączenia')) && (
+                    <p className="mt-2 text-sm text-blue-600">
+                      🔌 Sprawdź połączenie internetowe i status serwera.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -269,27 +328,6 @@ const RegisterPage: React.FC = () => {
                   className="block w-full pl-10 pr-3 py-3 border border-secondary-300 rounded-lg placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                   placeholder={t('placeholders.enter_email')}
                   value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            {/* Company Name Field */}
-            <div>
-              <label htmlFor="companyName" className="block text-sm font-medium text-secondary-700 mb-2">
-                {t('register.company_optional')}
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <BuildingOffice2Icon className="h-5 w-5 text-secondary-400" />
-                </div>
-                <input
-                  id="companyName"
-                  name="companyName"
-                  type="text"
-                  className="block w-full pl-10 pr-3 py-3 border border-secondary-300 rounded-lg placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                  placeholder={t('register.placeholders.company_name')}
-                  value={formData.companyName}
                   onChange={handleChange}
                 />
               </div>

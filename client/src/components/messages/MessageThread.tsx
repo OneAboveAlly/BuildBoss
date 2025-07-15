@@ -9,14 +9,16 @@ import {
   TrashIcon,
   EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
+import { Modal } from '../ui/Modal';
 
 interface MessageThreadProps {
   conversation: Conversation;
   messages: Message[];
   loading: boolean;
-  currentUserId: number;
-  onSendMessage: (content: string) => void;
+  currentUserId: string;
+  onSendMessage: (content: string, file?: File) => void;
   onDeleteMessage: (messageId: number) => void;
+  defaultMessage?: string;
 }
 
 const MessageThread: React.FC<MessageThreadProps> = ({
@@ -25,9 +27,12 @@ const MessageThread: React.FC<MessageThreadProps> = ({
   loading,
   currentUserId,
   onSendMessage,
-  onDeleteMessage
+  onDeleteMessage,
+  defaultMessage
 }) => {
   const [showDeleteMenu, setShowDeleteMenu] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageIdToDelete, setMessageIdToDelete] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll do najnowszej wiadomości
@@ -80,7 +85,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({
   };
 
   const handleDeleteMessage = (messageId: number) => {
-    onDeleteMessage(messageId);
+    setMessageIdToDelete(messageId);
+    setShowDeleteModal(true);
     setShowDeleteMenu(null);
   };
 
@@ -195,8 +201,37 @@ const MessageThread: React.FC<MessageThreadProps> = ({
 
       {/* Formularz wysyłania wiadomości */}
       <div className="border-t border-gray-200 bg-white">
-        <MessageInput onSendMessage={onSendMessage} />
+        <MessageInput onSendMessage={onSendMessage} defaultValue={defaultMessage} />
       </div>
+      {/* Modal potwierdzenia usuwania */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Usuń wiadomość"
+        size="sm"
+      >
+        <p className="mb-4">Czy na pewno chcesz trwale usunąć tę wiadomość? Tej operacji nie można cofnąć.</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            Anuluj
+          </button>
+          <button
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            onClick={() => {
+              if (messageIdToDelete !== null) {
+                onDeleteMessage(messageIdToDelete);
+                setShowDeleteModal(false);
+                setMessageIdToDelete(null);
+              }
+            }}
+          >
+            Usuń
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

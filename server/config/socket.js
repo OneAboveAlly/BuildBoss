@@ -16,7 +16,10 @@ class SocketManager {
         origin: process.env.CLIENT_URL || 'http://localhost:5173',
         methods: ['GET', 'POST'],
         credentials: true
-      }
+      },
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      transports: ['websocket', 'polling']
     });
 
     // Middleware do autoryzacji
@@ -27,6 +30,24 @@ class SocketManager {
           return next(new Error('No token provided'));
         }
 
+        // Sprawdź czy to token admina
+        try {
+          const adminDecoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET || 'supersecret_admin_key');
+          const admin = await prisma.plansAdmin.findUnique({
+            where: { id: adminDecoded.id },
+            select: { id: true, email: true, role: true }
+          });
+
+          if (admin && admin.isActive) {
+            socket.userId = admin.id;
+            socket.user = { ...admin, role: 'SUPERADMIN' };
+            return next();
+          }
+        } catch {
+          // Token nie jest tokenem admina, sprawdź jako token użytkownika
+        }
+
+        // Sprawdź token użytkownika
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await prisma.user.findUnique({
           where: { id: decoded.userId },
@@ -56,9 +77,14 @@ class SocketManager {
       socket.join(`user_${socket.userId}`);
 
       // Obsługa rozłączenia
-      socket.on('disconnect', () => {
-        console.log(`User ${socket.user.email} disconnected`);
+      socket.on('disconnect', (reason) => {
+        console.log(`User ${socket.user.email} disconnected: ${reason}`);
         this.connectedUsers.delete(socket.userId);
+      });
+
+      // Obsługa błędów
+      socket.on('error', (error) => {
+        console.error('Socket error:', error);
       });
 
       // Oznacz powiadomienia jako przeczytane

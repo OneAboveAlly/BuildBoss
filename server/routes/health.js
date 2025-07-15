@@ -20,35 +20,35 @@ router.get('/', (req, res) => {
 router.get('/detailed', async (req, res) => {
   const checks = {};
   let overallStatus = 'OK';
-  
+
   try {
     // 1. Database connectivity check
     checks.database = await checkDatabase();
-    
+
     // 2. Redis connectivity check (if configured)
     checks.redis = await checkRedis();
-    
+
     // 3. Disk space check
     checks.diskSpace = await checkDiskSpace();
-    
+
     // 4. Memory usage check
     checks.memory = checkMemory();
-    
+
     // 5. System load check
     checks.systemLoad = checkSystemLoad();
-    
+
     // 6. Dependencies check
     checks.dependencies = await checkDependencies();
-    
+
     // 7. External services check
     checks.externalServices = await checkExternalServices();
-    
+
     // Determine overall status
     const failedChecks = Object.values(checks).filter(check => check.status !== 'OK');
     if (failedChecks.length > 0) {
       overallStatus = failedChecks.some(check => check.status === 'CRITICAL') ? 'CRITICAL' : 'WARNING';
     }
-    
+
     const response = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
@@ -57,19 +57,19 @@ router.get('/detailed', async (req, res) => {
       uptime: process.uptime(),
       checks
     };
-    
+
     // Return appropriate HTTP status
-    const httpStatus = overallStatus === 'CRITICAL' ? 503 : 
-                      overallStatus === 'WARNING' ? 200 : 200;
-    
+    const httpStatus = overallStatus === 'CRITICAL' ? 503 :
+      overallStatus === 'WARNING' ? 200 : 200;
+
     res.status(httpStatus).json(response);
-    
+
   } catch (error) {
     logger.error('Health check failed', {
       error: error.message,
       stack: error.stack
     });
-    
+
     res.status(503).json({
       status: 'CRITICAL',
       timestamp: new Date().toISOString(),
@@ -126,20 +126,29 @@ router.get('/system', (req, res) => {
   }
 });
 
+// Endpoint: GET /api/version
+router.get('/version', (req, res) => {
+  res.json({
+    backendVersion: process.env.npm_package_version || process.env.APP_VERSION || '1.0.0',
+    frontendVersion: process.env.FRONTEND_APP_VERSION || null,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Helper functions for health checks
 async function checkDatabase() {
   try {
     const start = Date.now();
-    
+
     // Simple connection test
     await prisma.$queryRaw`SELECT 1`;
-    
+
     // Test basic operations
     const userCount = await prisma.user.count();
     const companyCount = await prisma.company.count();
-    
+
     const responseTime = Date.now() - start;
-    
+
     return {
       status: 'OK',
       component: 'database',
@@ -176,12 +185,12 @@ async function checkRedis() {
         timestamp: new Date().toISOString()
       };
     }
-    
+
     // This is a placeholder - you'd need to implement actual Redis connectivity
     // const redis = require('redis');
     // const client = redis.createClient(process.env.REDIS_URL);
     // await client.ping();
-    
+
     return {
       status: 'OK',
       component: 'redis',
@@ -206,10 +215,10 @@ async function checkDiskSpace() {
       used: 'N/A - requires implementation',
       available: 'N/A - requires implementation'
     };
-    
+
     // Note: Node.js doesn't have built-in disk space checking
     // You could use a library like 'diskusage' or implement platform-specific commands
-    
+
     return {
       status: 'OK',
       component: 'diskSpace',
@@ -235,13 +244,13 @@ function checkMemory() {
       free: os.freemem(),
       used: os.totalmem() - os.freemem()
     };
-    
+
     const memUsagePercent = (systemMem.used / systemMem.total) * 100;
     const heapUsagePercent = (memUsage.heapUsed / memUsage.heapTotal) * 100;
-    
+
     // Warning if memory usage > 80%
     const status = memUsagePercent > 80 ? 'WARNING' : 'OK';
-    
+
     return {
       status,
       component: 'memory',
@@ -276,13 +285,13 @@ function checkSystemLoad() {
   try {
     const loadAvg = os.loadavg();
     const cpuCount = os.cpus().length;
-    
+
     // Load average should ideally be below CPU count
     const load1min = loadAvg[0];
     const loadPercent = (load1min / cpuCount) * 100;
-    
+
     const status = loadPercent > 80 ? 'WARNING' : 'OK';
-    
+
     return {
       status,
       component: 'systemLoad',
@@ -316,7 +325,7 @@ async function checkDependencies() {
       arch: process.arch,
       environment: process.env.NODE_ENV || 'development'
     };
-    
+
     return {
       status: 'OK',
       component: 'dependencies',
@@ -336,26 +345,26 @@ async function checkDependencies() {
 async function checkExternalServices() {
   try {
     const services = {};
-    
+
     // Check Stripe API if configured
     if (process.env.STRIPE_SECRET_KEY) {
       services.stripe = await checkStripeAPI();
     }
-    
+
     // Check Email service if configured
     if (process.env.EMAIL_HOST) {
       services.email = await checkEmailService();
     }
-    
+
     // Check Google OAuth if configured
     if (process.env.GOOGLE_CLIENT_ID) {
       services.googleOAuth = { status: 'CONFIGURED', message: 'OAuth credentials present' };
     }
-    
-    const allServicesOK = Object.values(services).every(service => 
+
+    const allServicesOK = Object.values(services).every(service =>
       service.status === 'OK' || service.status === 'CONFIGURED'
     );
-    
+
     return {
       status: allServicesOK ? 'OK' : 'WARNING',
       component: 'externalServices',

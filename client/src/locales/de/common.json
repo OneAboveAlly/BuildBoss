@@ -79,5 +79,38 @@
     "de": "Deutsch",
     "en": "English",
     "ua": "Українська"
+  },
+  "network": {
+    "error": "Netzwerkfehler aufgetreten",
+    "retry": "Wiederholen",
+    "offline": "Sie sind derzeit offline"
+  },
+  "pwa": {
+    "install_title": "BuildBoss installieren",
+    "install_description": "Fügen Sie BuildBoss zu Ihrem Startbildschirm hinzu für schnellen Zugriff und Offline-Funktionalität",
+    "install_button": "Installieren",
+    "install_dismiss": "Später",
+    "update_title": "Update verfügbar",
+    "update_description": "Eine neue Version von BuildBoss ist verfügbar. Jetzt aktualisieren, um die neuesten Funktionen und Verbesserungen zu erhalten",
+    "update_button": "Jetzt aktualisieren",
+    "update_dismiss": "Später",
+    "offline_mode": "Offline-Modus",
+    "offline_description": "Eingeschränkte Funktionalität verfügbar",
+    "offline": "Offline",
+    "online": "Online",
+    "installing": "Installieren...",
+    "install_success": "BuildBoss erfolgreich installiert!",
+    "install_failed": "Installation fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "update_success": "BuildBoss erfolgreich aktualisiert!",
+    "update_failed": "Update fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "autoRefresh": {
+    "update_available": "Update verfügbar",
+    "update_description": "Eine neue Version der Anwendung ist verfügbar. Aktualisieren Sie die Seite, um die neuesten Änderungen zu erhalten.",
+    "refresh_now": "Jetzt aktualisieren",
+    "later": "Später",
+    "checking_updates": "Suche nach Updates...",
+    "update_found": "Update gefunden",
+    "auto_refresh_in": "Auto-Update in"
   }
 } 

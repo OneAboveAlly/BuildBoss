@@ -1,0 +1,20 @@
+{
+  "usageLimits": "Limity i użycie zasobów",
+  "currentPlan": "Twój plan",
+  "companies": "Firmy",
+  "projects": "Projekty",
+  "workers": "Pracownicy",
+  "jobOffers": "Ogłoszenia o pracę",
+  "workRequests": "Zlecenia",
+  "upgradePlan": "Zmień plan",
+  "trialDaysLeft": "Pozostało {{days}} dni okresu próbnego",
+  "trialEndingSoon": "Twój okres próbny kończy się wkrótce!",
+  "planActiveUntil": "Plan aktywny do",
+  "planTrialUntil": "Trial do",
+  "planStarted": "Rozpoczęto",
+  "nextPayment": "Następna płatność",
+  "status": "Status",
+  "plan": "Plan",
+  "pricePerMonth": "{{price}} zł/miesiąc",
+  "unlimited": "nielimitowane"
+} 

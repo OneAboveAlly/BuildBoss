@@ -161,7 +161,7 @@ const LegalDocumentViewer: React.FC<LegalDocumentViewerProps> = ({
             </div>
             <div>${markdownToHtml(printContent)}</div>
             <div class="footer">
-              <p>© 2025 SiteBoss. ${t('footer.copyright')}</p>
+              <p>© 2025 BuildBoss. ${t('footer.copyright')}</p>
             </div>
           </body>
         </html>

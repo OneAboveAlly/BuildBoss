@@ -15,7 +15,13 @@ router.get('/', authenticateToken, validateQuery(notificationFiltersSchema), asy
     const offset = (page - 1) * limit;
 
     const where = {
-      userId: req.user.userId
+      userId: req.user.id,
+      // Wyklucz powiadomienia o wiadomościach i wiadomościach od admina - te są pokazywane w sekcji wiadomości
+      NOT: {
+        type: {
+          in: ['MESSAGE_RECEIVED', 'ADMIN_MESSAGE', 'ADMIN_MESSAGE_REPLY']
+        }
+      }
     };
 
     if (unreadOnly === 'true') {
@@ -52,12 +58,18 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
   try {
     const count = await prisma.notification.count({
       where: {
-        userId: req.user.userId,
-        isRead: false
+        userId: req.user.id,
+        isRead: false,
+        // Wyklucz powiadomienia o wiadomościach i wiadomościach od admina - te są już liczone jako wiadomości
+        NOT: {
+          type: {
+            in: ['MESSAGE_RECEIVED', 'ADMIN_MESSAGE', 'ADMIN_MESSAGE_REPLY']
+          }
+        }
       }
     });
 
-    res.json({ count });
+    res.json(count);
   } catch (error) {
     console.error('Error fetching unread count:', error);
     res.status(500).json({ error: 'Failed to fetch unread count' });
@@ -72,7 +84,13 @@ router.put('/:id/read', authenticateToken, validateParams(idSchema), async (req,
     const notification = await prisma.notification.findFirst({
       where: {
         id,
-        userId: req.user.userId
+        userId: req.user.id,
+        // Wyklucz powiadomienia o wiadomościach i wiadomościach od admina - te są oznaczane jako przeczytane w sekcji wiadomości
+        NOT: {
+          type: {
+            in: ['MESSAGE_RECEIVED', 'ADMIN_MESSAGE', 'ADMIN_MESSAGE_REPLY']
+          }
+        }
       }
     });
 
@@ -97,8 +115,14 @@ router.put('/mark-all-read', authenticateToken, async (req, res) => {
   try {
     const result = await prisma.notification.updateMany({
       where: {
-        userId: req.user.userId,
-        isRead: false
+        userId: req.user.id,
+        isRead: false,
+        // Wyklucz powiadomienia o wiadomościach i wiadomościach od admina - te są oznaczane jako przeczytane w sekcji wiadomości
+        NOT: {
+          type: {
+            in: ['MESSAGE_RECEIVED', 'ADMIN_MESSAGE', 'ADMIN_MESSAGE_REPLY']
+          }
+        }
       },
       data: { isRead: true }
     });
@@ -121,7 +145,13 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
     const notification = await prisma.notification.findFirst({
       where: {
         id,
-        userId: req.user.userId
+        userId: req.user.id,
+        // Wyklucz powiadomienia o wiadomościach i wiadomościach od admina - te są zarządzane w sekcji wiadomości
+        NOT: {
+          type: {
+            in: ['MESSAGE_RECEIVED', 'ADMIN_MESSAGE', 'ADMIN_MESSAGE_REPLY']
+          }
+        }
       }
     });
 
@@ -134,18 +164,18 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
     });
 
     logger.info('Notification deleted', {
-      userId: req.user.userId,
+      userId: req.user.id,
       notificationId: id
     });
 
-    securityLogger.logDataAccess(req.user.userId, 'DELETE', 'notification', id);
+    securityLogger.logDataAccess(req.user.id, 'DELETE', 'notification', id);
 
     res.json({ message: 'Notification deleted successfully' });
   } catch (error) {
     logger.error('Error deleting notification', {
       error: error.message,
       stack: error.stack,
-      userId: req.user?.userId,
+      userId: req.user?.id,
       notificationId: req.params.id
     });
     res.status(500).json({ error: 'Failed to delete notification' });
@@ -157,16 +187,22 @@ router.delete('/clear-all', authenticateToken, async (req, res) => {
   try {
     const result = await prisma.notification.deleteMany({
       where: {
-        userId: req.user.userId
+        userId: req.user.id,
+        // Wyklucz powiadomienia o wiadomościach i wiadomościach od admina - te są zarządzane w sekcji wiadomości
+        NOT: {
+          type: {
+            in: ['MESSAGE_RECEIVED', 'ADMIN_MESSAGE', 'ADMIN_MESSAGE_REPLY']
+          }
+        }
       }
     });
 
     logger.info('All notifications cleared', {
-      userId: req.user.userId,
+      userId: req.user.id,
       count: result.count
     });
 
-    securityLogger.logDataAccess(req.user.userId, 'DELETE', 'notification', 'ALL');
+    securityLogger.logDataAccess(req.user.id, 'DELETE', 'notification', 'ALL');
 
     res.json({
       message: 'All notifications cleared',
@@ -176,7 +212,7 @@ router.delete('/clear-all', authenticateToken, async (req, res) => {
     logger.error('Error clearing all notifications', {
       error: error.message,
       stack: error.stack,
-      userId: req.user?.userId
+      userId: req.user?.id
     });
     res.status(500).json({ error: 'Failed to clear all notifications' });
   }
@@ -192,7 +228,7 @@ router.post('/test', authenticateToken, validate(testNotificationSchema), async 
     const { type = 'SYSTEM_UPDATE', title, message } = req.body;
 
     const notification = await socketManager.sendNotificationToUser(
-      req.user.userId,
+      req.user.id,
       {
         type,
         title: title || 'Test Notification',

@@ -360,4 +360,6 @@ export const TasksPage: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};
+
+export default TasksPage; 

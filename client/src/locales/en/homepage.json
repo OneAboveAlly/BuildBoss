@@ -15,6 +15,13 @@
     "cta_secondary": "Watch demo",
     "features_short": "✓ No commitments ✓ Full access ✓ Cancel anytime"
   },
+  "rotating_texts": {
+    "professional": "like a professional",
+    "precision": "with precision",
+    "passion": "with passion",
+    "experience": "with experience",
+    "innovation": "with innovation"
+  },
   "features": {
     "title": "Everything you need to manage projects",
     "subtitle": "Comprehensive tools for construction companies",

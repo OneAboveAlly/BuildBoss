@@ -24,6 +24,11 @@ router.get('/plans', async (req, res) => {
       orderBy: { price: 'asc' }
     });
 
+    console.log(`📋 Pobrano ${plans.length} planów z bazy danych:`);
+    plans.forEach(plan => {
+      console.log(`   - ${plan.displayName} (${plan.name}) - ${(plan.price / 100).toFixed(2)} ${plan.currency}`);
+    });
+
     res.json({
       success: true,
       plans: plans.map(plan => ({
@@ -100,20 +105,18 @@ router.get('/current', authenticateToken, async (req, res) => {
           description: subscription.plan.description,
           price: subscription.plan.price,
           currency: subscription.plan.currency,
-          priceFormatted: `${(subscription.plan.price / 100).toFixed(2)} ${subscription.plan.currency.toUpperCase()}`,
-          features: {
-            maxCompanies: subscription.plan.maxCompanies,
-            maxProjects: subscription.plan.maxProjects,
-            maxWorkers: subscription.plan.maxWorkers,
-            maxJobOffers: subscription.plan.maxJobOffers,
-            maxWorkRequests: subscription.plan.maxWorkRequests,
-            maxStorageGB: subscription.plan.maxStorageGB,
-            hasAdvancedReports: subscription.plan.hasAdvancedReports,
-            hasApiAccess: subscription.plan.hasApiAccess,
-            hasPrioritySupport: subscription.plan.hasPrioritySupport,
-            hasCustomBranding: subscription.plan.hasCustomBranding,
-            hasTeamManagement: subscription.plan.hasTeamManagement
-          }
+          maxCompanies: subscription.plan.maxCompanies,
+          maxProjects: subscription.plan.maxProjects,
+          maxWorkers: subscription.plan.maxWorkers,
+          maxJobOffers: subscription.plan.maxJobOffers,
+          maxWorkRequests: subscription.plan.maxWorkRequests,
+          maxStorageGB: subscription.plan.maxStorageGB,
+          hasAdvancedReports: subscription.plan.hasAdvancedReports,
+          hasApiAccess: subscription.plan.hasApiAccess,
+          hasPrioritySupport: subscription.plan.hasPrioritySupport,
+          hasCustomBranding: subscription.plan.hasCustomBranding,
+          hasTeamManagement: subscription.plan.hasTeamManagement,
+          isActive: subscription.plan.isActive
         },
         usage,
         recentPayments: subscription.payments

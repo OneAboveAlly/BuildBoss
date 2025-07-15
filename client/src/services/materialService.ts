@@ -52,11 +52,15 @@ export const materialService = {
     return response.data;
   },
 
-  // Utwórz nowy materiał
-  async createMaterial(data: CreateMaterialData): Promise<Material> {
+  // Tworzenie nowego materiału
+  async createMaterial(data: CreateMaterialData) {
+    console.log('=== createMaterial DEBUG ===');
+    console.log('Sending data:', JSON.stringify(data, null, 2));
+    console.log('=== END createMaterial DEBUG ===');
+    
     const api = createAuthenticatedRequest();
     const response = await api.post('/materials', data);
-    return response.data;
+    return response.data as Material;
   },
 
   // Aktualizuj materiał

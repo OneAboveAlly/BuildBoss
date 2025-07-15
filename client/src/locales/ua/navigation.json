@@ -1,14 +1,14 @@
 {
-  "dashboard": "Панель керування",
+  "dashboard": "Головна панель",
   "projects": "Проекти",
   "tasks": "Завдання",
   "materials": "Матеріали",
   "messages": "Повідомлення",
   "notifications": "Сповіщення",
-  "employees": "Співробітники",
+  "employees": "Працівники",
   "applications": "Заявки",
   "subscription": "Підписка",
-  "billing": "Оплата",
+  "billing": "Платежі",
   "settings": "Налаштування",
   "profile": "Профіль",
   "help": "Допомога",
@@ -16,15 +16,15 @@
   "documentation": "Документація",
   "logout": "Вийти",
   "menu": "Меню",
-  "home": "Головна",
+  "home": "Головна сторінка",
   "back_to_dashboard": "Повернутися до панелі",
   "sidebar": {
-    "toggle": "Перемкнути бічну панель",
+    "toggle": "Переключити бічне меню",
     "collapse": "Згорнути меню",
     "expand": "Розгорнути меню"
   },
   "breadcrumbs": {
-    "home": "Головна",
+    "home": "Головна сторінка",
     "current": "Поточна сторінка"
   }
 } 

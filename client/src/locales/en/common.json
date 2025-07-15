@@ -79,5 +79,38 @@
     "de": "Deutsch",
     "en": "English",
     "ua": "Українська"
+  },
+  "network": {
+    "error": "Network error occurred",
+    "retry": "Retry",
+    "offline": "You are currently offline"
+  },
+  "pwa": {
+    "install_title": "Install BuildBoss",
+    "install_description": "Add BuildBoss to your home screen for quick access and offline functionality",
+    "install_button": "Install",
+    "install_dismiss": "Later",
+    "update_title": "Update Available", 
+    "update_description": "A new version of BuildBoss is available. Update now to get the latest features and improvements",
+    "update_button": "Update Now",
+    "update_dismiss": "Later",
+    "offline_mode": "Offline Mode",
+    "offline_description": "Limited functionality available",
+    "offline": "Offline",
+    "online": "Online",
+    "installing": "Installing...",
+    "install_success": "BuildBoss installed successfully!",
+    "install_failed": "Installation failed. Please try again.",
+    "update_success": "BuildBoss updated successfully!",
+    "update_failed": "Update failed. Please try again."
+  },
+  "autoRefresh": {
+    "update_available": "Update Available",
+    "update_description": "A new version of the application is available. Refresh the page to get the latest changes.",
+    "refresh_now": "Refresh Now",
+    "later": "Later",
+    "checking_updates": "Checking for updates...",
+    "update_found": "Update found",
+    "auto_refresh_in": "Auto refresh in"
   }
 } 

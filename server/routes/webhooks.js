@@ -1,6 +1,7 @@
 const express = require('express');
 const { prisma } = require('../config/database');
 const { stripe } = require('../config/stripe');
+const socketManager = require('../config/socket'); // Added for real-time notifications
 
 // Sprawdź czy Stripe jest skonfigurowany
 if (!stripe) {
@@ -238,7 +239,8 @@ async function handleInvoicePaymentSucceeded(invoice) {
   console.log('Invoice payment succeeded:', invoice.id);
 
   const subscription = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: invoice.subscription }
+    where: { stripeSubscriptionId: invoice.subscription },
+    include: { user: true, plan: true }
   });
 
   if (!subscription) {
@@ -270,6 +272,45 @@ async function handleInvoicePaymentSucceeded(invoice) {
       nextBillingDate: new Date(invoice.lines.data[0]?.period?.end * 1000)
     }
   });
+
+  // Wyślij powiadomienie o udanej płatności
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: subscription.userId,
+        type: 'PAYMENT_SUCCESS',
+        title: 'Płatność zrealizowana pomyślnie',
+        message: 'Płatność za subskrypcję została zrealizowana pomyślnie. Dziękujemy za korzystanie z SiteBoss!',
+        data: {
+          subscriptionId: subscription.id,
+          planId: subscription.planId,
+          planName: subscription.plan.displayName,
+          invoiceId: invoice.id,
+          amount: invoice.amount_paid,
+          currency: invoice.currency
+        }
+      }
+    });
+
+    // Wyślij powiadomienie real-time przez Socket.io
+    await socketManager.sendNotificationToUser(subscription.userId, {
+      type: 'PAYMENT_SUCCESS',
+      title: 'Płatność zrealizowana pomyślnie',
+      message: 'Płatność za subskrypcję została zrealizowana pomyślnie.',
+      data: {
+        subscriptionId: subscription.id,
+        planId: subscription.planId,
+        planName: subscription.plan.displayName,
+        invoiceId: invoice.id,
+        amount: invoice.amount_paid,
+        currency: invoice.currency
+      }
+    });
+
+    console.log(`Payment success notification sent to user: ${subscription.user.email}`);
+  } catch (error) {
+    console.error('Error sending payment success notification:', error);
+  }
 }
 
 // Obsługa nieudanej płatności
@@ -277,7 +318,8 @@ async function handleInvoicePaymentFailed(invoice) {
   console.log('Invoice payment failed:', invoice.id);
 
   const subscription = await prisma.subscription.findFirst({
-    where: { stripeSubscriptionId: invoice.subscription }
+    where: { stripeSubscriptionId: invoice.subscription },
+    include: { user: true, plan: true }
   });
 
   if (!subscription) {
@@ -305,6 +347,41 @@ async function handleInvoicePaymentFailed(invoice) {
       status: 'PAST_DUE'
     }
   });
+
+  // Wyślij powiadomienie o nieudanej płatności
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: subscription.userId,
+        type: 'PAYMENT_FAILED',
+        title: 'Płatność nie powiodła się',
+        message: 'Nie udało się zrealizować płatności za subskrypcję. Sprawdź dane płatności i spróbuj ponownie.',
+        data: {
+          subscriptionId: subscription.id,
+          planId: subscription.planId,
+          planName: subscription.plan.displayName,
+          invoiceId: invoice.id
+        }
+      }
+    });
+
+    // Wyślij powiadomienie real-time przez Socket.io
+    await socketManager.sendNotificationToUser(subscription.userId, {
+      type: 'PAYMENT_FAILED',
+      title: 'Płatność nie powiodła się',
+      message: 'Nie udało się zrealizować płatności za subskrypcję.',
+      data: {
+        subscriptionId: subscription.id,
+        planId: subscription.planId,
+        planName: subscription.plan.displayName,
+        invoiceId: invoice.id
+      }
+    });
+
+    console.log(`Payment failed notification sent to user: ${subscription.user.email}`);
+  } catch (error) {
+    console.error('Error sending payment failed notification:', error);
+  }
 }
 
 // Obsługa końca okresu próbnego
@@ -313,7 +390,7 @@ async function handleTrialWillEnd(subscription) {
 
   const dbSubscription = await prisma.subscription.findFirst({
     where: { stripeSubscriptionId: subscription.id },
-    include: { user: true }
+    include: { user: true, plan: true }
   });
 
   if (!dbSubscription) {
@@ -321,8 +398,45 @@ async function handleTrialWillEnd(subscription) {
     return;
   }
 
-  // Tutaj można dodać logikę wysyłania emaila z przypomnieniem o końcu trial
-  console.log(`Okres próbny kończy się dla użytkownika: ${dbSubscription.user.email}`);
+  // Oblicz dni do końca trial
+  const now = new Date();
+  const trialEnd = new Date(subscription.trial_end * 1000);
+  const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Wyślij powiadomienie do użytkownika
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: dbSubscription.userId,
+        type: 'SUBSCRIPTION_TRIAL_ENDING',
+        title: 'Okres próbny kończy się wkrótce',
+        message: `Twój okres próbny kończy się za ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'}. Wybierz plan płatny, aby kontynuować korzystanie z SiteBoss.`,
+        data: {
+          subscriptionId: dbSubscription.id,
+          planId: dbSubscription.planId,
+          daysLeft,
+          planName: dbSubscription.plan.displayName
+        }
+      }
+    });
+
+    // Wyślij powiadomienie real-time przez Socket.io
+    await socketManager.sendNotificationToUser(dbSubscription.userId, {
+      type: 'SUBSCRIPTION_TRIAL_ENDING',
+      title: 'Okres próbny kończy się wkrótce',
+      message: `Twój okres próbny kończy się za ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'}`,
+      data: {
+        subscriptionId: dbSubscription.id,
+        planId: dbSubscription.planId,
+        daysLeft,
+        planName: dbSubscription.plan.displayName
+      }
+    });
+
+    console.log(`Trial ending notification sent to user: ${dbSubscription.user.email} (${daysLeft} days left)`);
+  } catch (error) {
+    console.error('Error sending trial ending notification:', error);
+  }
 }
 
 module.exports = router;

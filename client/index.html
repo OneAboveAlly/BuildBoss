@@ -2,9 +2,69 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- Favicon and basic icons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    
+    <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SiteBoss - Construction Management</title>
+    
+    <!-- App Info -->
+    <title>BuildBoss - Construction Management</title>
+    <meta name="description" content="Professional construction project management platform for small teams" />
+    <meta name="keywords" content="construction, project management, building, tasks, materials, teams" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1f2937" />
+    <meta name="background-color" content="#ffffff" />
+    <meta name="display" content="standalone" />
+    <meta name="orientation" content="portrait-primary" />
+    
+    <!-- Apple PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BuildBoss" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    
+    <!-- Microsoft PWA Support -->
+    <meta name="msapplication-TileColor" content="#1f2937" />
+    <meta name="msapplication-TileImage" content="/icons/icon.svg" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BuildBoss - Construction Management" />
+    <meta property="og:description" content="Professional construction project management platform for small teams" />
+    <meta property="og:url" content="https://buildboss.com" />
+    <meta property="og:image" content="/icons/icon.svg" />
+    <meta property="og:site_name" content="BuildBoss" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BuildBoss - Construction Management" />
+    <meta name="twitter:description" content="Professional construction project management platform for small teams" />
+    <meta name="twitter:image" content="/icons/icon.svg" />
+    
+    <!-- Additional PWA optimizations -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="BuildBoss" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Cache busting meta tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <!-- Version tracking for auto-refresh -->
+    <meta name="app-version" content="%VITE_APP_VERSION%" />
+    <meta name="build-time" content="%VITE_BUILD_TIME%" />
   </head>
   <body>
     <div id="root"></div>

@@ -88,7 +88,7 @@ const DataExportRequest: React.FC<DataExportRequestProps> = ({
     if (request.downloadUrl) {
       const link = document.createElement('a');
       link.href = request.downloadUrl;
-      link.download = `siteboss-data-export.${request.format}`;
+              link.download = `buildboss-data-export.${request.format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

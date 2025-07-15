@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BellIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { notificationService } from '../services/notificationService';
-import { useSocket } from '../hooks/useSocket';
+import { useUnreadMessages } from '../contexts/UnreadMessagesContext';
 import type { Notification } from '../types/notification';
 import { 
   getNotificationIcon, 
@@ -11,15 +11,18 @@ import {
   NotificationType 
 } from '../types/notification';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationsPage: React.FC = () => {
-  const { setUnreadCount } = useSocket();
+  const navigate = useNavigate();
+  const { refreshCounts } = useUnreadMessages();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Pobierz powiadomienia
   const fetchNotifications = async (currentPage = 1, unreadOnly = false) => {
@@ -49,11 +52,11 @@ const NotificationsPage: React.FC = () => {
         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );
       
-      // Aktualizuj licznik nieprzeczytanych
-      const unreadCount = notifications.filter(n => !n.isRead && n.id !== notificationId).length;
-      setUnreadCount(unreadCount);
+      // Emituj event dla globalnych liczników
+      window.dispatchEvent(new Event('notifications_marked_read'));
       
-      toast.success('Oznaczono jako przeczytane');
+      // Odśwież globalne liczniki
+      await refreshCounts();
     } catch (error) {
       console.error('Error marking as read:', error);
       toast.error('Błąd podczas oznaczania jako przeczytane');
@@ -65,7 +68,13 @@ const NotificationsPage: React.FC = () => {
     try {
       await notificationService.markAllAsRead();
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      setUnreadCount(0);
+      
+      // Emituj event dla globalnych liczników
+      window.dispatchEvent(new Event('notifications_marked_read'));
+      
+      // Odśwież globalne liczniki
+      await refreshCounts();
+      
       toast.success('Wszystkie powiadomienia oznaczono jako przeczytane');
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -109,7 +118,13 @@ const NotificationsPage: React.FC = () => {
     try {
       await notificationService.clearAllNotifications();
       setNotifications([]);
-      setUnreadCount(0);
+      
+      // Emituj event dla globalnych liczników
+      window.dispatchEvent(new Event('notifications_marked_read'));
+      
+      // Odśwież globalne liczniki
+      await refreshCounts();
+      
       toast.success('Wszystkie powiadomienia zostały usunięte');
     } catch (error) {
       console.error('Error clearing all notifications:', error);
@@ -146,11 +161,11 @@ const NotificationsPage: React.FC = () => {
       const { taskId, projectId, messageId, materialId } = notification.data;
       
       if (taskId && projectId) {
-        window.location.href = `/projects/${projectId}`;
+        navigate(`/projects/${projectId}`);
       } else if (messageId) {
-        window.location.href = '/messages';
+        navigate('/messages');
       } else if (materialId) {
-        window.location.href = '/materials';
+        navigate('/materials');
       }
     }
   };

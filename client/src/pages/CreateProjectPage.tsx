@@ -123,7 +123,7 @@ export const CreateProjectPage: React.FC = () => {
       {/* Project Form */}
       <div className="bg-white rounded-lg shadow-sm border border-secondary-200 p-6">
         <ProjectForm
-          companyId={companyId}
+          companyId={companyId || undefined}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           loading={formLoading}
@@ -131,4 +131,6 @@ export const CreateProjectPage: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};
+
+export default CreateProjectPage; 

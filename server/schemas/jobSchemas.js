@@ -48,10 +48,16 @@ const createJobSchema = Joi.object({
     }),
 
   type: Joi.string()
-    .valid('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP')
+    .valid('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP', 'FREELANCE')
     .default('FULL_TIME')
     .messages({
       'any.only': 'Nieprawidłowy typ zatrudnienia'
+    }),
+
+  country: Joi.string()
+    .default('Polska')
+    .messages({
+      'string.base': 'Kraj musi być tekstem'
     }),
 
   voivodeship: Joi.string()
@@ -129,28 +135,25 @@ const createJobSchema = Joi.object({
     }),
 
   experience: Joi.string()
-    .valid('ENTRY', 'JUNIOR', 'MID', 'SENIOR', 'EXPERT')
-    .allow(null)
+    .valid('JUNIOR', 'MID', 'SENIOR', 'EXPERT')
+    .required()
     .messages({
-      'any.only': 'Nieprawidłowy poziom doświadczenia'
+      'any.only': 'Nieprawidłowy poziom doświadczenia',
+      'any.required': 'Poziom doświadczenia jest wymagany'
     }),
 
-  requirements: Joi.array()
-    .items(Joi.string().max(200))
-    .max(20)
-    .default([])
+  requirements: Joi.string()
+    .max(2000)
+    .allow('')
     .messages({
-      'array.max': 'Maksymalnie 20 wymagań',
-      'string.max': 'Każde wymaganie może mieć maksimum 200 znaków'
+      'string.max': 'Wymagania mogą mieć maksimum 2000 znaków'
     }),
 
-  benefits: Joi.array()
-    .items(Joi.string().max(200))
-    .max(20)
-    .default([])
+  benefits: Joi.string()
+    .max(2000)
+    .allow('')
     .messages({
-      'array.max': 'Maksymalnie 20 korzyści',
-      'string.max': 'Każda korzyść może mieć maksimum 200 znaków'
+      'string.max': 'Korzyści mogą mieć maksimum 2000 znaków'
     }),
 
   contactEmail: Joi.string()
@@ -162,7 +165,7 @@ const createJobSchema = Joi.object({
       'string.max': 'Email może mieć maksimum 255 znaków'
     }),
 
-  phone: Joi.string()
+  contactPhone: Joi.string()
     .pattern(/^(\+48)?[0-9\s()-]{8,15}$/)
     .optional()
     .messages({
@@ -180,10 +183,10 @@ const createJobSchema = Joi.object({
     }),
 
   companyId: Joi.string()
-    .uuid()
+    .pattern(/^c[a-z0-9]{24}$/)
     .required()
     .messages({
-      'string.guid': 'Nieprawidłowe ID firmy',
+      'string.pattern.base': 'Nieprawidłowe ID firmy',
       'any.required': 'ID firmy jest wymagane'
     })
 });
@@ -213,9 +216,14 @@ const updateJobSchema = Joi.object({
     }),
 
   type: Joi.string()
-    .valid('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP')
+    .valid('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP', 'FREELANCE')
     .messages({
       'any.only': 'Nieprawidłowy typ zatrudnienia'
+    }),
+
+  country: Joi.string()
+    .messages({
+      'string.base': 'Kraj musi być tekstem'
     }),
 
   voivodeship: Joi.string()
@@ -268,23 +276,23 @@ const updateJobSchema = Joi.object({
     .valid('PLN', 'EUR', 'USD', 'GBP'),
 
   experience: Joi.string()
-    .valid('ENTRY', 'JUNIOR', 'MID', 'SENIOR', 'EXPERT')
+    .valid('JUNIOR', 'MID', 'SENIOR', 'EXPERT')
     .allow(null),
 
-  requirements: Joi.array()
-    .items(Joi.string().max(200))
-    .max(20),
+  requirements: Joi.string()
+    .max(2000)
+    .allow(''),
 
-  benefits: Joi.array()
-    .items(Joi.string().max(200))
-    .max(20),
+  benefits: Joi.string()
+    .max(2000)
+    .allow(''),
 
   contactEmail: Joi.string()
     .email()
     .max(255)
     .allow(''),
 
-  phone: Joi.string()
+  contactPhone: Joi.string()
     .pattern(/^(\+48)?[0-9\s()-]{8,15}$/)
     .optional()
     .messages({
@@ -297,7 +305,13 @@ const updateJobSchema = Joi.object({
 
   expiresAt: Joi.date()
     .min('now')
-    .allow(null)
+    .allow(null),
+
+  companyId: Joi.string()
+    .pattern(/^c[a-z0-9]{24}$/)
+    .messages({
+      'string.pattern.base': 'Nieprawidłowe ID firmy'
+    })
 });
 
 // Schemat filtrów dla wyszukiwania ofert
@@ -312,10 +326,10 @@ const jobFiltersSchema = Joi.object({
     .max(100),
 
   type: Joi.string()
-    .valid('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP'),
+    .valid('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP', 'FREELANCE'),
 
   experience: Joi.string()
-    .valid('ENTRY', 'JUNIOR', 'MID', 'SENIOR', 'EXPERT'),
+    .valid('JUNIOR', 'MID', 'SENIOR', 'EXPERT'),
 
   salaryMin: Joi.number()
     .min(0)
@@ -345,7 +359,10 @@ const jobFiltersSchema = Joi.object({
     .integer()
     .min(1)
     .max(100)
-    .default(20)
+    .default(20),
+
+  isPublic: Joi.boolean()
+    .default(true)
 });
 
 // Schemat aplikowania na ofertę

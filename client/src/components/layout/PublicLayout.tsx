@@ -8,6 +8,8 @@ import {
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from '../common/LanguageSelector';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ interface PublicLayoutProps {
 // Publiczny navbar dla niezalogowanych użytkowników
 const PublicHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { t } = useTranslation('homepage');
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
@@ -27,7 +30,7 @@ const PublicHeader: React.FC = () => {
               <span className="text-white font-bold text-lg">🏗️</span>
             </div>
             <h1 className="text-xl font-bold text-primary-600 hidden sm:block">
-              SiteBoss
+              BuildBoss
             </h1>
           </Link>
 
@@ -41,20 +44,21 @@ const PublicHeader: React.FC = () => {
               className="relative bg-gradient-to-r from-primary-600 to-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
             >
               <span className="mr-1">💼</span>
-              Oferty pracy
+              {t('navigation.jobs').replace('💼 ', '')}
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center">
                 <span className="animate-pulse">•</span>
               </span>
             </Link>
             <Link to="/login" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Logowanie
+              {t('navigation.login')}
             </Link>
             <Link 
               to="/register" 
               className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Rejestracja
+              {t('navigation.register')}
             </Link>
+            <LanguageSelector compact={true} showLabel={false} />
           </nav>
 
           {/* Mobile menu button */}
@@ -75,6 +79,11 @@ const PublicHeader: React.FC = () => {
         {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
+            {/* Language Selector - na górze menu mobilnego */}
+            <div className="flex justify-end px-2 mb-4">
+              <LanguageSelector compact={true} showLabel={true} />
+            </div>
+            
             <nav className="flex flex-col space-y-4">
               <Link 
                 to="/" 
@@ -89,7 +98,7 @@ const PublicHeader: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <span className="mr-2">💼</span>
-                Oferty pracy
+                {t('navigation.jobs').replace('💼 ', '')}
                 <span className="ml-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   <span className="animate-pulse">•</span>
                 </span>
@@ -99,14 +108,14 @@ const PublicHeader: React.FC = () => {
                 className="text-gray-600 hover:text-gray-900 px-2 py-1"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Logowanie
+                {t('navigation.login')}
               </Link>
               <Link 
                 to="/register" 
                 className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg mx-2 text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Rejestracja
+                {t('navigation.register')}
               </Link>
             </nav>
           </div>
@@ -126,14 +135,14 @@ const PublicFooter: React.FC = () => {
             <div className="flex items-center space-x-2 mb-4">
               <BuildingOffice2Icon className="h-8 w-8 text-primary-400" />
               <span className="text-2xl font-bold">
-                Site<span className="text-primary-400">Boss</span>
+                Build<span className="text-primary-400">Boss</span>
               </span>
             </div>
             <p className="text-secondary-300 mb-6 max-w-md">
               Profesjonalne zarządzanie projektami budowlanymi. Planuj, organizuj i realizuj swoje projekty efektywniej niż kiedykolwiek.
             </p>
             <div className="flex space-x-4">
-              <a href="mailto:kontakt@siteboss.pl" className="text-secondary-300 hover:text-white transition-colors">
+              <a href="mailto:kontakt@buildboss.pl" className="text-secondary-300 hover:text-white transition-colors">
                 <EnvelopeIcon className="h-6 w-6" />
               </a>
               <a href="tel:+48123456789" className="text-secondary-300 hover:text-white transition-colors">
@@ -165,7 +174,7 @@ const PublicFooter: React.FC = () => {
 
         <div className="border-t border-secondary-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-secondary-400 text-sm">
-            © 2024 SiteBoss. Wszystkie prawa zastrzeżone.
+            © 2024 BuildBoss. Wszystkie prawa zastrzeżone.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="/legal/privacy" className="text-secondary-400 hover:text-white text-sm transition-colors">Polityka prywatności</a>

@@ -1,119 +1,169 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { Notification } from '../types/notification';
-import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const connectingRef = useRef(false);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, token, loading } = useAuth();
+
+  // Usunięto fetchUnreadMessagesCount - liczniki są zarządzane przez UnreadMessagesContext
 
   const connect = () => {
-    const token = localStorage.getItem('token');
-    if (!token || socketRef.current?.connected) return;
+    if (!token || loading || connectingRef.current || socketRef.current?.connected) {
+      return;
+    }
 
-    console.log('Connecting to Socket.io server...');
+    // Wyczyść poprzedni timeout reconnect
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    connectingRef.current = true;
     
-    socketRef.current = io(SOCKET_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling']
-    });
-
-    socketRef.current.on('connect', () => {
-      console.log('Connected to Socket.io server');
-      setIsConnected(true);
-      
-      // Pobierz nieprzeczytane powiadomienia po połączeniu
-      socketRef.current?.emit('get_unread_notifications');
-    });
-
-    socketRef.current.on('disconnect', () => {
-      console.log('Disconnected from Socket.io server');
-      setIsConnected(false);
-    });
-
-    socketRef.current.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      setIsConnected(false);
-    });
-
-    // Obsługa nowych powiadomień
-    socketRef.current.on('new_notification', (notification: Notification) => {
-      console.log('New notification received:', notification);
-      
-      // Zwiększ licznik nieprzeczytanych
-      setUnreadCount(prev => prev + 1);
-      
-      // Pokaż toast notification
-      toast.success(notification.title, {
-        duration: 4000,
-        position: 'top-right',
-        style: {
-          background: '#10B981',
-          color: 'white',
-        },
+    try {
+      socketRef.current = io(SOCKET_URL, {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        autoConnect: true,
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 10,
+        timeout: 20000,
+        forceNew: true,
+        upgrade: true,
+        rememberUpgrade: true,
+        reconnectionDelayMax: 5000
       });
-    });
 
-    // Obsługa nieprzeczytanych powiadomień
-    socketRef.current.on('unread_notifications', (notifications: Notification[]) => {
-      setUnreadCount(notifications.length);
-    });
+      socketRef.current.on('connect', () => {
+        console.log('WebSocket connected successfully');
+        setIsConnected(true);
+        connectingRef.current = false;
+        
+        // Usunięto fetchUnreadMessagesCount() - liczniki są zarządzane przez UnreadMessagesContext
+      });
 
-    // Obsługa oznaczenia jako przeczytane
-    socketRef.current.on('notifications_marked_read', (notificationIds: string[]) => {
-      setUnreadCount(prev => Math.max(0, prev - notificationIds.length));
-    });
+      socketRef.current.on('disconnect', (reason) => {
+        console.log('WebSocket disconnected:', reason);
+        setIsConnected(false);
+        connectingRef.current = false;
+        
+        // Jeśli to nie jest celowe rozłączenie, spróbuj ponownie połączyć
+        if (reason === 'io server disconnect' || reason === 'io client disconnect') {
+          // Celowe rozłączenie - nie próbuj ponownie
+          return;
+        }
+        
+        // Automatyczne ponowne połączenie po 3 sekundach
+        if (token && !loading) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (token && !loading && !socketRef.current?.connected) {
+              connect();
+            }
+          }, 3000);
+        }
+      });
 
-    // Obsługa błędów
-    socketRef.current.on('error', (error: string) => {
-      console.error('Socket error:', error);
-      toast.error('Błąd połączenia z serwerem powiadomień');
-    });
+      socketRef.current.on('connect_error', (error) => {
+        console.error('WebSocket connection error:', error);
+        setIsConnected(false);
+        connectingRef.current = false;
+        
+        // Spróbuj ponownie połączyć po błędzie
+        if (token && !loading) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (token && !loading && !socketRef.current?.connected) {
+              connect();
+            }
+          }, 5000);
+        }
+      });
+
+      socketRef.current.on('reconnect', (attemptNumber) => {
+        console.log('WebSocket reconnected after', attemptNumber, 'attempts');
+        setIsConnected(true);
+        connectingRef.current = false;
+      });
+
+      socketRef.current.on('reconnect_error', (error) => {
+        console.error('WebSocket reconnection error:', error);
+      });
+
+      socketRef.current.on('reconnect_failed', () => {
+        console.error('WebSocket reconnection failed after all attempts');
+        connectingRef.current = false;
+      });
+
+      // Obsługa nowych powiadomień
+      socketRef.current.on('new_notification', (notification: Notification) => {
+        // Emituj eventy dla globalnych liczników
+        if (notification.type === 'MESSAGE_RECEIVED') {
+          window.dispatchEvent(new Event('new_message'));
+        }
+        if (notification.type === 'ADMIN_MESSAGE' || notification.type === 'ADMIN_MESSAGE_REPLY') {
+          window.dispatchEvent(new Event('new_admin_message'));
+        }
+        
+        // Usunięto fetchUnreadMessagesCount() - liczniki są zarządzane przez UnreadMessagesContext
+      });
+
+      // Obsługa błędów
+      socketRef.current.on('error', (error: string) => {
+        console.error('Socket error:', error);
+      });
+
+    } catch (error) {
+      console.error('Error creating socket connection:', error);
+      connectingRef.current = false;
+    }
   };
 
   const disconnect = () => {
+    // Wyczyść timeout reconnect
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
     if (socketRef.current) {
-      console.log('Disconnecting from Socket.io server...');
-      socketRef.current.disconnect();
+      try {
+        socketRef.current.disconnect();
+      } catch (error) {
+        console.error('Error disconnecting socket:', error);
+      }
       socketRef.current = null;
       setIsConnected(false);
-      setUnreadCount(0);
+      connectingRef.current = false;
     }
   };
 
-  const markNotificationsAsRead = (notificationIds: string[]) => {
-    if (socketRef.current && notificationIds.length > 0) {
-      socketRef.current.emit('mark_notifications_read', notificationIds);
-    }
-  };
-
-  const getUnreadNotifications = () => {
-    if (socketRef.current) {
-      socketRef.current.emit('get_unread_notifications');
-    }
-  };
-
-  // Auto-connect when token is available
+  // Auto-connect when token is available and not loading
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token && !socketRef.current) {
+    if (token && !loading && !socketRef.current && !connectingRef.current) {
       connect();
+    } else if (!token || loading) {
+      // Jeśli nie ma tokenu lub jest ładowanie, rozłącz
+      disconnect();
     }
 
     // Cleanup on unmount
     return () => {
       disconnect();
     };
-  }, []);
+  }, [token, loading]);
 
   // Listen for token changes
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'token') {
-        if (e.newValue) {
+        if (e.newValue && !loading) {
           // Token added - connect
           connect();
         } else {
@@ -125,15 +175,9 @@ export const useSocket = () => {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [loading]);
 
   return {
-    isConnected,
-    unreadCount,
-    connect,
-    disconnect,
-    markNotificationsAsRead,
-    getUnreadNotifications,
-    setUnreadCount
+    isConnected
   };
 }; 

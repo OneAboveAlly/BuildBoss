@@ -8,6 +8,33 @@ export interface User {
   isEmailConfirmed: boolean;
   createdAt: string;
   updatedAt: string;
+  // Subscription info
+  subscription?: {
+    status: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'UNPAID' | 'INCOMPLETE' | 'INCOMPLETE_EXPIRED' | 'PAUSED';
+    plan: {
+      id: string;
+      name: string;
+      displayName: string;
+      description?: string;
+      price: number;
+      currency: string;
+      maxCompanies: number;
+      maxProjects: number;
+      maxWorkers: number;
+      maxJobOffers: number;
+      maxWorkRequests: number;
+      maxStorageGB: number;
+      hasAdvancedReports: boolean;
+      hasApiAccess: boolean;
+      hasPrioritySupport: boolean;
+      hasCustomBranding: boolean;
+      hasTeamManagement: boolean;
+      isActive: boolean;
+    };
+    trialEndDate?: string;
+    nextBillingDate?: string;
+  };
+  ownedCompaniesCount?: number;
 }
 
 export interface Company {
@@ -43,11 +70,19 @@ export interface Worker {
 export interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthLoginResult>;
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<User>;
   loading: boolean;
+  // Subscription helpers
+  hasFeature: (feature: keyof NonNullable<User['subscription']>['plan']) => boolean;
+  getUsageLimit: (limit: string) => number;
+  isSubscriptionActive: () => boolean;
+  isTrialActive: () => boolean;
+  refreshSubscription: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
+  forceRefreshUserData: () => Promise<void>;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -439,4 +474,10 @@ export interface TaskFilters {
   priority?: Priority;
   assignedToId?: string;
   search?: string;
+}
+
+// Dodaj typ wyniku logowania
+export interface AuthLoginResult {
+  success: boolean;
+  message?: string;
 } 

@@ -1,11 +1,36 @@
 node_modules
-# Keep environment variables out of version control
-.env
 
-/generated/prisma
+# Environment variables
+.env*
+!env.example
+
+# Generated files
+/generated/
 
 # Test coverage
 /coverage/
 
 # Logs
 /logs/
+
+# Uploads
+/uploads/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache
+.cache
+.npm
+
+# Test files
+*.test.local
+
+# Backup files
+*.backup
+*.bak

@@ -1,8 +1,97 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     CreateCompanyRequest:
+ *       type: object
+ *       required:
+ *         - name
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: Company name
+ *           example: "BuildCorp Construction"
+ *         description:
+ *           type: string
+ *           nullable: true
+ *           description: Company description
+ *           example: "Professional construction and renovation services"
+ *         website:
+ *           type: string
+ *           format: uri
+ *           nullable: true
+ *           description: Company website
+ *           example: "https://buildcorp.com"
+ *         phone:
+ *           type: string
+ *           nullable: true
+ *           description: Company phone number
+ *           example: "+48123456789"
+ *         email:
+ *           type: string
+ *           format: email
+ *           nullable: true
+ *           description: Company email
+ *           example: "contact@buildcorp.com"
+ *         address:
+ *           type: string
+ *           nullable: true
+ *           description: Company address
+ *           example: "Main Street 123, Warsaw, Poland"
+ *         nip:
+ *           type: string
+ *           nullable: true
+ *           description: Tax identification number
+ *           example: "1234567890"
+ *
+ *     CompanyResponse:
+ *       allOf:
+ *         - $ref: '#/components/schemas/Company'
+ *         - type: object
+ *           properties:
+ *             userRole:
+ *               type: string
+ *               enum: [OWNER, WORKER]
+ *               description: Current user's role in the company
+ *             userPermissions:
+ *               type: object
+ *               properties:
+ *                 canEdit:
+ *                   type: boolean
+ *                 canView:
+ *                   type: boolean
+ *                 canManageFinance:
+ *                   type: boolean
+ *             workers:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     format: uuid
+ *                   status:
+ *                     type: string
+ *                     enum: [ACTIVE, PENDING, SUSPENDED]
+ *                   canEdit:
+ *                     type: boolean
+ *                   canView:
+ *                     type: boolean
+ *                   canManageFinance:
+ *                     type: boolean
+ *                   joinedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   user:
+ *                     $ref: '#/components/schemas/User'
+ */
+
 const express = require('express');
 const { prisma } = require('../config/database');
 const router = express.Router();
 const { authenticateToken, _requireRole } = require('../middleware/auth');
 const { validate, validateParams, _validateQuery } = require('../middleware/validation');
+const { checkSubscriptionOrFree, checkResourceLimit } = require('../middleware/subscription');
 const { logger, securityLogger } = require('../config/logger');
 const { sendEmail } = require('../utils/email');
 const {
@@ -14,6 +103,29 @@ const {
 } = require('../schemas/companySchemas');
 const { idSchema, _paginationSchema } = require('../schemas/commonSchemas');
 
+/**
+ * @swagger
+ * /api/companies:
+ *   get:
+ *     summary: List companies
+ *     description: Get list of companies where user is owner or worker
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Companies retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/CompanyResponse'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 // GET /api/companies - Lista firm użytkownika
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -145,6 +257,11 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
           orderBy: {
             joinedAt: 'desc'
           }
+        },
+        _count: {
+          select: {
+            workers: true
+          }
         }
       }
     });
@@ -186,8 +303,41 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
   }
 });
 
+/**
+ * @swagger
+ * /api/companies:
+ *   post:
+ *     summary: Create new company
+ *     description: Create a new company with current user as owner
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateCompanyRequest'
+ *     responses:
+ *       201:
+ *         description: Company created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CompanyResponse'
+ *       400:
+ *         description: Validation failed or company with NIP already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 // POST /api/companies - Tworzenie nowej firmy
-router.post('/', authenticateToken, validate(createCompanySchema), async (req, res) => {
+router.post('/', authenticateToken, checkSubscriptionOrFree, checkResourceLimit('companies'), validate(createCompanySchema), async (req, res) => {
   try {
     const { name, nip, address, latitude, longitude, phone, email, website, description } = req.body;
     const userId = req.user.id;

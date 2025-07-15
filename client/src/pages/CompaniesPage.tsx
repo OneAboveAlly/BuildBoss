@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { companyService } from '../services/companyService';
@@ -27,6 +27,7 @@ import type {
 import { toast } from 'react-hot-toast';
 
 const CompaniesPage: React.FC = () => {
+  const { user, refreshUserData, forceRefreshUserData } = useAuth();
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<CompanyWithDetails[]>([]);
   const [invitations, setInvitations] = useState<WorkerInvitation[]>([]);
@@ -41,6 +42,10 @@ const CompaniesPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // Odśwież dane użytkownika po wejściu na stronę, aby limity były aktualne
+    refreshUserData();
+    // Wymuś odświeżenie danych z backendu, aby pobrać najnowsze limity z planu
+    forceRefreshUserData();
   }, []);
 
   const loadData = async () => {
@@ -65,10 +70,14 @@ const CompaniesPage: React.FC = () => {
     try {
       setFormLoading(true);
       const newCompany = await companyService.createCompany(data);
+      console.log('Company created:', newCompany);
       setCompanies(prev => [...prev, newCompany]);
       setShowCreateModal(false);
       toast.success('Firma została utworzona pomyślnie');
+      console.log('Before loadData - companies count:', companies.length);
       await loadData();
+      await refreshUserData(); // <-- odśwież dane użytkownika po utworzeniu firmy
+      console.log('After loadData - companies count:', companies.length);
     } catch (error) {
       console.error('Error creating company:', error);
       throw error;
@@ -103,11 +112,12 @@ const CompaniesPage: React.FC = () => {
   const handleCompanyDeleted = async () => {
     await loadData();
     toast.success('Firma została usunięta pomyślnie');
+    await refreshUserData(); // <-- odśwież dane użytkownika po usunięciu firmy
   };
 
   const handleAcceptInvitation = async (invitation: WorkerInvitation) => {
     try {
-      await dashboardService.acceptInvitation(invitation.id);
+      await companyService.acceptInvitation(invitation.company.id);
       await loadData();
       toast.success('Zaproszenie zostało zaakceptowane');
     } catch (error) {
@@ -118,7 +128,7 @@ const CompaniesPage: React.FC = () => {
 
   const handleRejectInvitation = async (invitation: WorkerInvitation) => {
     try {
-      await dashboardService.rejectInvitation(invitation.id);
+      await companyService.rejectInvitation(invitation.company.id);
       setInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       toast.success('Zaproszenie zostało odrzucone');
     } catch (error) {
@@ -143,8 +153,9 @@ const CompaniesPage: React.FC = () => {
     { label: 'Firmy', current: true }
   ];
 
-  const ownedCompanies = companies.filter(c => c.userRole === 'OWNER').length;
-  const workerCompanies = companies.filter(c => c.userRole === 'WORKER').length;
+  console.log('CompaniesPage - companies:', companies.length, 'ownedCompanies:', user?.ownedCompaniesCount);
+  console.log('CompaniesPage - companies structure:', companies.map(c => ({ id: c.id, name: c.name, userRole: c.userRole })));
+  console.log('CompaniesPage render - ownedCompanies:', user?.ownedCompaniesCount, 'companies with OWNER role:', companies.filter(c => c.userRole === 'OWNER'));
 
   if (loading) {
     return (
@@ -160,6 +171,11 @@ const CompaniesPage: React.FC = () => {
       </div>
     );
   }
+
+  const handleOpenCreateModal = async () => {
+    await refreshUserData();
+    setShowCreateModal(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -178,7 +194,7 @@ const CompaniesPage: React.FC = () => {
             </p>
           </div>
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleOpenCreateModal}
             className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
@@ -206,7 +222,7 @@ const CompaniesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-secondary-600">Jako właściciel</p>
-                  <p className="text-2xl font-bold text-secondary-900">{ownedCompanies}</p>
+                  <p className="text-2xl font-bold text-secondary-900">{user?.ownedCompaniesCount ?? 0}</p>
                 </div>
                 <div className="bg-green-100 p-3 rounded-lg">
                   <BuildingOffice2Icon className="h-6 w-6 text-green-600" />
@@ -220,7 +236,7 @@ const CompaniesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-secondary-600">Jako pracownik</p>
-                  <p className="text-2xl font-bold text-secondary-900">{workerCompanies}</p>
+                  <p className="text-2xl font-bold text-secondary-900">{companies.filter(c => c.userRole === 'WORKER').length}</p>
                 </div>
                 <div className="bg-orange-100 p-3 rounded-lg">
                   <BuildingOffice2Icon className="h-6 w-6 text-orange-600" />
@@ -331,7 +347,7 @@ const CompaniesPage: React.FC = () => {
                 <BuildingOffice2Icon className="h-10 w-10 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold text-secondary-900 mb-3">
-                {companies.length === 0 ? 'Rozpocznij swoją przygodę z SiteBoss' : 'Brak wyników'}
+                {companies.length === 0 ? 'Rozpocznij swoją przygodę z BuildBoss' : 'Brak wyników'}
               </h3>
               <p className="text-secondary-600 mb-6 max-w-md mx-auto">
                 {companies.length === 0 
@@ -341,7 +357,7 @@ const CompaniesPage: React.FC = () => {
               </p>
               {companies.length === 0 && (
                 <Button 
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={handleOpenCreateModal}
                   variant="primary"
                   size="lg"
                 >
@@ -380,6 +396,8 @@ const CompaniesPage: React.FC = () => {
             onSubmit={handleCreateCompany}
             onCancel={() => setShowCreateModal(false)}
             loading={formLoading}
+            mode="create"
+            currentCompanyCount={user?.ownedCompaniesCount ?? 0}
           />
         </Modal>
 
@@ -400,6 +418,8 @@ const CompaniesPage: React.FC = () => {
               setSelectedCompany(null);
             }}
             loading={formLoading}
+            mode="edit"
+            currentCompanyCount={user?.ownedCompaniesCount ?? 0}
           />
         </Modal>
 

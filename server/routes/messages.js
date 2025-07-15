@@ -1,11 +1,12 @@
 const express = require('express');
 const { prisma } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
-const { validate, validateParams } = require('../middleware/validation');
+const { validateParams } = require('../middleware/validation');
 const { _logger, _securityLogger } = require('../config/logger');
 const { notifyNewMessage } = require('./notifications');
-const { createMessageSchema } = require('../schemas/messageSchemas');
 const { idSchema } = require('../schemas/commonSchemas');
+const multer = require('multer');
+const path = require('path');
 
 const router = express.Router();
 // GET /api/messages - Lista konwersacji użytkownika
@@ -184,8 +185,21 @@ router.get('/thread', authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/messages - Wysyłanie nowej wiadomości
-router.post('/', authenticateToken, validate(createMessageSchema), async (req, res) => {
+const upload = multer({
+  dest: path.join(__dirname, '../uploads'),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Dozwolone są tylko pliki PDF, DOC, DOCX'));
+    }
+  }
+});
+
+// POST /api/messages - Wysyłanie nowej wiadomości z opcjonalnym CV
+router.post('/', authenticateToken, upload.single('cv'), async (req, res) => {
   try {
     const { receiverId, content, jobOfferId, workRequestId } = req.body;
     const senderId = req.user.id;
@@ -194,86 +208,43 @@ router.post('/', authenticateToken, validate(createMessageSchema), async (req, r
     if (!receiverId || !content) {
       return res.status(400).json({ error: 'Wymagane pola: receiverId, content' });
     }
-
     if (senderId === receiverId) {
       return res.status(400).json({ error: 'Nie możesz wysłać wiadomości do siebie' });
     }
 
-    // Sprawdź czy odbiorca istnieje
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId }
-    });
-
-    if (!receiver) {
-      return res.status(404).json({ error: 'Odbiorca nie został znaleziony' });
-    }
-
-    // Sprawdź kontekst jeśli podany
-    if (jobOfferId) {
-      const jobOffer = await prisma.jobOffer.findUnique({
-        where: { id: jobOfferId }
+    // Obsługa załącznika CV
+    const attachments = [];
+    if (req.file) {
+      attachments.push({
+        filename: req.file.originalname,
+        url: `/uploads/${req.file.filename}`,
+        size: req.file.size,
+        mimeType: req.file.mimetype
       });
-      if (!jobOffer) {
-        return res.status(404).json({ error: 'Ogłoszenie nie zostało znalezione' });
-      }
     }
 
-    if (workRequestId) {
-      const workRequest = await prisma.workRequest.findUnique({
-        where: { id: workRequestId }
-      });
-      if (!workRequest) {
-        return res.status(404).json({ error: 'Zlecenie nie zostało znalezione' });
-      }
-    }
-
-    // Utwórz wiadomość
     const message = await prisma.message.create({
       data: {
         senderId,
-        receiverId,
+        receiverId: parseInt(receiverId),
         content,
-        jobOfferId: jobOfferId || null,
-        workRequestId: workRequestId || null
+        jobOfferId: jobOfferId ? parseInt(jobOfferId) : null,
+        workRequestId: workRequestId ? parseInt(workRequestId) : null,
+        attachments: attachments.length > 0 ? attachments : undefined
       },
       include: {
-        sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true
-          }
-        },
-        receiver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true
-          }
-        },
-        jobOffer: {
-          select: {
-            id: true,
-            title: true
-          }
-        },
-        workRequest: {
-          select: {
-            id: true,
-            title: true
-          }
-        }
+        sender: true,
+        receiver: true,
+        jobOffer: true,
+        workRequest: true
       }
     });
 
-    // ETAP 11 - Wyślij powiadomienie o nowej wiadomości
+    // Powiadom odbiorcę
     try {
-      await notifyNewMessage(message.id, receiverId, senderId);
+      await notifyNewMessage(message.id, message.receiverId, message.senderId);
     } catch (notificationError) {
       console.error('Error sending message notification:', notificationError);
-      // Nie przerywamy procesu jeśli powiadomienie się nie powiedzie
     }
 
     res.status(201).json(message);
@@ -398,6 +369,190 @@ router.delete('/:id', authenticateToken, validateParams(idSchema), async (req, r
   } catch (error) {
     console.error('Error deleting message:', error);
     res.status(500).json({ error: 'Błąd podczas usuwania wiadomości' });
+  }
+});
+
+// GET /api/messages/admin - Wiadomości od admina dla użytkownika
+router.get('/admin', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, priority } = req.query;
+    const skip = (page - 1) * limit;
+    const userId = req.user.id;
+
+    const where = {
+      recipientId: userId
+    };
+
+    if (status) where.status = status.toUpperCase();
+    if (priority) where.priority = priority.toUpperCase();
+
+    const messages = await prisma.adminMessage.findMany({
+      where,
+      include: {
+        senderUser: {
+          select: { id: true, email: true, firstName: true, lastName: true }
+        },
+        senderAdmin: {
+          select: { id: true, email: true, firstName: true, lastName: true }
+        },
+        recipient: {
+          select: { id: true, email: true, firstName: true, lastName: true }
+        },
+        replies: {
+          include: {
+            senderUser: {
+              select: { id: true, email: true, firstName: true, lastName: true }
+            },
+            senderAdmin: {
+              select: { id: true, email: true, firstName: true, lastName: true }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: parseInt(skip),
+      take: parseInt(limit)
+    });
+
+    // Mapuj wiadomości, aby miały jednolite pole sender
+    const mappedMessages = messages.map(message => ({
+      ...message,
+      sender: message.senderType === 'ADMIN' ? message.senderAdmin : message.senderUser,
+      replies: message.replies.map(reply => ({
+        ...reply,
+        sender: reply.senderType === 'ADMIN' ? reply.senderAdmin : reply.senderUser
+      }))
+    }));
+
+    const total = await prisma.adminMessage.count({ where });
+
+    res.json({
+      messages: mappedMessages,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching admin messages for user:', error);
+    res.status(500).json({ error: 'Błąd podczas pobierania wiadomości od admina' });
+  }
+});
+
+// GET /api/messages/admin/unread-count - Liczba nieprzeczytanych wiadomości od admina
+router.get('/admin/unread-count', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const unreadCount = await prisma.adminMessage.count({
+      where: {
+        recipientId: userId,
+        status: 'UNREAD'
+      }
+    });
+    res.json({ total: unreadCount });
+  } catch (error) {
+    console.error('Error fetching admin unread count:', error);
+    res.status(500).json({ error: 'Błąd podczas pobierania liczby nieprzeczytanych wiadomości od admina' });
+  }
+});
+
+// GET /api/messages/admin/:id - Szczegóły wiadomości od admina
+router.get('/admin/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const message = await prisma.adminMessage.findUnique({
+      where: { id },
+      include: {
+        senderUser: {
+          select: { id: true, email: true, firstName: true, lastName: true }
+        },
+        senderAdmin: {
+          select: { id: true, email: true, firstName: true, lastName: true }
+        },
+        recipient: {
+          select: { id: true, email: true, firstName: true, lastName: true }
+        },
+        replies: {
+          include: {
+            senderUser: {
+              select: { id: true, email: true, firstName: true, lastName: true }
+            },
+            senderAdmin: {
+              select: { id: true, email: true, firstName: true, lastName: true }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      }
+    });
+
+    if (!message) {
+      return res.status(404).json({ error: 'Wiadomość nie została znaleziona' });
+    }
+
+    // Mapuj wiadomość i odpowiedzi
+    const mappedMessage = {
+      ...message,
+      sender: message.senderType === 'ADMIN' ? message.senderAdmin : message.senderUser,
+      replies: message.replies.map(reply => ({
+        ...reply,
+        sender: reply.senderType === 'ADMIN' ? reply.senderAdmin : reply.senderUser
+      }))
+    };
+
+    // Sprawdź czy użytkownik jest odbiorcą wiadomości
+    if (mappedMessage.recipientId !== userId) {
+      return res.status(403).json({ error: 'Brak dostępu do tej wiadomości' });
+    }
+
+    // Oznacz jako przeczytaną jeśli nie jest jeszcze przeczytana
+    if (mappedMessage.status === 'UNREAD') {
+      await prisma.adminMessage.update({
+        where: { id },
+        data: { status: 'READ' }
+      });
+      mappedMessage.status = 'READ';
+    }
+
+    res.json(mappedMessage);
+  } catch (error) {
+    console.error('Error fetching admin message:', error);
+    res.status(500).json({ error: 'Błąd podczas pobierania wiadomości' });
+  }
+});
+
+// DELETE /api/messages/admin/:id - Usuwanie wiadomości od admina przez odbiorcę
+router.delete('/admin/:id', authenticateToken, validateParams(idSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Sprawdź czy wiadomość istnieje i czy użytkownik jest odbiorcą
+    const adminMessage = await prisma.adminMessage.findUnique({
+      where: { id }
+    });
+
+    if (!adminMessage) {
+      return res.status(404).json({ error: 'Wiadomość od admina nie została znaleziona' });
+    }
+
+    if (adminMessage.recipientId !== userId) {
+      return res.status(403).json({ error: 'Możesz usuwać tylko swoje wiadomości od admina' });
+    }
+
+    await prisma.adminMessage.delete({
+      where: { id }
+    });
+
+    res.json({ message: 'Wiadomość od admina została usunięta' });
+  } catch (error) {
+    console.error('Error deleting admin message:', error);
+    res.status(500).json({ error: 'Błąd podczas usuwania wiadomości od admina' });
   }
 });
 

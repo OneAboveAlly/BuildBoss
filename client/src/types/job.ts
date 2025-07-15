@@ -86,6 +86,7 @@ export interface CreateJobOfferData {
   description: string;
   category: JobCategory;
   type: JobType;
+  country?: string;
   voivodeship: string;
   city: string;
   address?: string;

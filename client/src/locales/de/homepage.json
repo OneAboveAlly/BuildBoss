@@ -15,6 +15,13 @@
     "cta_secondary": "Demo ansehen",
     "features_short": "✓ Keine Verpflichtungen ✓ Vollzugang ✓ Jederzeit kündbar"
   },
+  "rotating_texts": {
+    "professional": "wie ein Profi",
+    "precision": "mit Präzision",
+    "passion": "mit Leidenschaft",
+    "experience": "mit Erfahrung",
+    "innovation": "mit Innovation"
+  },
   "features": {
     "title": "Alles was Sie für das Projektmanagement brauchen",
     "subtitle": "Umfassende Tools für Bauunternehmen",

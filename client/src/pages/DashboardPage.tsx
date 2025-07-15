@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAutoRefreshUser } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import { companyService } from '../services/companyService';
 import { dashboardService } from '../services/dashboardService';
 import { CompanyCard } from '../components/companies/CompanyCard';
 import { CompanyForm } from '../components/companies/CompanyForm';
 import { DeleteCompanyModal } from '../components/companies/DeleteCompanyModal';
+import { UsageLimits } from '../components/common/UsageLimits';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -25,7 +27,8 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   CalendarDaysIcon,
-  BellIcon
+  BellIcon,
+  CreditCardIcon
 } from '@heroicons/react/24/outline';
 import type { 
   CompanyWithDetails, 
@@ -35,7 +38,14 @@ import type {
 } from '../types';
 
 const DashboardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshUserData, forceRefreshUserData } = useAuth();
+  const { 
+    getPlanName, 
+    isTrialActive, 
+    getTrialDaysLeft, 
+    isTrialEndingSoon,
+    isPlanActive 
+  } = useSubscription();
   const navigate = useNavigate();
   
   // Hook do automatycznego odświeżania danych użytkownika
@@ -53,6 +63,10 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     loadDashboardData();
+    // Odśwież dane użytkownika po wejściu na dashboard, aby limity były aktualne
+    refreshUserData();
+    // Wymuś odświeżenie danych z backendu, aby pobrać najnowsze limity z planu
+    forceRefreshUserData();
   }, []);
 
   const loadDashboardData = async () => {
@@ -81,6 +95,7 @@ const DashboardPage: React.FC = () => {
       setCompanies(prev => [...prev, newCompany]);
       setShowCreateModal(false);
       await loadDashboardData();
+      refreshUserData(); // Odświeżanie danych użytkownika po utworzeniu firmy
     } catch (error) {
       console.error('Error creating company:', error);
       throw error;
@@ -112,10 +127,10 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleCompanyDeleted = async () => {
-    if (selectedCompany) {
-      setCompanies(prev => prev.filter(c => c.id !== selectedCompany.id));
-      await loadDashboardData();
-    }
+    setShowDeleteModal(false);
+    setSelectedCompany(null);
+    await loadDashboardData();
+    await refreshUserData(); // Odświeżanie danych użytkownika po usunięciu firmy
   };
 
   const handleAcceptInvitation = async (invitation: WorkerInvitation) => {
@@ -245,6 +260,72 @@ const DashboardPage: React.FC = () => {
           <h3 className="font-semibold text-secondary-900 text-sm md:text-base">Wiadomości</h3>
           <p className="text-xs md:text-sm text-secondary-600">Komunikacja zespołu</p>
         </button>
+      </div>
+
+      {/* Subscription Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Current Plan Info */}
+        <div className="lg:col-span-2">
+          <Card className="bg-white border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-secondary-900 flex items-center">
+                <CreditCardIcon className="h-5 w-5 mr-2 text-primary-600" />
+                Twój plan subskrypcji
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-secondary-900">{getPlanName()}</h3>
+                  <p className="text-sm text-secondary-600 mt-1">
+                    {isPlanActive() ? 'Plan aktywny' : 'Plan nieaktywny'}
+                  </p>
+                  {isTrialActive() && (
+                    <div className="mt-2">
+                      <p className="text-sm text-blue-600 font-medium">
+                        Okres próbny: {getTrialDaysLeft()} dni pozostało
+                      </p>
+                      {isTrialEndingSoon() && (
+                        <p className="text-sm text-red-600 mt-1">
+                          ⚠️ Trial kończy się wkrótce!
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={() => navigate('/subscription')}
+                  variant="outline"
+                  className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                >
+                  Zarządzaj planem
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Upgrade */}
+        <div>
+          <Card className="bg-gradient-to-br from-primary-50 to-primary-100 border-primary-200 shadow-sm">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-primary-900 mb-2">
+                  Potrzebujesz więcej?
+                </h3>
+                <p className="text-sm text-primary-700 mb-4">
+                  Rozszerz swój plan, aby uzyskać więcej funkcji i wyższe limity.
+                </p>
+                <Button
+                  onClick={() => navigate('/pricing')}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white"
+                >
+                  Zobacz plany
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -404,7 +485,7 @@ const DashboardPage: React.FC = () => {
                 <BuildingOffice2Icon className="h-10 w-10 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold text-secondary-900 mb-3">
-                Rozpocznij swoją przygodę z SiteBoss
+                Rozpocznij swoją przygodę z BuildBoss
               </h3>
               <p className="text-secondary-600 mb-6 max-w-md mx-auto">
                 Utwórz swoją pierwszą firmę i zacznij zarządzać projektami budowlanymi 
@@ -451,6 +532,8 @@ const DashboardPage: React.FC = () => {
           onSubmit={handleCreateCompany}
           onCancel={() => setShowCreateModal(false)}
           loading={formLoading}
+          mode="create"
+          currentCompanyCount={user?.ownedCompaniesCount ?? 0}
         />
       </Modal>
 
@@ -472,6 +555,8 @@ const DashboardPage: React.FC = () => {
             setSelectedCompany(null);
           }}
           loading={formLoading}
+          mode="edit"
+          currentCompanyCount={user?.ownedCompaniesCount ?? 0}
         />
       </Modal>
 

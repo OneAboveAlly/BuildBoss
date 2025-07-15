@@ -7,11 +7,7 @@ export interface SubscriptionPlan {
   description?: string;
   price: number;
   currency: string;
-  priceFormatted: string;
-  features: PlanFeatures;
-}
-
-export interface PlanFeatures {
+  priceFormatted?: string;
   maxCompanies: number;
   maxProjects: number;
   maxWorkers: number;
@@ -23,6 +19,7 @@ export interface PlanFeatures {
   hasPrioritySupport: boolean;
   hasCustomBranding: boolean;
   hasTeamManagement: boolean;
+  isActive: boolean;
 }
 
 export interface Subscription {

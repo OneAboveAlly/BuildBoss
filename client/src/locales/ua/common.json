@@ -79,5 +79,38 @@
     "de": "Deutsch",
     "en": "English",
     "ua": "Українська"
+  },
+  "network": {
+    "error": "Сталася помилка мережі",
+    "retry": "Повторити",
+    "offline": "Ви зараз офлайн"
+  },
+  "pwa": {
+    "install_title": "Встановити BuildBoss",
+    "install_description": "Додайте BuildBoss на головний екран для швидкого доступу та роботи офлайн",
+    "install_button": "Встановити",
+    "install_dismiss": "Пізніше",
+    "update_title": "Доступне оновлення",
+    "update_description": "Нова версія BuildBoss доступна. Оновіть зараз, щоб отримати найновіші функції та покращення",
+    "update_button": "Оновити зараз",
+    "update_dismiss": "Пізніше",
+    "offline_mode": "Режим офлайн",
+    "offline_description": "Доступна обмежена функціональність",
+    "offline": "Офлайн",
+    "online": "Онлайн",
+    "installing": "Встановлення...",
+    "install_success": "BuildBoss успішно встановлено!",
+    "install_failed": "Помилка встановлення. Спробуйте знову.",
+    "update_success": "BuildBoss успішно оновлено!",
+    "update_failed": "Помилка оновлення. Спробуйте знову."
+  },
+  "autoRefresh": {
+    "update_available": "Доступне оновлення",
+    "update_description": "Доступна нова версія додатку. Оновіть сторінку, щоб отримати останні зміни.",
+    "refresh_now": "Оновити зараз",
+    "later": "Пізніше",
+    "checking_updates": "Перевірка оновлень...",
+    "update_found": "Оновлення знайдено",
+    "auto_refresh_in": "Автооновлення через"
   }
 } 

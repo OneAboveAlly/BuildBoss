@@ -14,7 +14,7 @@ const SubscriptionCancelPage: React.FC = () => {
   };
 
   const handleContactSupport = () => {
-    window.location.href = 'mailto:support@siteboss.pl?subject=Pomoc z subskrypcją';
+    window.location.href = 'mailto:support@buildboss.pl?subject=Pomoc z subskrypcją';
   };
 
   return (

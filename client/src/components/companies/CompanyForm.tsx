@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { AddressAutocomplete, type AddressData } from '../common/AddressAutocomplete';
 import {
@@ -13,12 +13,18 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import type { CompanyWithDetails, CreateCompanyRequest } from '../../types';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useTranslation } from 'react-i18next';
+import { AdminModal } from '../common/AdminModal';
+import { UsageLimits } from '../common/UsageLimits';
 
 interface CompanyFormProps {
   company?: CompanyWithDetails;
   onSubmit: (data: CreateCompanyRequest) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  mode?: 'create' | 'edit';
+  currentCompanyCount: number; // Dodane
 }
 
 interface InputFieldProps {
@@ -123,8 +129,13 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   company,
   onSubmit,
   onCancel,
-  loading = false
+  loading = false,
+  mode = 'create',
+  currentCompanyCount = 0
 }) => {
+  console.log('CompanyForm render - currentCompanyCount:', currentCompanyCount, 'mode:', mode);
+  const { t } = useTranslation();
+  const { canCreateCompany, getUsageLimit } = useSubscription();
   const [formData, setFormData] = useState<CreateCompanyRequest>({
     name: company?.name || '',
     nip: company?.nip || '',
@@ -147,6 +158,21 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitInfo, setLimitInfo] = useState({ current: 0, max: 0 });
+
+  // Aktualizuj limitInfo przy ładowaniu komponentu
+  useEffect(() => {
+    const limit = getUsageLimit('maxCompanies');
+    const safeCurrentCount = typeof currentCompanyCount === 'number' ? currentCompanyCount : 0;
+    console.log('CompanyForm useEffect - currentCompanyCount:', currentCompanyCount, 'safeCurrentCount:', safeCurrentCount, 'limit:', limit);
+    setLimitInfo({ current: safeCurrentCount, max: limit });
+  }, [currentCompanyCount, getUsageLimit]);
+
+  // Dodatkowe logowanie zmian currentCompanyCount
+  useEffect(() => {
+    console.log('CompanyForm - currentCompanyCount changed:', currentCompanyCount);
+  }, [currentCompanyCount]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -196,6 +222,17 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       return;
     }
 
+    if (mode === 'create') {
+      const limit = getUsageLimit('maxCompanies');
+      const safeCurrentCount = typeof currentCompanyCount === 'number' ? currentCompanyCount : 0;
+      console.log('currentCompanyCount:', currentCompanyCount, 'safeCurrentCount:', safeCurrentCount, 'limit:', limit);
+      if (!canCreateCompany(safeCurrentCount)) {
+        setLimitInfo({ current: safeCurrentCount, max: limit });
+        setShowLimitModal(true);
+        return;
+      }
+    }
+
     try {
       await onSubmit({
         ...formData,
@@ -209,8 +246,22 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         website: formData.website?.trim() || undefined,
         description: formData.description?.trim() || undefined
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
+      
+      // Obsługa błędu przekroczenia limitu z backendu
+      if (error.response?.status === 403 && error.response?.data?.error === 'Przekroczono limit planu') {
+        const errorData = error.response.data;
+        setLimitInfo({ 
+          current: errorData.currentCount || 0, 
+          max: errorData.maxAllowed || 0 
+        });
+        setShowLimitModal(true);
+        return;
+      }
+      
+      // Inne błędy - pokaż alert
+      alert(error.response?.data?.message || 'Wystąpił błąd podczas tworzenia firmy');
     }
   };
 
@@ -231,6 +282,37 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           }
         </p>
       </div>
+
+      {/* Usage Limits Info */}
+      {mode === 'create' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm font-medium text-blue-900">Limit firm</span>
+            </div>
+            <span className="text-sm text-blue-700">
+              {limitInfo.current} / {limitInfo.max === -1 ? '∞' : limitInfo.max}
+            </span>
+          </div>
+          <div className="mt-2">
+            <div className="w-full bg-blue-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ 
+                  width: `${limitInfo.max === -1 ? 0 : Math.min(100, (limitInfo.current / limitInfo.max) * 100)}%` 
+                }}
+              ></div>
+            </div>
+            <p className="text-xs text-blue-600 mt-1">
+              {limitInfo.max === -1 
+                ? 'Plan nieograniczony' 
+                : `Możesz utworzyć jeszcze ${Math.max(0, limitInfo.max - limitInfo.current)} firm`
+              }
+            </p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Podstawowe informacje */}
@@ -376,6 +458,17 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           </Button>
         </div>
       </form>
+      <AdminModal
+        open={showLimitModal}
+        title={t('subscription.companyLimitReached')}
+        message={
+          limitInfo.max === 0
+            ? t('subscription.companyLimitZero', 'Twój plan nie pozwala na tworzenie firm.')
+            : `Możesz utworzyć maksymalnie ${limitInfo.max} firm na tym planie. Obecnie masz ${limitInfo.current}. Pozostało: ${Math.max(0, limitInfo.max - limitInfo.current)}.`
+        }
+        onClose={() => setShowLimitModal(false)}
+        confirmText={t('common.ok', 'OK')}
+      />
     </div>
   );
 };

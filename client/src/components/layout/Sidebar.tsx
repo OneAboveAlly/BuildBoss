@@ -4,7 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import {
   HomeIcon,
-  FolderIcon,
   UsersIcon,
   CubeIcon,
   ChatBubbleLeftRightIcon,
@@ -23,7 +22,31 @@ import {
   DocumentChartBarIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon,
+  SparklesIcon,
+  RocketLaunchIcon,
+  PresentationChartLineIcon,
 } from '@heroicons/react/24/outline';
+
+// Import lazy components for preloading
+import { 
+  DashboardPage,
+  ProjectsPage,
+  TasksPage,
+  MaterialsPage,
+  MessagesPage,
+  CompaniesPage,
+  JobsPage,
+  SubscriptionPage,
+  AnalyticsPage,
+  ReportsPage,
+  SearchPage,
+  NotificationsPage,
+  SettingsPage
+} from '../../App';
+
+import { messageService } from '../../services/messageService';
+import { notificationService } from '../../services/notificationService';
+import { useUnreadMessages } from '../../contexts/UnreadMessagesContext';
 
 interface MenuItem {
   name: string;
@@ -31,6 +54,7 @@ interface MenuItem {
   icon: React.ComponentType<any>;
   group: 'main' | 'projects' | 'business' | 'reports';
   badge?: number;
+  component?: any; // For preloading
 }
 
 const Sidebar: React.FC = () => {
@@ -38,6 +62,7 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const { unreadMessages, unreadNotifications, unreadAdminMessages, totalUnread } = useUnreadMessages();
 
   // Force re-render when language changes
   useEffect(() => {
@@ -56,24 +81,31 @@ const Sidebar: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     // Main
-    { name: t('dashboard'), path: '/dashboard', icon: HomeIcon, group: 'main' },
-    { name: 'Wyszukiwanie', path: '/search', icon: MagnifyingGlassIcon, group: 'main' },
-    { name: t('notifications'), path: '/notifications', icon: BellIcon, group: 'main', badge: 3 },
+    { name: t('dashboard'), path: '/dashboard', icon: HomeIcon, group: 'main', component: DashboardPage },
+    { name: 'Wyszukiwanie', path: '/search', icon: MagnifyingGlassIcon, group: 'main', component: SearchPage },
+    { name: t('notifications'), path: '/notifications', icon: BellIcon, group: 'main', badge: unreadNotifications > 0 ? unreadNotifications : undefined, component: NotificationsPage },
     
     // Projects
-    { name: t('projects'), path: '/projects', icon: BuildingOffice2Icon, group: 'projects' },
-    { name: t('tasks'), path: '/tasks', icon: ClipboardDocumentListIcon, group: 'projects' },
-    { name: t('materials'), path: '/materials', icon: CubeIcon, group: 'projects' },
-    { name: t('messages'), path: '/messages', icon: ChatBubbleLeftRightIcon, group: 'projects', badge: 2 },
+    { name: t('projects'), path: '/projects', icon: RocketLaunchIcon, group: 'projects', component: ProjectsPage },
+    { name: t('tasks'), path: '/tasks', icon: ClipboardDocumentListIcon, group: 'projects', component: TasksPage },
+    { name: t('materials'), path: '/materials', icon: CubeIcon, group: 'projects', component: MaterialsPage },
+    { 
+      name: t('messages'), 
+      path: '/messages', 
+      icon: ChatBubbleLeftRightIcon, 
+      group: 'projects', 
+      badge: (unreadMessages + unreadAdminMessages) > 0 ? (unreadMessages + unreadAdminMessages) : undefined, 
+      component: MessagesPage 
+    },
     
     // Business
-    { name: 'Firma', path: '/company', icon: UserGroupIcon, group: 'business' },
-    { name: '💼 Praca', path: '/jobs', icon: BriefcaseIcon, group: 'business', badge: 999 }, // specjalne wyróżnienie
-    { name: t('subscription'), path: '/subscription', icon: CreditCardIcon, group: 'business' },
+    { name: 'Firma', path: '/company', icon: BuildingOffice2Icon, group: 'business', component: CompaniesPage },
+    { name: '💼 Praca', path: '/jobs', icon: BriefcaseIcon, group: 'business', badge: 999, component: JobsPage }, // specjalne wyróżnienie
+    { name: t('subscription'), path: '/subscription', icon: SparklesIcon, group: 'business', component: SubscriptionPage },
     
     // Reports
-    { name: 'Analityki', path: '/analytics', icon: ChartBarIcon, group: 'reports' },
-    { name: 'Raporty', path: '/reports', icon: DocumentChartBarIcon, group: 'reports' },
+    { name: 'Analityki', path: '/analytics', icon: PresentationChartLineIcon, group: 'reports', component: AnalyticsPage },
+    { name: 'Raporty', path: '/reports', icon: DocumentChartBarIcon, group: 'reports', component: ReportsPage },
     { name: 'Dokumenty', path: '/documents', icon: DocumentTextIcon, group: 'reports' },
   ];
 
@@ -97,26 +129,40 @@ const Sidebar: React.FC = () => {
            (path !== '/dashboard' && location.pathname.startsWith(path));
   };
 
+  const handleMouseEnter = (component: any) => {
+    if (component && typeof component.preload === 'function') {
+      // Small delay to avoid unnecessary preloads for quick hovers
+      setTimeout(() => {
+        component.preload();
+      }, 100);
+    }
+  };
+
   return (
     <aside className={`
       ${isCollapsed ? 'w-16' : 'w-64'} 
-      bg-white shadow-lg border-r border-secondary-200 min-h-screen 
+      bg-white/80 backdrop-blur-lg shadow-glass border-r border-white/20 min-h-screen 
       transition-all duration-300 ease-in-out
       flex flex-col
     `}>
       {/* Header */}
-      <div className="p-4 border-b border-secondary-200 flex items-center justify-between">
+      <div className="p-4 border-b border-white/20 flex items-center justify-between">
         {!isCollapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="bg-primary-600 p-2 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-2.5 rounded-xl shadow-lg">
               <span className="text-white font-bold text-lg">🏗️</span>
             </div>
-            <h2 className="text-lg font-bold text-primary-600">SiteBoss</h2>
+            <div>
+              <h2 className="text-lg font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
+                BuildBoss
+              </h2>
+              <p className="text-xs text-secondary-500 font-medium">Professional</p>
+            </div>
           </div>
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 text-secondary-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+          className="p-2 text-secondary-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 hover:scale-105"
         >
           {isCollapsed ? (
             <ChevronRightIcon className="w-4 h-4" />
@@ -146,16 +192,17 @@ const Sidebar: React.FC = () => {
                       <Link
                         to={item.path}
                         className={`
-                          group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg 
-                          transition-all duration-200 relative
+                          group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl 
+                          transition-all duration-300 relative
                           ${item.path === '/jobs' 
-                            ? 'bg-gradient-to-r from-primary-600 to-blue-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                            ? 'bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-lg hover:shadow-xl hover:shadow-primary-500/25 transform hover:scale-105'
                             : isActive
-                              ? 'bg-primary-100 text-primary-700 shadow-sm'
-                              : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+                              ? 'bg-gradient-to-r from-primary-100 to-primary-200 text-primary-700 shadow-card'
+                              : 'text-secondary-600 hover:bg-white/60 hover:text-secondary-900 hover:shadow-sm'
                           }
                         `}
                         title={isCollapsed ? item.name : undefined}
+                        onMouseEnter={() => handleMouseEnter(item.component)}
                       >
                         <Icon className={`
                           ${isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3'}
@@ -163,17 +210,17 @@ const Sidebar: React.FC = () => {
                             ? 'text-white' 
                             : isActive ? 'text-primary-600' : 'text-secondary-400 group-hover:text-secondary-600'
                           }
-                          transition-colors duration-200
+                          transition-all duration-300 group-hover:scale-110
                         `} />
                         {!isCollapsed && (
                           <>
                             <span className="truncate">{item.name}</span>
                             {item.badge && item.badge > 0 && (
                               <span className={`
-                                ml-auto text-xs rounded-full h-5 px-2 flex items-center justify-center font-semibold
+                                ml-auto text-xs rounded-full h-5 px-2 flex items-center justify-center font-semibold shadow-sm
                                 ${item.path === '/jobs' 
-                                  ? 'bg-yellow-400 text-yellow-900 animate-pulse' 
-                                  : 'bg-red-500 text-white'
+                                  ? 'bg-gradient-to-r from-warning-400 to-warning-500 text-warning-900 animate-pulse' 
+                                  : 'bg-gradient-to-r from-error-500 to-error-600 text-white'
                                 }
                               `}>
                                 {item.path === '/jobs' ? 'HOT' : (item.badge > 9 ? '9+' : item.badge)}
@@ -186,10 +233,10 @@ const Sidebar: React.FC = () => {
                         )}
                         {isCollapsed && item.badge && item.badge > 0 && (
                           <div className={`
-                            absolute -top-1 -right-1 text-xs rounded-full h-4 flex items-center justify-center font-semibold px-1 min-w-4
+                            absolute -top-1 -right-1 text-xs rounded-full h-4 flex items-center justify-center font-semibold px-1 min-w-4 shadow-sm
                             ${item.path === '/jobs' 
-                              ? 'bg-yellow-400 text-yellow-900 animate-pulse text-xs' 
-                              : 'bg-red-500 text-white'
+                              ? 'bg-gradient-to-r from-warning-400 to-warning-500 text-warning-900 animate-pulse text-xs' 
+                              : 'bg-gradient-to-r from-error-500 to-error-600 text-white'
                             }
                           `}>
                             {item.path === '/jobs' ? 'HOT' : (item.badge > 9 ? '9' : item.badge)}
@@ -206,20 +253,20 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Bottom Section - Only Settings */}
-      <div className="border-t border-secondary-200 p-4">
+      <div className="border-t border-white/20 p-4">
         <Link
           to="/settings"
           className={`
-            group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg 
-            transition-all duration-200
-            text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900
+            group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl 
+            transition-all duration-300
+            text-secondary-600 hover:bg-white/60 hover:text-secondary-900 hover:shadow-sm
           `}
           title={isCollapsed ? 'Ustawienia' : undefined}
         >
           <Cog6ToothIcon className={`
             ${isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3'}
             text-secondary-400 group-hover:text-secondary-600
-            transition-colors duration-200
+            transition-all duration-300 group-hover:scale-110
           `} />
           {!isCollapsed && <span>{t('settings')}</span>}
         </Link>

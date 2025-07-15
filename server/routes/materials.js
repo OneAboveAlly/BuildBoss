@@ -59,6 +59,13 @@ router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (
     // Filtr dla niskiego stanu - będzie obsłużony po pobraniu danych
     const shouldFilterLowStock = lowStock === 'true';
 
+    // Waliduj i ustaw domyślne sortowanie
+    const validSortFields = ['name', 'category', 'quantity', 'price', 'createdAt'];
+    const validSortOrders = ['asc', 'desc'];
+
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+    const sortDirection = validSortOrders.includes(sortOrder) ? sortOrder : 'asc';
+
     const materials = await prisma.material.findMany({
       where,
       include: {
@@ -73,7 +80,7 @@ router.get('/', authenticateToken, validateQuery(materialFiltersSchema), async (
         }
       },
       orderBy: {
-        [sortBy]: sortOrder
+        [sortField]: sortDirection
       }
     });
 
@@ -263,7 +270,35 @@ router.get('/:id', authenticateToken, validateParams(idSchema), async (req, res)
 });
 
 // POST /api/materials - Tworzenie nowego materiału
-router.post('/', authenticateToken, validate(createMaterialSchema), async (req, res) => {
+router.post('/', authenticateToken, (req, res, next) => {
+  console.log('=== POST /api/materials DEBUG ===');
+  console.log('Received data:', JSON.stringify(req.body, null, 2));
+  
+  // Ręczna walidacja z logowaniem
+  const { error } = createMaterialSchema.validate(req.body, { abortEarly: false });
+  
+  if (error) {
+    console.log('=== VALIDATION ERROR ===');
+    console.log('Validation error details:', JSON.stringify(error.details, null, 2));
+    
+    const validationErrors = error.details.map(detail => ({
+      field: detail.path.join('.'),
+      message: detail.message,
+      value: detail.context.value
+    }));
+    
+    console.log('Formatted validation errors:', JSON.stringify(validationErrors, null, 2));
+    
+    return res.status(400).json({
+      success: false,
+      message: 'Błędy walidacji danych',
+      errors: validationErrors
+    });
+  }
+  
+  console.log('=== VALIDATION PASSED ===');
+  next();
+}, async (req, res) => {
   try {
     const {
       name,
