@@ -1,208 +1,347 @@
-# 🏗️ SiteBoss
+# 🏗️ BuildBoss
 
-Kompleksowe rozwiązanie SaaS dla małych ekip budowlanych. Zarządzaj zadaniami, dokumentami, fakturami i zespołem w jednym miejscu.
+**Nowoczesna platforma SaaS dla małych i średnich firm budowlanych**
 
-## 🚀 Etap 1 - UKOŃCZONY ✅
+Kompleksowe rozwiązanie do zarządzania projektami, zespołem, materiałami i dokumentacją budowlaną. Wszystko w jednym miejscu.
 
-### ✅ Backend (Node.js + Express + Prisma)
-- ✅ Struktura projektu
-- ✅ Konfiguracja Express z middleware
-- ✅ Modele Prisma (User, Company, Worker)
-- ✅ Konfiguracja PostgreSQL
-- ✅ Podstawowe endpointy API (przygotowane)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-brightgreen.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://typescriptlang.org/)
 
-### ✅ Frontend (React + Vite + TailwindCSS)
-- ✅ Struktura projektu React z TypeScript
-- ✅ Konfiguracja TailwindCSS
-- ✅ React Router setup
-- ✅ AuthContext i zarządzanie stanem
-- ✅ Strony: Home, Login, Register, Dashboard
-- ✅ Komponenty: Layout, Header, Sidebar, ProtectedRoute
-- ✅ Konfiguracja i18n (PL/EN)
+## 🚀 Funkcjonalności
+
+### 🏢 Zarządzanie firmą
+- ✅ Tworzenie i zarządzanie profilami firm budowlanych
+- ✅ Zapraszanie i zarządzanie pracownikami
+- ✅ System uprawnień (właściciel/administrator/pracownik)
+- ✅ Monitoring aktywności zespołu
+
+### 📋 Projekty i zadania
+- ✅ Tablica Kanban z przeciągnij i upuść
+- ✅ Kalendarz projektów z widokiem miesięcznym
+- ✅ Przypisywanie zadań do pracowników
+- ✅ Śledzenie postępów w czasie rzeczywistym
+- ✅ System tagów i kategorii
+
+### 🧱 Zarządzanie materiałami
+- ✅ Inwentaryzacja materiałów budowlanych
+- ✅ Alerty o niskich stanach magazynowych
+- ✅ Historia wykorzystania materiałów
+- ✅ Kalkulacja kosztów projektów
+
+### 💼 Oferty pracy
+- ✅ Publikowanie ogłoszeń o pracę
+- ✅ Zarządzanie aplikacjami
+- ✅ Formularz kontaktowy dla kandydatów
+
+### 💳 Subskrypcje i płatności
+- ✅ Integracja ze Stripe
+- ✅ Plany subskrypcyjne (Starter, Professional, Enterprise)
+- ✅ Automatyczne fakturowanie
+- ✅ Panel administratora subskrypcji
+
+### 📊 Analityka i raporty
+- ✅ Dashboard z kluczowymi metrykami
+- ✅ Raporty wydajności zespołu
+- ✅ Analiza kosztów projektów
+- ✅ Eksport danych do PDF/Excel
+
+### 🔒 Bezpieczeństwo i prywatność
+- ✅ GDPR compliance
+- ✅ Eksport i usuwanie danych osobowych
+- ✅ Dwustopniowa autoryzacja (2FA)
+- ✅ Szyfrowanie danych wrażliwych
+
+### 🌍 Wielojęzyczność
+- ✅ Polski (PL)
+- ✅ Angielski (EN)
+- ✅ Niemiecki (DE)
+- ✅ Ukraiński (UA)
+
+### 📱 Progressive Web App (PWA)
+- ✅ Instalacja na urządzeniach mobilnych
+- ✅ Tryb offline
+- ✅ Powiadomienia push
+- ✅ Responsive design
 
 ## 🛠️ Technologie
 
-**Backend:**
-- Node.js + Express
-- Prisma ORM + PostgreSQL
-- JWT Authentication
-- Bcrypt, Helmet, CORS
-- Nodemailer, Passport (Google OAuth)
+### Backend
+- **Node.js + Express** - Serwer HTTP
+- **Prisma ORM + PostgreSQL** - Baza danych
+- **JWT + Google OAuth** - Autoryzacja
+- **Stripe API** - Płatności
+- **Socket.io** - Komunikacja w czasie rzeczywistym
+- **Nodemailer** - Wysyłanie emaili
+- **Jest** - Testy jednostkowe
 
-**Frontend:**
-- React 18 + TypeScript
-- Vite (build tool)
-- TailwindCSS (styling)
-- React Router (routing)
-- Axios (HTTP client)
-- i18next (internationalization)
+### Frontend
+- **React 18 + TypeScript** - Interfejs użytkownika
+- **Vite** - Build tool i dev server
+- **TailwindCSS** - Styling
+- **React Router** - Routing SPA
+- **React Query** - Cache i synchronizacja danych
+- **React Hook Form** - Zarządzanie formularzami
+- **i18next** - Internacjonalizacja
+
+### DevOps i infrastruktura
+- **Docker + Docker Compose** - Konteneryzacja
+- **GitHub Actions** - CI/CD
+- **Nginx** - Reverse proxy
+- **Sentry** - Monitoring błędów
 
 ## 📁 Struktura projektu
 
 ```
-SiteBoss/
-├── server/                 # Backend
-│   ├── prisma/            # Database schema
-│   ├── routes/            # API routes
-│   ├── middleware/        # Express middleware
-│   ├── utils/             # Utility functions
-│   ├── config/            # Configuration files
-│   ├── uploads/           # File uploads
-│   └── server.js          # Main server file
-├── client/                # Frontend
+BuildBoss/
+├── client/                 # Frontend React
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── pages/         # Page components
+│   │   ├── components/    # Komponenty React
+│   │   ├── pages/         # Strony aplikacji
 │   │   ├── contexts/      # React contexts
 │   │   ├── services/      # API services
 │   │   ├── hooks/         # Custom hooks
-│   │   ├── utils/         # Utility functions
 │   │   ├── types/         # TypeScript types
-│   │   └── i18n/          # Internationalization
-│   └── public/            # Static files
-├── agent_config.md        # Agent configuration
-├── copilot_instructions.md # Project instructions
-└── README.md              # This file
+│   │   └── locales/       # Tłumaczenia
+│   └── public/            # Statyczne pliki
+├── server/                # Backend Node.js
+│   ├── prisma/           # Schema i migracje bazy danych
+│   ├── routes/           # Endpointy API
+│   ├── middleware/       # Express middleware
+│   ├── config/           # Konfiguracja
+│   ├── tests/            # Testy jednostkowe
+│   └── uploads/          # Przesyłane pliki
+├── docs/                 # Dokumentacja
+├── deployment-scripts/   # Skrypty deploymentu
+└── docker-compose.yml    # Konfiguracja Docker
 ```
 
-## 🚀 Uruchamianie projektu
-
-### Opcja 1: Szybkie uruchomienie (zalecane)
-```bash
-# W katalogu głównym projektu
-npm install
-npm start
-```
-
-### Opcja 2: Uruchomienie ręczne
-```bash
-# Terminal 1 - Server (backend)
-cd server
-npm install
-npm run dev
-
-# Terminal 2 - Client (frontend)
-cd client
-npm install
-npm run dev
-```
-
-## 🛠️ Dostępne komendy
-
-```bash
-# Uruchomienie całego projektu
-npm start
-
-# Uruchomienie tylko frontendu
-npm run start:client
-
-# Uruchomienie tylko backendu
-npm run start:server
-
-# Instalacja zależności
-npm run install
-
-# Build produkcyjny
-npm run build
-
-# Baza danych
-npm run db:generate    # Generuj klienta Prismy
-npm run db:push        # Wypchnij zmiany do bazy
-npm run db:migrate     # Migracje
-npm run db:studio      # Studio Prismy
-```
-
-## 🔧 Konfiguracja
+## 🚀 Szybki start
 
 ### Wymagania
 - Node.js >= 18.0.0
-- PostgreSQL
+- PostgreSQL >= 13
 - npm >= 9.0.0
 
-### Zmienne środowiskowe
+### Instalacja
 
-#### Server (.env w katalogu /server)
+1. **Klonowanie repozytorium**
+```bash
+git clone https://github.com/OneAboveAlly/BuildBoss.git
+cd BuildBoss
+```
+
+2. **Instalacja zależności**
+```bash
+npm install
+```
+
+3. **Konfiguracja bazy danych**
+```bash
+# Skopiuj i edytuj pliki środowiskowe
+cp server/env.example server/.env
+cp client/env.example client/.env
+
+# Skonfiguruj bazę danych
+cd server
+npx prisma generate
+npx prisma db push
+```
+
+4. **Uruchomienie aplikacji**
+```bash
+# Z katalogu głównego
+npm start
+```
+
+Aplikacja będzie dostępna na:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5000
+
+### Docker (alternatywa)
+
+```bash
+# Uruchomienie z Docker Compose
+docker-compose up -d
+
+# Aplikacja dostępna na http://localhost
+```
+
+## ⚙️ Konfiguracja
+
+### Server (.env w katalogu /server)
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/siteboss"
-JWT_SECRET="your-jwt-secret"
-CLIENT_URL="http://localhost:5173"
-NODE_ENV="development"
+# Baza danych
+DATABASE_URL="postgresql://username:password@localhost:5432/buildboss"
 
-# Opcjonalne - płatności Stripe
+# JWT
+JWT_SECRET="your-super-secret-jwt-key"
+
+# API URLs
+CLIENT_URL="http://localhost:5173"
+SERVER_URL="http://localhost:5000"
+
+# Stripe (opcjonalne)
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
-# Opcjonalne - email
+# Email (opcjonalne)
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
 SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-password"
+SMTP_PASS="your-app-password"
 
-# Opcjonalne - Google OAuth
+# Google OAuth (opcjonalne)
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Sentry monitoring (opcjonalne)
+SENTRY_DSN="your-sentry-dsn"
 ```
 
-#### Client (.env w katalogu /client)
+### Client (.env w katalogu /client)
 ```env
 VITE_API_URL="http://localhost:5000/api"
+VITE_SENTRY_DSN="your-sentry-dsn"
 ```
 
-## 📚 Funkcjonalności
+## 📚 Dokumentacja API
 
-- ✅ Zarządzanie firmami budowlanymi
-- ✅ Zapraszanie i zarządzanie pracownikami
-- ✅ Projekty i zadania w systemie Kanban
-- ✅ Materiały budowlane z alertami stanów
-- ✅ System uprawnień (właściciel/pracownik)
-- ✅ Subskrypcje i płatności (Stripe)
-- ✅ Publiczne ogłoszenia o pracę
-- ✅ Wielojęzyczność (PL, EN, DE, UA)
-- ✅ Responsive design
+Pełna dokumentacja API dostępna jest pod adresem `/api/docs` po uruchomieniu serwera.
+
+### Główne endpointy:
+- `POST /api/auth/login` - Logowanie użytkownika
+- `GET /api/companies` - Lista firm
+- `GET /api/projects` - Lista projektów
+- `GET /api/tasks` - Lista zadań
+- `GET /api/materials` - Zarządzanie materiałami
+- `GET /api/analytics` - Dane analityczne
+
+## 🧪 Testowanie
+
+```bash
+# Testy jednostkowe (backend)
+cd server
+npm test
+
+# Testy z coverage
+npm run test:coverage
+
+# Testy integracyjne
+npm run test:integration
+```
+
+## 🚀 Deployment
+
+### Produkcja z Docker
+
+```bash
+# Build obrazów produkcyjnych
+docker-compose -f docker-compose.yml build
+
+# Uruchomienie w trybie produkcyjnym
+docker-compose -f docker-compose.yml up -d
+```
+
+### Deployment manualny
+
+```bash
+# Build frontendu
+cd client
+npm run build
+
+# Start serwera produkcyjnego
+cd ../server
+npm run start:prod
+```
+
+## 🔧 Dostępne komendy
+
+```bash
+# Rozwój
+npm start              # Uruchom całą aplikację
+npm run dev            # Tryb rozwoju z hot reload
+
+# Build
+npm run build          # Build produkcyjny
+npm run build:client   # Build tylko frontendu
+npm run build:server   # Build tylko backendu
+
+# Baza danych
+npm run db:generate    # Generuj klienta Prismy
+npm run db:push        # Wypchnij schemat do bazy
+npm run db:migrate     # Uruchom migracje
+npm run db:studio      # Otwórz Prisma Studio
+npm run db:seed        # Seed bazy danych testowymi danymi
+
+# Testy
+npm test               # Uruchom testy
+npm run test:watch     # Testy w trybie watch
+npm run test:coverage  # Testy z pokryciem kodu
+
+# Linting i formatowanie
+npm run lint           # Sprawdź kod ESLintem
+npm run lint:fix       # Popraw automatyczne błędy
+npm run format         # Formatuj kod Prettierem
+```
 
 ## 🐛 Rozwiązywanie problemów
 
-### Problem: "npm start" zwraca błąd "Missing script"
-**Rozwiązanie:** Upewnij się, że jesteś w katalogu głównym projektu (nie w /client ani /server).
-
 ### Problem: Błąd połączenia z bazą danych
-**Rozwiązanie:** 
 1. Sprawdź czy PostgreSQL jest uruchomiony
-2. Zweryfikuj `DATABASE_URL` w pliku `.env`
-3. Uruchom `npm run db:generate` i `npm run db:push`
+2. Zweryfikuj `DATABASE_URL` w `.env`
+3. Uruchom `npx prisma db push`
 
-### Problem: Utrata uprawnień po subskrypcji
-**Rozwiązanie:** Odśwież stronę lub przejdź do Dashboard - system automatycznie odświeży dane użytkownika.
+### Problem: Błąd CORS
+1. Sprawdź `CLIENT_URL` w konfiguracji serwera
+2. Upewnij się, że porty są poprawne
 
-## 🔗 Porty
-- Frontend: http://localhost:5173
-- Backend: http://localhost:5000
-- Prisma Studio: http://localhost:5555 (gdy uruchomione)
+### Problem: Stripe webhooks nie działają
+1. Zainstaluj Stripe CLI
+2. Uruchom `stripe listen --forward-to localhost:5000/api/webhooks/stripe`
 
-## 📞 Wsparcie
-W razie problemów skontaktuj się z zespołem rozwoju.
+## 📈 Monitoring i metryki
 
-## 🎯 Następne kroki (Etap 2)
+Aplikacja zbiera metryki wydajności i błędów za pomocą:
+- **Sentry** - Monitoring błędów i wydajności
+- **Custom metrics** - Metryki biznesowe
+- **Health checks** - Status aplikacji
 
-W następnym chacie będziemy implementować:
-- ✅ Pełną autoryzację (JWT + Google OAuth)
-- ✅ API endpoints dla auth
-- ✅ Email confirmation
-- ✅ Middleware autoryzacji
-- ✅ Testy podstawowych funkcji
+Endpoint health check: `GET /api/health`
 
-## 📝 Notatki
+## 🤝 Wkład w rozwój
 
-- Projekt używa PowerShell (Windows)
-- Komendy używają `;` zamiast `&&`
-- Backend na porcie 5000, Frontend na porcie 3000
-- Wszystkie błędy TypeScript naprawione
-- TailwindCSS skonfigurowany z custom kolorami
+1. Fork repozytorium
+2. Stwórz branch dla nowej funkcjonalności (`git checkout -b feature/amazing-feature`)
+3. Commit zmian (`git commit -m 'Add amazing feature'`)
+4. Push do branch (`git push origin feature/amazing-feature`)
+5. Otwórz Pull Request
 
-## 🤖 Status agenta
+## 📄 Licencja
 
-**Chat #1 - UKOŃCZONY** ✅
-- Etap 1: Konfiguracja projektu ✅
-- Podstawy Etapu 2: Przygotowane ✅
+Ten projekt jest licencjonowany na [MIT License](LICENSE).
 
-**Następny chat:** Implementacja autoryzacji i API endpoints 
+## 🆘 Wsparcie
+
+Jeśli napotkasz problemy lub masz pytania:
+
+1. Sprawdź [dokumentację](docs/)
+2. Przeszukaj [Issues](https://github.com/OneAboveAlly/BuildBoss/issues)
+3. Stwórz nowy [Issue](https://github.com/OneAboveAlly/BuildBoss/issues/new)
+
+## 🎯 Roadmapa
+
+### Q1 2025
+- [ ] Aplikacja mobilna (React Native)
+- [ ] Integracja z popularnymi narzędziami CAD
+- [ ] Advanced analytics z AI insights
+
+### Q2 2025
+- [ ] API dla integracji z systemami ERP
+- [ ] Marketplace dla materiałów budowlanych
+- [ ] Video calls dla zespołów
+
+---
+
+**BuildBoss** - Twój partner w cyfrowej transformacji branży budowlanej 🏗️ 
