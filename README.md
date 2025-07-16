@@ -8,6 +8,7 @@ Kompleksowe rozwiązanie do zarządzania projektami, zespołem, materiałami i d
 [![Node.js](https://img.shields.io/badge/Node.js-18+-brightgreen.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://typescriptlang.org/)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#)
 
 ## 🚀 Funkcjonalności
 
